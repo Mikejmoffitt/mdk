@@ -2,6 +2,8 @@
 Michael Moffitt 2018 */
 #include "md/sys.h"
 
+uint16_t sys_ints_enabled;
+
 void sys_z80_init(uint8_t *src, uint16_t size)
 {
 	sys_z80_bus_req();

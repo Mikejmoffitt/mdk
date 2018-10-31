@@ -222,6 +222,7 @@ void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
 			break;
 	}
 
+	sys_di();
 	vdp_wait_dma();
 	vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 
@@ -233,6 +234,7 @@ void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
 
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
 	VDPPORT_DATA = val << 8;
+	// TODO: Do we care about Z80 here?
 }
 
 void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
@@ -267,6 +269,7 @@ void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
 	vdp_set_reg(VDP_DMASRC3, VDP_DMA_SRC_COPY);
 
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
+	// TODO: Do we care about Z80 here?
 }
 
 void dma_transfer(uint16_t bus, uint16_t dest, void *src, uint16_t n)
@@ -275,6 +278,7 @@ void dma_transfer(uint16_t bus, uint16_t dest, void *src, uint16_t n)
 	uint32_t transfer_src = (uint32_t)src;
 	uint32_t transfer_limit;
 	uint16_t transfer_len = n;
+	uint16_t intstatus = sys_get_ints_enabled();
 
 	// check that the source address + length won't cross a 128KIB boundary
 	// based on SGDK's DMA validation
@@ -305,6 +309,8 @@ void dma_transfer(uint16_t bus, uint16_t dest, void *src, uint16_t n)
 			break;
 	}
 
+	sys_di();
+
 	vdp_wait_dma();
 	vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 
@@ -327,4 +333,9 @@ void dma_transfer(uint16_t bus, uint16_t dest, void *src, uint16_t n)
 	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 
 	sys_z80_bus_release();
+	if (intstatus)
+	{
+		sys_ei();
+	}
+
 }

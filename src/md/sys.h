@@ -10,6 +10,8 @@ Michael Moffitt 2018 */
 #define SYS_Z80_PORT_BUS   (*(volatile uint16_t *)0xA11100)
 #define SYS_Z80_PORT_RESET (*(volatile uint16_t *)0xA11200)
 
+extern uint16_t sys_ints_enabled;
+
 // Get system information
 static inline uint8_t sys_is_overseas(void);
 static inline uint8_t sys_is_pal(void);
@@ -53,11 +55,18 @@ static inline uint8_t sys_get_hw_rev(void)
 static inline void sys_ei(void)
 {
 	__asm__ volatile("\tandi.w	#0xF8FF, %sr\n");
+	sys_ints_enabled = 1;
 }
 
 static inline void sys_di(void)
 {
 	__asm__ volatile("\tori.w	#0x700, %sr\n");
+	sys_ints_enabled = 0;
+}
+
+static uint16_t sys_get_ints_enabled(void)
+{
+	return sys_ints_enabled;
 }
 
 static inline uint16_t sys_z80_get_bus_status(void)

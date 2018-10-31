@@ -19,6 +19,7 @@
 // * Initializes VDP with VDP defaults (see vdp.c):
 //     * Vertical blank interrupt enabled
 //     * 320 x 224 (40x28 cell) video mode
+//     * Clear VRAM
 //     * Display enabled
 //     * DMA enabled
 //     * HV counter enabled

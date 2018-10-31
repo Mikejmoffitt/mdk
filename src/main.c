@@ -88,13 +88,6 @@ void main(void)
 	// Get the megadrive ready to go! (See md/megadrive.h)
 	megadrive_init();
 
-	// Clear the plane nametables
-	sys_di();
-	plane_clear(VDP_PLANE_A);
-	plane_clear(VDP_PLANE_B);
-	plane_clear(VDP_PLANE_WINDOW);
-	sys_ei();
-
 	// Set up text graphics at VRAM address 0x400 palette 0
 	// This lines it up nicely with the actual ASCII values, which we will
 	// use to draw letters with sprites.

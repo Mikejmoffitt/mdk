@@ -11,6 +11,13 @@ void megadrive_init(void)
 	sys_di();
 	vdp_init();
 	dma_q_set_budget(DMA_Q_BUDGET_AUTO);
+	dma_set_stride(1);
+	dma_fill_vram(0, 0, 0);
+	vdp_wait_dma();
+	for (int i = 0; i < 64; i++)
+	{
+		pal_set(i, 0x000);
+	}
 	io_gamepad_en(0);
 	io_gamepad_en(1);
 	io_gamepad_en(2);

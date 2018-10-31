@@ -13,10 +13,12 @@ static inline void plane_clear(VdpPlane plane)
 	plane_size = (vdp_get_reg(VDP_PLANESIZE) & 0x03) * 64;
 	plane_size *= (vdp_get_reg(VDP_PLANESIZE) & 0x30) * 4;
 
+	sys_di();
 	vdp_wait_dma();
 	vdp_set_autoinc(1);
 	dma_fill_vram(plane_dest, 0, plane_size);
 	vdp_wait_dma();
+	sys_ei();
 }
 
 #endif
