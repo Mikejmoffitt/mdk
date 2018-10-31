@@ -64,7 +64,7 @@ void vdp_wait_vblank(void)
 	g_vblank_wait = 1;
 	while (g_vblank_wait)
 	{
-
+		__asm__ volatile ("\tnop\n");
 	}
 }
 static inline uint16_t hsram_len_calc(void)

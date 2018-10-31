@@ -1,9 +1,6 @@
 // md-toolchain print utility functions
 // Michael Moffitt 2018
 #include "util/text.h"
-#include "md/pal.h"
-#include "md/dma.h"
-#include "md/vdp.h"
 
 #include "res_font_gfx.h"
 #include "res_font_pal.h"

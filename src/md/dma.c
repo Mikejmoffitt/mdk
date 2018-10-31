@@ -136,7 +136,7 @@ static inline uint32_t calc_dma_cost(DmaCmd *cmd)
 {
 	// Bandwidth is in *bytes* for VRAM transfers, words otherwise, so VRAM
 	// cost is doubled as n specifies words.
-	return ((cmd->type | 0xFF) == DMA_OP_BUS_VRAM) ? (cmd->n << 1) : (cmd->n);
+	return ((cmd->type & 0xFF) == DMA_OP_BUS_VRAM) ? (cmd->n << 1) : (cmd->n);
 }
 
 // Aaah, I'm sorry! It's *really* a DMA stack!
@@ -233,8 +233,6 @@ void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
 
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
 	VDPPORT_DATA = val << 8;
-
-	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 }
 
 void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
@@ -269,8 +267,6 @@ void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
 	vdp_set_reg(VDP_DMASRC3, VDP_DMA_SRC_COPY);
 
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
-
-	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 }
 
 void dma_transfer(uint16_t bus, uint16_t dest, void *src, uint16_t n)

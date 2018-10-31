@@ -372,7 +372,7 @@ static inline void vdp_wait_dma(void)
 {
 	while(vdp_get_status() & VDP_STATUS_DMA)
 	{
-
+		__asm__ volatile ("\tnop\n");
 	}
 }
 

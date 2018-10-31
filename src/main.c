@@ -9,6 +9,7 @@
 #include "md/megadrive.h"
 
 #include "util/text.h"
+#include "util/plane.h"
 
 static uint16_t xs, ys;
 
@@ -88,9 +89,11 @@ void main(void)
 	megadrive_init();
 
 	// Clear the plane nametables
-//	dma_q_fill_vram(vdp_get_plane_base(VDP_PLANE_A), 0, 0x2000, 1);
-	dma_set_stride(1);
-	dma_fill_vram(vdp_get_plane_base(VDP_PLANE_B), 0, 0x4000);
+	sys_di();
+	plane_clear(VDP_PLANE_A);
+	plane_clear(VDP_PLANE_B);
+	plane_clear(VDP_PLANE_WINDOW);
+	sys_ei();
 
 	// Set up text graphics at VRAM address 0x400 palette 0
 	// This lines it up nicely with the actual ASCII values, which we will

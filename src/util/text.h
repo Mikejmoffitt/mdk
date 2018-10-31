@@ -10,7 +10,8 @@
 
 #define TEXT_VRAM_NO_LOAD 0x0001
 #define TEXT_PAL_NO_LOAD  0x1000
-#include "md/vdp.h"
+
+#include "md/megadrive.h"
 
 // Load the font graphics (res/gfx/font.bin) and palette (res/gfx/font.pal)
 // OR vram_pos with TEXT_VRAM_NO_LOAD to skip uploading the text graphics to
