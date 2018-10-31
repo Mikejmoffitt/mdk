@@ -1,7 +1,7 @@
 Mega Drive Toolchain
 ===================
 
-This project aims to deliver some core support toolchain components used in developing software for the Sega Genesis / Mega Drive. Extant solutions exist on both ends of the complexity spectrum, with straight 68000 assembly programming on one and SGDK on the other. Both are great solutions, but it's never a bad time for some not-invented-here syndrome to come through and help deliver a third option somewhere in the middle.
+This project aims to deliver some core support toolchain components used in developing software for the Sega Genesis / Mega Drive. Solutions exist on both ends of the complexity spectrum, with straight 68000 assembly programming on one and SGDK on the other. Both are great solutions, but it's never a bad time for some not-invented-here syndrome to come through and help deliver a third option somewhere in the middle.
 
 This project is oriented towards development on a Linux or Unix-like host, and is C-focused. However, as needed, some functionality can be implemented in 68000 assembly. Presently, this is limited to the C runtime startup, and IRQ handlers.
 
