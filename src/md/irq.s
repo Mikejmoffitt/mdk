@@ -1,9 +1,9 @@
-/* md-toolchain interrupt handlers 
+/* md-toolchain interrupt handlers
 Michael Moffitt 2018
 
 The vblank IRQ contains only enough functionality to let the vdp_wait_vblank
 function to work. In the future, it will be responsible for kicking off queued
-DMA transfers as well. 
+DMA transfers as well.
 
 The hblank and serial interrupts (levels 4 and 2 respectively) are empty; they
 should be expanded as-needed. */
@@ -37,11 +37,6 @@ _v_irq6:
 	and then block on it transitioning low in order to synchronize.
 	*/
 	clr.w	g_vblank_wait
-	
 	jsr	io_poll
 	jsr	dma_q_process
-
-	/*
-	TODO: Incorperate scheduled DMA transfers.
-	*/
 	rte

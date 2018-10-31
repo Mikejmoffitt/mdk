@@ -182,11 +182,14 @@ void dma_q_process(void)
 				break;
 		}
 
+		// TODO: Test any of this beyond "my transfer worked!"
+
 		// TODO: If cost is greater than budget_rem, split the DMA up
 		// and do what is possible, and then queue the remainder for the
 		// next vblank and exit. For now, it allows it to go slightly
 		// over budget.
-		if (cost >= budget_rem)
+		// If the display is disabled, budget is entirely ignored.
+		if (cost >= budget_rem && (vdp_get_reg(VDP_MODESET2) & VDP_MODESET2_DISP_EN))
 		{
 			return;
 		}

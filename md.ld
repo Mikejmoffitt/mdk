@@ -16,6 +16,7 @@ MEMORY
    borrowed from SGDK*/
 PROVIDE (__stack = 0x01000000);
 
+/* TODO: work banked SRAM into the ROM area for games that support saving. */
 SECTIONS
 {
 	.text 0x00000000 :
@@ -23,15 +24,6 @@ SECTIONS
 		KEEP(*(.text.keepboot)) *(.text .text.*)
 		. = ALIGN(0x4);
 		*(.rodata .rodata.*)
-
-/*		. = ALIGN(0x4);
-		__INIT_SECTION__ = . ;
-		*(.ini)
-		SHORT (0x4E75)
-
-		__FINI_SECTION__ = . ;
-		*(.fini)
-		SHORT (0x4E75)*/
 
 		_etext = .;
 		*(.lit)
@@ -42,8 +34,6 @@ SECTIONS
 	.data 0x00FF0000 :
 	AT ( ADDR (.text) + SIZEOF (.text) )
 	{
-/*		*(.got.plt) *(.got)*/
-/*		*(.shdata)*/
 		*(.data .data.*)
 		_edata = .;
 	} > ram
@@ -52,26 +42,8 @@ SECTIONS
 	.bss 0x00FF0000 + SIZEOF (.data) :
 	{
 		_start = . ;
-/*		*(.shbss)*/
 		*(.bss .bss.*)
-/*		*(COMMON)*/
 		_bend = . ;
 		end = . ;
 	} > ram
-	
-	.stab 0 (NOLOAD) :
-	{
-		*(.stab)
-	}
-	
-	.stabstr 0 (NOLOAD) :
-	{
-		*(.stabstr)
-	}
-	
-	.eh_frame 0 (NOLOAD) :
-	{
-		*(.eh_frame)
-	}
-
 }

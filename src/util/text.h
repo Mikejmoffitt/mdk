@@ -13,7 +13,7 @@
 
 #include "md/megadrive.h"
 
-// Load the font graphics (res/gfx/font.bin) and palette (res/gfx/font.pal)
+// Load the font graphics and palette.
 // OR vram_pos with TEXT_VRAM_NO_LOAD to skip uploading the text graphics to
 // VRAM and only redirect the base tile index.
 // OR pal_lne with TEXT_PAL_NO_LOAD to redirect the base palette without
