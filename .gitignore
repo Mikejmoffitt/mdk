@@ -5,3 +5,4 @@ res/*.o
 *.swp
 util/megaloader
 util/binclude
+util/blastem64-0.5.1/*

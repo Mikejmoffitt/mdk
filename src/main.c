@@ -10,7 +10,6 @@
 
 #include "util/text.h"
 #include "util/plane.h"
-#include "res_etc_zero.h"
 
 static uint16_t xs, ys;
 

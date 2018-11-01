@@ -20,6 +20,7 @@ NM := $(GBIN)/m68k-elf-nm
 OBJCOPY := $(GBIN)/m68k-elf-objcopy
 BINCLUDE := util/binclude
 MEGALOADER := util/megaloader
+BLASTEM := util/blastem64-0.5.1/blastem
 
 # Compiler, assembler, and linker flag setup
 CFLAGS+= -Wno-strict-aliasing -ffreestanding
@@ -36,7 +37,11 @@ OBJECTS_RES := $(addsuffix .o,$(addprefix $(OUTPUT_DIR),$(basename $(RESOURCES_L
 
 .PHONY: all
 
-all: $(BINCLUDE) $(MEGALOADER) $(OUTPUT_FILE).elf $(OUTPUT_FILE).bin
+all: $(BLASTEM) $(BINCLUDE) $(MEGALOADER) $(OUTPUT_FILE).elf $(OUTPUT_FILE).bin
+
+# An archive for Blastem is included; this just unpacks it.
+$(BLASTEM):
+	cd util && tar -xf blastem64-0.5.1.tar.gz
 
 $(MEGALOADER):
 	@$(CC_HOST) -D_DEFAULT_SOURCE util/megaloader.c -o $(MEGALOADER) -O3 -std=c11
@@ -63,17 +68,23 @@ $(OUTPUT_FILE).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM)
 	@$(CC) $(CFLAGS) -c res/$(subst /,_,$(basename $<)).c -o $@
 	@rm res/$(subst /,_,$(basename $<)).c
 
-%.o: %.c
+%.o: %.c $(OBJECTS_RES)
 	@bash -c 'printf " \e[96m[  C  ]\e[0m $< --> $@\n"'
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-%.o: %.s
+%.o: %.s $(OBJECTS_RES)
 	@bash -c 'printf " \e[33m[ ASM ]\e[0m $< --> $@\n"'
 	@$(AS) $(ASFLAGS) -c $< -o $@
 
 flash: all
 	@exec $(MEGALOADER) md $(OUTPUT_FILE).bin /dev/ttyUSB0 2> /dev/null
 
+debug: all
+	@exec $(BLASTEM) -m gen -d $(OUTPUT_FILE).bin
+	
+test: all
+	@exec $(BLASTEM) -m gen $(OUTPUT_FILE).bin
+	
 clean:
 	@-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_FILE).bin
 	@-rm -f $(OBJECTS_RES) $(RESDIR)/res_*.h
