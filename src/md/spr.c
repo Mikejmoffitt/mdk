@@ -22,7 +22,7 @@ void spr_finish(void)
 	}
 
 	dma_q_transfer_vram(vdp_get_sprite_base(), (void *)g_sprite_table,
-	                    sizeof(SprSlot) * 2 * g_sprite_count, 2);
+	                    sizeof(SprSlot) * g_sprite_count / 2, 2);
 
 	g_sprite_count = 0;
 	g_sprite_next = &g_sprite_table[0];

@@ -1,7 +1,7 @@
-Mega Drive Toolchain
-===================
+Sega Genesis / Mega Drive Framework
+===================================
 
-This project aims to deliver some core support toolchain components used in developing software for the Sega Genesis / Mega Drive. Extant solutions exist on both ends of the complexity spectrum, with straight 68000 assembly programming on one and SGDK on the other. Both are great solutions, but it's never a bad time for some not-invented-here syndrome to come through and help deliver a third option somewhere in the middle.
+This project aims to deliver some core support toolchain components used in developing software for the Sega Genesis / Mega Drive. Solutions exist on both ends of the complexity spectrum, with straight 68000 assembly programming on one and SGDK on the other. Both are great solutions, but it's never a bad time for some not-invented-here syndrome to come through and help deliver a third option somewhere in the middle.
 
 This project is oriented towards development on a Linux or Unix-like host, and is C-focused. However, as needed, some functionality can be implemented in 68000 assembly. Presently, this is limited to the C runtime startup, and IRQ handlers.
 
@@ -123,13 +123,13 @@ TODO
 
 This project is far from complete. In no particular order, there are some tasks I'd like to get taken care of:
 
-* Z80 development
+* Z80 development:
 I would like for Z80 sound driver development to be a first-class endeavor. Providing a few sample drivers for different needs would not be a bad idea (include Echo, XGM, my own engine, and a simple PCM playback reference driver perhaps).
-* Serial support
+* Serial support:
 io.h is supposed to also allow for control of the controller ports for serial transfers. Some of the code is written, but it needs the most work and is the lowest priority.
-* 6-button, mouse, and other alternate controllers
+* 6-button, mouse, and other alternate controllers:
 io.h should also support a variety of controllers. Right now, it operates under the assumption that a 3-button pad is used.
-* DMA slicing
+* DMA slicing:
 If a VRAM transfer is projected to overrun the remaining bandwidth, it should be split into one or more smaller transfers, deferred to the next vblank.
-* Tilemap support
+* Tilemap support:
 This is not a core function, but I would like to include a reference implementation of a simple scrolling tilemap in src/util/plane.c. Right now, plane.h only offers a function to clear planes using a DMA Fill.
