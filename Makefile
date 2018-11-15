@@ -4,9 +4,9 @@ SRCDIR := src
 RESDIR := res
 CFLAGS := -I$(SRCDIR) -I$(RESDIR) -Wall -Wextra -O2 -std=c11 -Wno-unused-function #-Werror
 LDSCRIPT := md.ld
-SOURCES_C := $(wildcard $(SRCDIR)/*.c) $(wildcard $(SRCDIR)/*/*.c)
-SOURCES_ASM := $(wildcard $(SRCDIR)/*.s) $(wildcard $(SRCDIR)/*/*.s)
-RESOURCES_LIST := $(wildcard $(RESDIR)/*.bin) $(wildcard $(RESDIR)/*/*.bin)
+SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
+SOURCES_ASM := $(shell find $(SRCDIR)/ -type f -name '*.s')
+RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*.bin')
 OUTPUT_FILE := prg
 LIBS :=
 

@@ -14,7 +14,7 @@ void text_init(uint16_t vram_pos, uint16_t pal_line)
 	font_pal_line = pal_line & 0x3;
 	if (!(vram_pos & TEXT_VRAM_NO_LOAD))
 	{
-		dma_q_transfer_vram(font_vram_pos, (void *)res_font_gfx, 2048, 2);
+		dma_q_transfer_vram(font_vram_pos, (void *)res_font_gfx, 3072/2, 2);
 	}
 	font_vram_pos /= 32;
 	if (!(font_pal_line & TEXT_PAL_NO_LOAD))
@@ -75,4 +75,9 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s)
 		}
 		s++;
 	}
+}
+
+uint16_t text_get_vram_pos(void)
+{
+	return font_vram_pos;
 }
