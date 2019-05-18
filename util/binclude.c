@@ -41,8 +41,8 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	snprintf(out_fpath, 512, "%s.c", symbol_name);
-
+	snprintf(out_fpath, sizeof(out_fpath) - 1, "%s.c", symbol_name);
+	out_fpath[sizeof(out_fpath) - 1] = 0;
 	fout = fopen(out_fpath, "w");
 	if (!fout)
 	{
@@ -81,10 +81,11 @@ int main(int argc, char **argv)
 	fclose(fout);
 	fclose(fin);
 
-	printf("Wrote %d bytes to \"%s\".\n", bytes_written, out_fpath);
+	printf("Wrote %zu bytes to \"%s\".\n", bytes_written, out_fpath);
 
 	// Write header file
-	snprintf(out_fpath, 512, "%s.h", symbol_name);
+	snprintf(out_fpath, sizeof(out_fpath) - 1, "%s.h", symbol_name);
+	out_fpath[sizeof(out_fpath) - 1] = 0;
 	fout = fopen(out_fpath, "w");
 	if (!fout)
 	{

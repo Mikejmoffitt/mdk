@@ -46,8 +46,8 @@ $(BLASTEM):
 $(MEGALOADER):
 	@$(CC_HOST) -D_DEFAULT_SOURCE util/megaloader.c -o $(MEGALOADER) -O3 -std=c11
 
-$(BINCLUDE):
-	@$(CC_HOST) util/binclude.c -o $(BINCLUDE) -O3 -std=c11
+$(BINCLUDE): util/binclude.c
+	@$(CC_HOST) $^ -o $(BINCLUDE) -O3 -std=c11
 
 $(OUTPUT_FILE).bin: $(OUTPUT_FILE).elf
 	@$(OBJCOPY) -O binary $< temp.bin
