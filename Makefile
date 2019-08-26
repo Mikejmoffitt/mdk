@@ -2,7 +2,7 @@
 CPUTYPE := 68000
 SRCDIR := src
 RESDIR := res
-CFLAGS := -I$(SRCDIR) -I$(RESDIR) -Wall -Wextra -O2 -std=c11 -Wno-unused-function #-Werror
+CFLAGS := -I$(SRCDIR) -I$(RESDIR) -std=c11 -O2 -fno-strict-aliasing -fno-math-errno -Wall -Wextra -Wno-unused-function #-Werror
 LDSCRIPT := md.ld
 SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
 SOURCES_ASM := $(shell find $(SRCDIR)/ -type f -name '*.s')
