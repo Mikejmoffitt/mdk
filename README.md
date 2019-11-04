@@ -56,10 +56,11 @@ To initialize the Mega Drive to sane defaults, call this in `main()`:
 
 Afterwards, an infinite loop like this is sufficient:
 
-    while(1) {
-      // Do whatever you want here - draw some text, move some
-      // sprites around, run game logic
-      megadrive_finish();
+    while(1)
+    {
+        // Do whatever you want here - draw some text, move some
+        // sprites around, run game logic
+        megadrive_finish();
     }
 
 To build all this from the terminal:
