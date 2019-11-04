@@ -2,8 +2,8 @@
 // Michael Moffitt 2018
 #include "util/text.h"
 
-#include "res_font_gfx.h"
-#include "res_font_pal.h"
+extern const unsigned char res_font_gfx_bin[];
+extern const unsigned char res_font_pal_bin[];
 
 static uint16_t font_vram_pos;
 static uint16_t font_pal_line;
@@ -14,12 +14,12 @@ void text_init(uint16_t vram_pos, uint16_t pal_line)
 	font_pal_line = pal_line & 0x3;
 	if (!(vram_pos & TEXT_VRAM_NO_LOAD))
 	{
-		dma_q_transfer_vram(font_vram_pos, (void *)res_font_gfx, 3072/2, 2);
+		dma_q_transfer_vram(font_vram_pos, (void *)res_font_gfx_bin, 3072/2, 2);
 	}
 	font_vram_pos /= 32;
 	if (!(font_pal_line & TEXT_PAL_NO_LOAD))
 	{
-		pal_upload(font_pal_line * 16, (void *)res_font_pal, 16);
+		pal_upload(font_pal_line * 16, (void *)res_font_pal_bin, 16);
 	}
 }
 
