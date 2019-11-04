@@ -1,8 +1,9 @@
-prg.bin
+md-framework.gen
 *.o
-res/*.h
-res/*.o
+obj/res.s
+obj/*.gen
+obj/*.elf
 *.swp
 util/megaloader
-util/binclude
+util/bin2s
 util/blastem64-0.5.1/*
