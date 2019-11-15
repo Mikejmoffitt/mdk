@@ -222,4 +222,4 @@ _v_trap0xe:
 _v_trap0xf:
 _v_unimp:
 	rte
-.include	"src/md/irq.s"
+.include	"md/irq.inc"
