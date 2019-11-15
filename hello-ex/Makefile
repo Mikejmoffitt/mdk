@@ -1,5 +1,5 @@
 # Configuration
-OUTPUT_FILE := hello-world
+OUTPUT_FILE := hello-ex
 OUTPUT_EXT := gen
 OUTPUT_VERSION := wip
 
