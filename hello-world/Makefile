@@ -3,6 +3,8 @@ CPUTYPE := 68000
 SRCDIR := src
 RESDIR := res
 OBJDIR := obj
+UTILDIR := ../util
+COMMONSRCDIR := ../common/src
 CFLAGS := -I$(SRCDIR) -I$(OBJDIR) -Wall -Wextra -O2 -std=c11 -Wno-unused-function #-Werror
 HOSTCFLAGS := -Os -std=c11
 LDSCRIPT := md.ld
@@ -22,9 +24,9 @@ AS := $(GBIN)/m68k-elf-gcc
 LD := $(GBIN)/m68k-elf-ld
 NM := $(GBIN)/m68k-elf-nm
 OBJCOPY := $(GBIN)/m68k-elf-objcopy
-BIN2S := util/bin2s
-MEGALOADER := util/megaloader
-BLASTEM := util/blastem64-0.5.1/blastem
+BIN2S := $(UTILDIR)/bin2s
+MEGALOADER := $(UTILDIR)/megaloader
+BLASTEM := $(UTILDIR)/blastem64-0.5.1/blastem
 
 # Compiler, assembler, and linker flag setup
 CFLAGS+= -Wno-strict-aliasing -ffreestanding
@@ -49,12 +51,12 @@ all: $(BLASTEM) $(BINCLUDE) $(MEGALOADER) $(OUTPUT_GEN)
 
 # An archive for Blastem is included; this just unpacks it.
 $(BLASTEM):
-	cd util && tar -xf blastem64-0.5.1.tar.gz
+	cd $(UTILDIR) && tar -xf blastem64-0.5.1.tar.gz
 
-$(MEGALOADER):
-	@$(CC_HOST) -D_DEFAULT_SOURCE util/megaloader.c -o $@ $(HOSTCFLAGS)
+$(MEGALOADER): $(UTILDIR)/megaloader.c
+	@$(CC_HOST) -D_DEFAULT_SOURCE $< -o $@ $(HOSTCFLAGS)
 
-$(BIN2S): util/bin2s.c
+$(BIN2S): $(UTILDIR)/bin2s.c
 	@$(CC_HOST) $^ -o $@ -Os  $(HOSTCFLAGS)
 
 $(OUTPUT_GEN): $(OUTPUT_ELF)
