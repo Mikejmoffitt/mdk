@@ -11,6 +11,11 @@ BIN2S := $(UTILDIR)/bin2s
 MEGALOADER := $(UTILDIR)/megaloader
 BLASTEM := $(UTILDIR)/blastem64-0.5.1/blastem
 
+# If the user isn't overriding the emulator
+ifeq ($(MDEMU),)
+MDEMU := $(BLASTEM)
+endif
+
 # Compiler, assembler, and linker flag setup
 CFLAGS+= -Wno-strict-aliasing -ffreestanding
 CFLAGS+= -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
@@ -101,10 +106,10 @@ flash: all
 	@exec $(MEGALOADER) md $(OUTPUT_GEN) /dev/ttyUSB0 2> /dev/null
 
 debug: all
-	@exec $(BLASTEM) -m gen -d $(OUTPUT_GEN)
+	@exec $(MDEMU) -m gen -d $(OUTPUT_GEN)
 
 test: all
-	@exec $(BLASTEM) -m gen $(OUTPUT_GEN)
+	@exec $(MDEMU) -m gen $(OUTPUT_GEN)
 
 clean:
 	@-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
