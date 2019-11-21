@@ -1,8 +1,8 @@
-md-framework.gen
+*.gen
 *.o
-obj/res.s
-obj/*.gen
-obj/*.elf
+*/obj/res.s
+*/obj/*.gen
+*/obj/*.elf
 *.swp
 util/megaloader
 util/bin2s
