@@ -6,4 +6,5 @@
 *.swp
 util/megaloader
 util/bin2s
+util/pngto
 util/blastem64-0.5.1/*
