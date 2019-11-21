@@ -48,9 +48,12 @@ MIchael Moffitt 2018 */
 #define VDP_STATUS_FULL 0x0100
 #define VDP_STATUS_EMPTY 0x0200
 
-#define VRAM_SCRA_BASE	0xA000
-#define VRAM_SCRB_BASE	0xC000
-#define VRAM_SCRW_BASE	0xF000
+// Default VRAM layout, assuming 64x32-cell planes
+// 0000-BFFF (1536 tiles) free
+#define VRAM_SCRA_BASE	0xC000
+#define VRAM_SCRW_BASE	0xD000
+#define VRAM_SCRB_BASE	0xE000
+// F000-F7FF (64 tiles) free
 #define VRAM_HSCR_BASE	0xF800
 #define VRAM_SPR_BASE	0xFC00
 
