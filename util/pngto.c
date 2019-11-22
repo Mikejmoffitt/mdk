@@ -657,6 +657,7 @@ int main(int argc, char **argv) {
               goto abort_conversion;
             }
             if (!fwrite(convertedtile, tileend - convertedtile, 1, outfp)) {
+              fprintf(stderr, "%s: fwrite failed\n", args.outfilename);
               error = 79;
               goto abort_conversion;
             }
@@ -665,7 +666,8 @@ int main(int argc, char **argv) {
       }
     }
   }
-  if (!fflush(outfp)) {
+  if (fflush(outfp)) {
+    fprintf(stderr, "%s: fflush failed\n", args.outfilename);
     error = 79;
   }
 

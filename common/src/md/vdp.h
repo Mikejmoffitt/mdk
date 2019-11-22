@@ -6,7 +6,7 @@ MIchael Moffitt 2018 */
 #include <stdint.h>
 
 // Tile / sprite attribute definition
-#define VDP_ATTR(_tile, _hflip, _vflip, _pal, _prio) (((_tile) & 0x3FF) | \
+#define VDP_ATTR(_tile, _hflip, _vflip, _pal, _prio) (((_tile) & 0x7FF) | \
                  ((_hflip) ? 0x800 : 0) | ((_vflip) ? 0x1000 : 0) | \
                  (((_pal) & 0x3) << 13) | ((_prio) ? 0x8000 : 0))
 
@@ -71,7 +71,7 @@ MIchael Moffitt 2018 */
 #define VDP_DMA_SRC_FILL 0x80
 #define VDP_DMA_SRC_COPY 0xC0
 
-#define VDP_CTRL_ADDR(_addr) ((((uint32_t)_addr & 0x3FFF) << 16) | (((uint32_t)_addr & 0xC000) >> 14))
+#define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | (((uint32_t)(_addr) & 0xC000) >> 14))
 
 
 #define VDP_VRAMDEST(DEST)		(0x00004000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
