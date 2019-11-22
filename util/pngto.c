@@ -26,6 +26,7 @@ freely, subject to the following restrictions:
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "indexedimage.h"
 #include "lodepng.h"
 #include "musl_getopt.h"
@@ -52,7 +53,11 @@ const char usageText[] =
 "  -1                shortcut for -p 0 (that is, 1bpp)\n"
 "  --hflip           horizontally flip all tiles (most significant\n"
 "                    pixel on right)\n"
-"  --little          reverse bytes in each row-plane\n"
+"  -c PALFMT, --palette=PALFMT\n"
+"                    write a palette in this format instead of tiles\n"
+"                    (-p is ignored)\n"
+"  --num-colors=NUM  write this many colors instead of PNG PLTE size\n"
+"  --little          reverse bytes in each row-plane or palette entry\n"
 "  --add=ADDAMT      value to add to each pixel\n"
 "  --add0=ADDAMT0    value to add to pixels of color 0 (if different)\n"
 "\n"
@@ -65,18 +70,33 @@ const char usageText[] =
 "  0                 1 bit per pixel\n"
 "  0;1               NES (default)\n"
 "  0,1               Game Boy, Super NES 2bpp\n"
+"  0,1,2,3           Sega Master System, Game Gear\n"
 "  0,1;2             Super NES 3bpp (decoded by some games in software)\n"
 "  0,1;2,3           Super NES and TurboGrafx-16 (background) 4bpp\n"
 "  0,1;2,3;4,5;6,7   Super NES 8bpp for modes 3 and 4\n"
 "  3210              Genesis 4bpp\n"
-"  76543210          Super NES mode 7 and GBA 8bpp\n"
+"  76543210          Super NES mode 7 and Game Boy Advance 8bpp\n"
 "  10 --hflip --little\n"
-"                    Virtual Boy and Game Boy Advance 2bpp\n"
+"                    Virtual Boy and GBA 2bpp\n"
 "  3210 --hflip --little\n"
-"                    Game Boy Advance 4bpp\n"
+"                    GBA 4bpp\n"
+"\n"
+"In a palette format:\n"
+"- 0 and 1 are constant bits.\n"
+"- R, G, B are color component bits in most to least significant order.\n"
+"\n"
+"Common palette formats:\n"
+"  00BBGGRR                    SMS\n"
+"  0000000GGGRRRBBB --little   TG16\n"
+"  0000BBBBGGGGRRRR --little   Game Gear\n"
+"  0000BBB0GGG0RRR0            Genesis\n"
+"  0BBBBBGGGGGRRRRR --little   Super NES, GBC, GBA, DS\n"
 ;
+// EGA (00rgbRGB) and Neo Geo (0rgbRRRRGGGGBBBB) cannot yet be
+// represented in this program
+
 const char versionText[] =
-  "pngtochr v0.01\n"
+  "pngtochr v0.02wip\n"
   "Copyright 2019 Damian Yerrick\n"
   "Comes with ABSOLUTELY NO WARRANTY.  This is free software and may\n"
   "be redistributed pursuant to the conditions in the documentation.\n"
@@ -90,10 +110,12 @@ typedef struct Args {
   const char *infilename;
   const char *outfilename;
   const char *planemap;
+  const char *palettefmt;
   unsigned int mtwidth;
   unsigned int mtheight;
   unsigned int addamt;
   unsigned int addamt0;
+  unsigned int num_colors;
   int hflip, little;
 } Args;
 
@@ -101,8 +123,8 @@ typedef struct Args {
  * @return 0 for ok, 1 for error
  */
 unsigned parse_argv(Args *args, int argc, char **argv) {
-  static const char short_options[] = "i:o:p:W:H:1";
-  args->infilename = args->outfilename = 0;
+  static const char short_options[] = "i:o:p:c:W:H:1";
+  args->infilename = args->outfilename = args->palettefmt = 0;
   args->planemap = planemap_nes;
   args->mtwidth = args->mtheight = 8;
   args->hflip = args->little = args->addamt = args->addamt0 = 0;
@@ -116,6 +138,8 @@ unsigned parse_argv(Args *args, int argc, char **argv) {
     {"image",       musl_required_arg, 0, 'i'},
     {"output",      musl_required_arg, 0, 'o'},
     {"planes",      musl_required_arg, 0, 'p'},
+    {"palette",     musl_required_arg, 0, 'p'},
+    {"num-colors",  musl_required_arg, 0, '#'},
     {"tile-width",  musl_required_arg, 0, 'W'},
     {"tile-height", musl_required_arg, 0, 'H'},
     {"add",         musl_required_arg, 0, '+'},
@@ -162,6 +186,9 @@ unsigned parse_argv(Args *args, int argc, char **argv) {
       case 'p':
         args->planemap = musl_optarg;
         break;
+      case 'c':
+        args->palettefmt = musl_optarg;
+        break;
       case 'W':
         strtoul_result = strtoul(musl_optarg, &strtoul_end, 0);
         if (strtoul_end == musl_optarg
@@ -182,10 +209,20 @@ unsigned parse_argv(Args *args, int argc, char **argv) {
         }
         args->mtheight = strtoul_result;
         break;
+      case '#':
+        strtoul_result = strtoul(musl_optarg, &strtoul_end, 0);
+        if (strtoul_end == musl_optarg
+            || strtoul_result < 1 || strtoul_result > 256) {
+          fprintf(stderr, "%s: invalid number of colors '%s' (should be 1 to 256)\n", 
+                  argv[0], musl_optarg);
+          return EXIT_FAILURE;
+        }
+        args->num_colors = strtoul_result;
+        break;
       case '+':
         strtoul_result = strtoul(musl_optarg, &strtoul_end, 0);
         if (strtoul_end == musl_optarg || strtoul_result > 255) {
-          fprintf(stderr, "%s: invalid add amount (should be 0 to 255) '%s'\n", 
+          fprintf(stderr, "%s: invalid add amount '%s' (should be 0 to 255)\n", 
                   argv[0], musl_optarg);
           return EXIT_FAILURE;
         }
@@ -194,7 +231,7 @@ unsigned parse_argv(Args *args, int argc, char **argv) {
       case '/':
         strtoul_result = strtoul(musl_optarg, &strtoul_end, 0);
         if (strtoul_end == musl_optarg || strtoul_result > 255) {
-          fprintf(stderr, "%s: invalid add amount (should be 0 to 255) '%s'\n", 
+          fprintf(stderr, "%s: invalid add amount '%s' (should be 0 to 255)\n", 
                   argv[0], musl_optarg);
           return EXIT_FAILURE;
         }
@@ -234,15 +271,16 @@ unsigned parse_argv(Args *args, int argc, char **argv) {
     }
   }
 
-/*
-  printf("Want to convert %s to %s using planemap %s\n"
-         "    hflip = %d, little = %d, add = %u, add0 = %u, "
-         "tile width = %u, height = %u\n",
-         args->infilename, args->outfilename, args->planemap,
-         args->hflip, args->little, args->addamt, args->addamt0,
-         args->mtwidth, args->mtheight);
-*/
-
+  if (0) {
+    printf("Want to convert %s to %s\n"
+           "    using planemap %s or palette format %s\n"
+           "    hflip = %d, add = %u, add0 = %u, tile width = %u, height = %u,\n"
+           "    numcolors = %u, little = %d\n",
+           args->infilename, args->outfilename,
+           args->planemap, args->palettefmt,
+           args->hflip, args->addamt, args->addamt0, args->mtwidth, args->mtheight,
+           args->num_colors, args->little);
+  }
   return 0;
 }
 
@@ -289,6 +327,46 @@ unsigned planemap_bpp(const char *planemap) {
   return numdigits;
 }
 
+/**
+ * A palette format is valid if
+ * 1. It contains only characters in "01RGB"
+ * 2. At least one of R, G, or B
+ * 3. No more than 8 R, 8 G, 8 B, and 32 characters total
+ * The bytes per color is (strlen(palettefmt) + 7)/8
+ * @return 0 if valid, or a pointer to a message if not
+ */
+const char *validate_palettefmt(const char *palettefmt) {
+  unsigned int numr = 0, numg = 0, numb = 0, numbits = 0;
+
+  for (const char *s = palettefmt; *s; ++s) {
+    switch (*s) {
+      case 'R':
+        numr += 1;
+        if (numr > 8) return "more than 8 red (R) bits";
+        numbits += 1;
+        break;
+      case 'G':
+        numg += 1;
+        if (numg > 8) return "more than 8 green (G) bits";
+        numbits += 1;
+        break;
+      case 'B':
+        numb += 1;
+        if (numb > 8) return "more than 8 blue (B) bits";
+        // fall through
+      case '0':
+      case '1':
+        numbits += 1;
+        break;
+      default:
+        return "unknown character";
+    }
+    if (numbits > 32) return "more than 32 bits";
+  }
+  if (numr == 0 && numg == 0 && numb == 0) return "no color bits";
+  return 0;
+}
+
 /* IndexedImage debugging ******************************************/
 
 void IndexedImage_dump(const IndexedImage *im) {
@@ -315,6 +393,9 @@ void IndexedImage_dump(const IndexedImage *im) {
 
 /* Image conversion ************************************************/
 
+/**
+ * @return a pointer to the end of the buffer
+ */
 unsigned char *convert_tile(unsigned char *dst,
                             const unsigned char *src,
                             const char *planemap,
@@ -397,6 +478,66 @@ void IndexedImage_addconst(IndexedImage *im,
   }
 }
 
+/* Palette conversion **********************************************/
+
+/**
+ * Writes out a palette.
+ * @param dst a byte array of at least
+ * (strlen(planemap)+7)/8*ncolors bytes
+ * @param src a 4*ncolors-byte array with entries in order
+ * red, green, blue, unused
+ * @return a pointer to the end of the buffer
+ */
+unsigned char *convert_palette(unsigned char *dst,
+                               const unsigned char *src,
+                               const char *palettefmt,
+                               unsigned ncolors, unsigned little) {
+
+  for (; ncolors > 0; src += 4, ncolors -= 1) {
+    uint32_t bits = 0;
+    unsigned numr = 0, numg = 0, numb = 0, numbits = 0;
+
+    // Collect bits per the palette format string
+    for (const char *s = palettefmt; *s; ++s) {
+      bits <<= 1;
+      numbits += 1;
+      switch (*s) {
+        case '1':
+          bits |= 1;
+          break;
+        case 'R':  // Pull one red bit
+          if (numr < 8) bits |= (src[0] >> (7 - numr)) & 1;
+          numr += 1;
+          break;
+        case 'G':  // Pull one red bit
+          if (numg < 8) bits |= (src[1] >> (7 - numg)) & 1;
+          numg += 1;
+          break;
+        case 'B':  // Pull one red bit
+          if (numb < 8) bits |= (src[2] >> (7 - numb)) & 1;
+          numb += 1;
+          break;
+        default:  // treat others as 0
+          break;
+      }
+    }
+
+    // Write the bits to the buffer
+    if (little) {
+      for (unsigned int b = 0; b < numbits; b += 8) {
+        *dst++ = bits >> b;
+      }
+    } else {
+      numbits = (numbits + 7) / 8 * 8;
+      for (unsigned int b = (numbits + 7) / 8 * 8; b > 0; b -= 8) {
+        *dst++ = bits >> (b - 8);
+      }
+    }
+  }
+  return dst;
+}
+
+
 int main(int argc, char **argv) {
   IndexedImage im = {0}, curmetatile = {0}, curtile = {0};
   Args args = {0};
@@ -426,7 +567,15 @@ int main(int argc, char **argv) {
             argv[0]);
     return EXIT_FAILURE;
   }
-  {
+
+  if (args.palettefmt) {
+    const char *problem = validate_palettefmt(args.palettefmt);
+    if (problem) {
+      fprintf(stderr, "%s: invalid palette format %s: %s\n",
+              argv[0], args.palettefmt, problem);
+      return EXIT_FAILURE;
+    }
+  } else {
     const char *problem = validate_planemap(args.planemap);
     if (problem) {
       fprintf(stderr, "%s: invalid planemap %s: %s\n",
@@ -456,36 +605,61 @@ int main(int argc, char **argv) {
     IndexedImage_cleanup(&curmetatile);
     IndexedImage_cleanup(&im);
     fprintf(stderr, "%s: LodePNG error %u: %s\n", 
-            argv[1], error, lodepng_error_text(error));
+            args.infilename, error, lodepng_error_text(error));
     return EXIT_FAILURE;
   }
 
   // With all inputs checked and appearing to be consistent, we can
   // solve the problem
-  IndexedImage_addconst(&im, args.addamt, args.addamt0);
-  for (unsigned mty = 0; mty < im.height; mty += args.mtheight) {
-    for (unsigned mtx = 0; mtx < im.width; mtx += args.mtwidth) {
-      IndexedImage_clear(&curmetatile, 0);
-      IndexedImage_paste(&curmetatile, &im, -mtx, -mty);
+  if (args.palettefmt) {
+    unsigned int sizeof_entry = (strlen(args.palettefmt) + 7) / 8;
+    unsigned int in_ncolors = im.palettesize;
+    unsigned int out_ncolors = args.num_colors;
+    if (out_ncolors == 0) out_ncolors = in_ncolors;
+    unsigned char *outbuf = calloc(out_ncolors, sizeof_entry);
+    if (!outbuf) {
+      error = 83;
+      goto abort_conversion;
+    }
 
-      for (unsigned ty = 0; ty < args.mtheight; ty += 8) {
-        for (unsigned tx = 0; tx < args.mtwidth; tx += 8) {
-          IndexedImage_clear(&curtile, 0);
-          IndexedImage_paste(&curtile, &curmetatile, -tx, -ty);
+    // Don't extract more colors than there are; leave the rest
+    // black-filled
+    if (in_ncolors > out_ncolors) in_ncolors = out_ncolors;
+
+    // Extract the palette
+    convert_palette(outbuf, im.palette, args.palettefmt,
+                    in_ncolors, args.little);
+    if (!fwrite(outbuf, out_ncolors * sizeof_entry, 1, outfp)) {
+      error = 79;
+    }
+    free(outbuf);
+  } else {
+    // Extract the pixels
+    IndexedImage_addconst(&im, args.addamt, args.addamt0);
+    for (unsigned mty = 0; mty < im.height; mty += args.mtheight) {
+      for (unsigned mtx = 0; mtx < im.width; mtx += args.mtwidth) {
+        IndexedImage_clear(&curmetatile, 0);
+        IndexedImage_paste(&curmetatile, &im, -mtx, -mty);
+
+        for (unsigned ty = 0; ty < args.mtheight; ty += 8) {
+          for (unsigned tx = 0; tx < args.mtwidth; tx += 8) {
+            IndexedImage_clear(&curtile, 0);
+            IndexedImage_paste(&curtile, &curmetatile, -tx, -ty);
           
-          unsigned char *tileend = convert_tile(
-            convertedtile, curtile.pixels,
-            args.planemap, args.hflip, args.little
-          );
-          if (tileend - convertedtile != 8 * outbpp) {
-            fprintf(stderr, "internal error: conversion produced %d bytes but %u were expected\n",
-                   (int)(tileend - convertedtile), 8 * outbpp);
-            error = 255;
-            goto abort_conversion;
-          }
-          if (!fwrite(convertedtile, tileend - convertedtile, 1, outfp)) {
-            error = 79;
-            goto abort_conversion;
+            unsigned char *tileend = convert_tile(
+              convertedtile, curtile.pixels,
+              args.planemap, args.hflip, args.little
+            );
+            if (tileend - convertedtile != 8 * outbpp) {
+              fprintf(stderr, "internal error: conversion produced %d bytes but %u were expected\n",
+                     (int)(tileend - convertedtile), 8 * outbpp);
+              error = 255;
+              goto abort_conversion;
+            }
+            if (!fwrite(convertedtile, tileend - convertedtile, 1, outfp)) {
+              error = 79;
+              goto abort_conversion;
+            }
           }
         }
       }

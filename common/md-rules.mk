@@ -61,7 +61,7 @@ $(BIN2S): $(UTILDIR)/bin2s.c
 	@$(CC_HOST) $^ -o $@ -Os  $(HOSTCFLAGS)
 
 $(PNGTO): $(UTILDIR)/pngto.c $(UTILDIR)/musl_getopt.c $(UTILDIR)/lodepng.c $(UTILDIR)/indexedimage.c
-	@$(CC_HOST) $^ -o $@ -Os  $(HOSTCFLAGS)
+	@$(CC_HOST) $^ -o $@ -Os -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
 
 $(OUTPUT_GEN): $(OUTPUT_ELF)
 	@bash -c 'printf " \e[36m[ PAD ]\e[0m ... --> $@\n"'
