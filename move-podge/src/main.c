@@ -41,7 +41,7 @@ In web color format, these are the usable grays:
 static unsigned int player_x;
 static signed short player_dx;
 static unsigned short player_frame;
-static unsigned short player_facing = 0;
+static unsigned short player_facing;
 
 
 static void load_player(void)
@@ -56,7 +56,8 @@ static void move_player(void)
 {
 	unsigned short cur_keys = io_pad_read(0);
 	// Acceleration and braking while moving right
-	if (player_dx >= 0) {
+	if (player_dx >= 0)
+	{
 		if (cur_keys & BTN_RIGHT)
 		{
 			player_dx += WALK_ACCEL;
@@ -71,8 +72,10 @@ static void move_player(void)
 	}
 	
 	// Acceleration and braking while moving left
-	if (player_dx <= 0) {
-		if (cur_keys & BTN_LEFT) {
+	if (player_dx <= 0)
+	{
+		if (cur_keys & BTN_LEFT)
+		{
 			player_dx -= WALK_ACCEL;
 			if (player_dx < -WALK_SPD) player_dx = -WALK_SPD;
 			player_facing = 1;	// 1: L

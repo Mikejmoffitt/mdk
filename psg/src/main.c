@@ -13,6 +13,9 @@
 #include "util/text.h"
 #include "util/plane.h"
 
+extern const unsigned char res_font_gfx_bin[];
+extern const unsigned char res_font_pal_bin[];
+
 struct Chord
 {
 	unsigned short period[3];
@@ -39,13 +42,11 @@ static const struct Chord saygah[] =
 
 void main(void)
 {
-	const struct Chord *playpos = saygah;
-
 	// Get the megadrive ready to go! (See md/megadrive.h)
 	megadrive_init();
 
 	// Set up text graphics at VRAM address 0x400 palette 0
-	text_init(0x400, 0);
+	text_init(res_font_gfx_bin, 3072, 0x400, res_font_pal_bin, 0);
 
 	// Print a simple message in the center of plane A
 	text_puts(VDP_PLANE_A, 15, 11, "PSG Chords");
