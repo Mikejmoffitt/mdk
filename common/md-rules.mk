@@ -8,6 +8,7 @@ LD := $(GBIN)/m68k-elf-ld
 NM := $(GBIN)/m68k-elf-nm
 OBJCOPY := $(GBIN)/m68k-elf-objcopy
 BIN2S := $(UTILDIR)/bin2s
+BIN2H := $(UTILDIR)/bin2h
 MEGALOADER := $(UTILDIR)/megaloader
 PNGTO := $(UTILDIR)/pngto
 BLASTEM := $(UTILDIR)/blastem64-0.5.1/blastem
@@ -21,6 +22,7 @@ endif
 CFLAGS+= -Wno-strict-aliasing -ffreestanding
 CFLAGS+= -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
 CFLAGS+=-mcpu=$(CPUTYPE)
+CFLAGS+= -I.
 # CFLAGS+= -ffunction-sections -fdata-sections -fconserve-stack
 ASFLAGS:=$(CFLAGS)
 ASFLAGS:=-Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(COMMONSRCDIR) 
@@ -37,7 +39,9 @@ OBJECTS_ASM := $(patsubst $(SRCDIR)/%.s,$(OBJDIR)/%.o,$(SOURCES_ASM)) \
   $(patsubst $(COMMONSRCDIR)/%.s,$(OBJDIR)/%.o,$(COMMONSOURCES_ASM))
 OBJECTS_RES := $(OBJDIR)/res.o
 
-.PHONY: all vars
+RES_HEADER := res.h
+
+.PHONY: all vars $(RES_HEADER)
 
 all: $(BLASTEM) $(BINCLUDE) $(MEGALOADER) $(OUTPUT_GEN)
 
@@ -60,6 +64,9 @@ $(MEGALOADER): $(UTILDIR)/megaloader.c
 $(BIN2S): $(UTILDIR)/bin2s.c
 	@$(CC_HOST) $^ -o $@ -Os  $(HOSTCFLAGS)
 
+$(BIN2H): $(UTILDIR)/bin2h.c
+	@$(CC_HOST) $^ -o $@ -Os  $(HOSTCFLAGS)
+
 $(PNGTO): $(UTILDIR)/pngto.c $(UTILDIR)/musl_getopt.c $(UTILDIR)/lodepng.c $(UTILDIR)/indexedimage.c
 	@$(CC_HOST) $^ -o $@ -Os -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
 
@@ -75,7 +82,7 @@ $(OBJDIR)/$(OUTPUT_FILE).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM)
 	@bash -c 'printf " \e[36m[ LNK ]\e[0m ... --> $@\n"'
 	@$(LD) -o $@ $(LDFLAGS) $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM) $(LIBS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES)
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[  C  ]\e[0m $< --> $@\n"'
 	@$(CC) $(CFLAGS) -c $< -o $@
@@ -100,11 +107,21 @@ $(OBJDIR)/%.o: $(OBJDIR)/%.s
 	@bash -c 'printf " \e[33m[B:ASM]\e[0m $< --> $@\n"'
 	@$(AS) $(ASFLAGS) -c $< -o $@
 
-# Converts a file to .c and .h files
+# Converts a file to object files
 $(OBJDIR)/res.s: $(BIN2S) $(RESOURCES_LIST)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[95m[ BIN ]\e[0m $^ --> $@\n"'
 	@$^ > $@
+
+# Generates header entries for resource data
+$(RES_HEADER): $(BIN2H) $(RESOURCES_LIST)
+	@bash -c 'printf " \e[95m[RES.H]\e[0m $^ --> $@\n"'
+	@printf '#ifndef _RES_AUTOGEN_H\n#define _RES_AUTOGEN_H\n' > $@
+	@$^ >> $@
+	@printf '#endif  // _RES_AUTOGEN_H\n' >> $@
+
+res_post:
+	@printf
 
 flash: all
 	@exec $(MEGALOADER) md $(OUTPUT_GEN) /dev/ttyUSB0 2> /dev/null
@@ -118,4 +135,4 @@ test: all
 clean:
 	@-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
 	@-rm -f $(OUTPUT_ELF) $(OUTPUT_UNPAD)
-	@-rm -f $(OBJECTS_RES) $(OBJDIR)/res.s
+	@-rm -f $(OBJECTS_RES) $(OBJDIR)/res.s $(RES_HEADER)

@@ -11,8 +11,7 @@
 #include "util/text.h"
 #include "util/plane.h"
 
-extern const unsigned char res_font_gfx_bin[];
-extern const unsigned char res_font_pal_bin[];
+#include "res.h"
 
 void main(void)
 {
@@ -22,7 +21,7 @@ void main(void)
 	// Set up text graphics at VRAM address 0x400 palette 0
 	// This lines it up nicely with the actual ASCII values, which
 	// a later demo will take advantage of.
-	text_init(res_font_gfx_bin, 3072, 0x400, res_font_pal_bin, 0);
+	text_init(res_font_gfx_bin, sizeof(res_font_gfx_bin), 0x400, res_font_pal_bin, 0);
 
 	// Print a simple message in the center of plane A
 	text_puts(VDP_PLANE_A, 14, 11, "Hello World");
