@@ -105,7 +105,6 @@ void main(void)
 		btn_draw();
 		scroll_movement();
 
-		// Set the background color to get an idea of how much CPU is utilized
 		megadrive_finish(); // Terminate the sprite list and wait for vblank
 		// Controller polling and DMA queue process is handled in VBL ISR
 	}

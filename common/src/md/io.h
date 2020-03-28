@@ -5,22 +5,26 @@ Michael Moffitt 2018 */
 
 #include <stdint.h>
 
+// TODO: Make MdIoMode type, configure IO ports using it.
 // TODO: Serial support
 // TODO: 6-button controllers
 
 // Button masks
-#define BTN_UP    0x0001
-#define BTN_DOWN  0x0002
-#define BTN_LEFT  0x0004
-#define BTN_RIGHT 0x0008
-#define BTN_B     0x0010
-#define BTN_C     0x0020
-#define BTN_A     0x0040
-#define BTN_START 0x0080
-#define BTN_X     0x0100
-#define BTN_Y     0x0200
-#define BTN_Z     0x0400
-#define BTN_MODE  0x0800
+typedef enum MdButton
+{
+	BTN_UP    = 0x0001,
+	BTN_DOWN  = 0x0002,
+	BTN_LEFT  = 0x0004,
+	BTN_RIGHT = 0x0008,
+	BTN_B     = 0x0010,
+	BTN_C     = 0x0020,
+	BTN_A     = 0x0040,
+	BTN_START = 0x0080,
+	BTN_X     = 0x0100,
+	BTN_Y     = 0x0200,
+	BTN_Z     = 0x0400,
+	BTN_MODE  = 0x0800,
+} MdButton;
 
 // Serial port speed configurations
 #define IO_BAUD_4800 0x00
@@ -54,7 +58,7 @@ void io_poll(void);
 // Get the state of one control port (0 through 2)
 // This returns from the cache captured during vblank, so there are no
 // concerns about touching IO ports or disabling the Z80.
-uint16_t io_pad_read(uint8_t port);
+MdButton io_pad_read(uint8_t port);
 
 // Configures a port's control register for gamepad reading.
 // th interrupts are disabled for each port.

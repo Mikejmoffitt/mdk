@@ -20,6 +20,7 @@ Michael Moffitt 2018 */
 #define DMA_PAL_H32_V30_TRANSFER_BANDWIDTH  11753
 #define DMA_PAL_H40_V30_TRANSFER_BANDWIDTH  14454
 
+// This should be a power of 2, since it is used with the modulo operator.
 #define DMA_QUEUE_DEPTH 64
 
 typedef struct DmaCmd
@@ -32,23 +33,22 @@ typedef struct DmaCmd
 } DmaCmd;
 
 static uint32_t dma_budget;
-static uint16_t dma_queue_pos;
+// DMA queue ring buffer.
+static uint16_t dma_queue_write_pos;
+static uint16_t dma_queue_read_pos;
 static DmaCmd dma_queue[DMA_QUEUE_DEPTH];
 
 static inline void dma_q_enqueue(uint16_t op, uint16_t bus, uint16_t dest,
                                  uint32_t src, uint16_t n, uint16_t stride)
 {
-	if (dma_queue_pos >= DMA_QUEUE_DEPTH)
-	{
-		return;
-	}
-	DmaCmd *cmd = &dma_queue[dma_queue_pos];
+	DmaCmd *cmd = &dma_queue[dma_queue_write_pos];
+	dma_queue_write_pos = (dma_queue_write_pos + 1) % DMA_QUEUE_DEPTH;
+	if (dma_queue_write_pos == dma_queue_read_pos) return;
 	cmd->type = (bus | op);
 	cmd->src = src;
 	cmd->dest = dest;
 	cmd->n = n;
 	cmd->stride = stride;
-	dma_queue_pos++;
 }
 
 // Configure the DMA queue vblank transfer budget for max_words per vblank.
@@ -142,28 +142,13 @@ static inline uint32_t calc_dma_cost(DmaCmd *cmd)
 // Aaah, I'm sorry! It's *really* a DMA stack!
 void dma_q_process(void)
 {
-	/* 
-	// Debug thing to show how many transfers will be done on plane A
-	text_puts(VDP_PLANE_B, 0, 0, "                    ");
-	for (uint16_t i = 0; i < dma_queue_pos; i++)
-	{
-		text_puts(VDP_PLANE_B, i, 0, "X");
-	}
-	*/
-	if (dma_queue_pos == 0)
-	{
-		return;
-	}
 	uint32_t budget_rem = dma_budget;
-	uint16_t cost;
 
-	// At this point, it is gauranteed there is at least one DMA transfer.
-	do
+	while (dma_queue_read_pos != dma_queue_write_pos && budget_rem > 0)
 	{
-		dma_queue_pos -= 1;
-
-		DmaCmd *cmd = &dma_queue[dma_queue_pos];
-		cost = calc_dma_cost(cmd);
+		DmaCmd *cmd = &dma_queue[dma_queue_read_pos];
+		dma_queue_read_pos = (dma_queue_read_pos + 1) % DMA_QUEUE_DEPTH;
+		uint16_t cost = calc_dma_cost(cmd);
 
 		dma_set_stride(cmd->stride);
 
@@ -197,13 +182,13 @@ void dma_q_process(void)
 		{
 			budget_rem -= cost;
 		}
-		
-	} while (dma_queue_pos > 0 && budget_rem > 0);
+	}
 }
 
 void dma_q_flush(void)
 {
-	dma_queue_pos = 0;
+	dma_queue_read_pos = 0;
+	dma_queue_write_pos = 0;
 }
 
 void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
