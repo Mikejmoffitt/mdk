@@ -102,19 +102,22 @@ void dma_q_set_budget(uint32_t max_words)
 }
 
 // Schedule a DMA for next vblank from 68K mem to VRAM
-void dma_q_transfer_vram(uint16_t dest, void *src, uint16_t n, uint16_t stride)
+void dma_q_transfer_vram(uint16_t dest, const void *src, uint16_t n,
+                         uint16_t stride)
 {
 	dma_q_enqueue(DMA_CMD_OP_TRANSFER, DMA_OP_BUS_VRAM,
 	              dest, (uint32_t )src, n, stride);
 }
 
-void dma_q_transfer_cram(uint16_t dest, void *src, uint16_t n, uint16_t stride)
+void dma_q_transfer_cram(uint16_t dest, const void *src, uint16_t n,
+                         uint16_t stride)
 {
 	dma_q_enqueue(DMA_CMD_OP_TRANSFER, DMA_OP_BUS_CRAM,
 	              dest, (uint32_t )src, n, stride);
 }
 
-void dma_q_transfer_vsram(uint16_t dest, void *src, uint16_t n, uint16_t stride)
+void dma_q_transfer_vsram(uint16_t dest, const void *src, uint16_t n,
+                          uint16_t stride)
 {
 	dma_q_enqueue(DMA_CMD_OP_TRANSFER, DMA_OP_BUS_VSRAM,
 	              dest, (uint32_t )src, n, stride);
@@ -157,7 +160,8 @@ void dma_q_process(void)
 			default:
 				continue;
 			case DMA_CMD_OP_TRANSFER:
-				dma_transfer(cmd->type, cmd->dest, (void *)(cmd->src), cmd->n);
+				dma_transfer(cmd->type, cmd->dest, (const void *)(cmd->src),
+				             cmd->n);
 				break;
 			case DMA_CMD_OP_COPY:
 				dma_copy(cmd->type, cmd->dest, (uint16_t)(cmd->src), cmd->n);
@@ -174,7 +178,8 @@ void dma_q_process(void)
 		// next vblank and exit. For now, it allows it to go slightly
 		// over budget.
 		// If the display is disabled, budget is entirely ignored.
-		if (cost >= budget_rem && (vdp_get_reg(VDP_MODESET2) & VDP_MODESET2_DISP_EN))
+		if (cost >= budget_rem &&
+		            (vdp_get_reg(VDP_MODESET2) & VDP_MODESET2_DISP_EN))
 		{
 			return;
 		}
@@ -260,7 +265,7 @@ void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
 	// TODO: Do we care about Z80 here?
 }
 
-void dma_transfer(uint16_t bus, uint16_t dest, void *src, uint16_t n)
+void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
 {
 	uint32_t ctrl_mask = VDP_CTRL_DMA_BIT;
 	uint32_t transfer_src = (uint32_t)src;
@@ -277,7 +282,7 @@ void dma_transfer(uint16_t bus, uint16_t dest, void *src, uint16_t n)
 	if (transfer_len > (transfer_limit >> 1))
 	{
 		dma_transfer(bus, dest + transfer_limit,
-		             (void *)(transfer_src + transfer_limit),
+		             (const void *)(transfer_src + transfer_limit),
 		             n - (transfer_limit >> 1));
 		transfer_len = transfer_limit >> 1;
 	}

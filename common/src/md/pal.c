@@ -9,7 +9,7 @@ void pal_set(uint8_t idx, uint16_t val)
 	VDPPORT_DATA = val;
 }
 
-void pal_upload(uint8_t dest, void *source, uint8_t len)
+void pal_upload(uint8_t dest, const void *source, uint8_t len)
 {
 	dma_q_transfer_cram(dest << 1, source, len, 2);
 }
