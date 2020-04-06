@@ -11,7 +11,7 @@ BIN2S := $(UTILDIR)/bin2s
 BIN2H := $(UTILDIR)/bin2h
 MEGALOADER := $(UTILDIR)/megaloader
 PNGTO := $(UTILDIR)/pngto
-BLASTEM := $(UTILDIR)/blastem64-0.5.1/blastem
+BLASTEM := $(UTILDIR)/blastem64-*/blastem
 
 # If the user isn't overriding the emulator
 ifeq ($(MDEMU),)
@@ -56,7 +56,7 @@ vars:
 
 # An archive for Blastem is included; this just unpacks it.
 $(BLASTEM):
-	cd $(UTILDIR) && tar -xf blastem64-0.5.1.tar.gz
+	cd $(UTILDIR) && tar -xf blastem64-*.tar.gz
 
 $(MEGALOADER): $(UTILDIR)/megaloader.c
 	@$(CC_HOST) -D_DEFAULT_SOURCE $< -o $@ $(HOSTCFLAGS)
