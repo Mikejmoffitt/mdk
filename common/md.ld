@@ -24,8 +24,9 @@ SECTIONS
 		KEEP(*(.text.keepboot)) *(.text .text.*)
 		. = ALIGN(0x4);
 		*(.rodata .rodata.*)
-
+		. = ALIGN(0x4);
 		_etext = .;
+		. = ALIGN(0x4);
 		*(.lit)
 	} > rom
 
@@ -34,15 +35,19 @@ SECTIONS
 	.data 0x00FF0000 :
 	AT ( ADDR (.text) + SIZEOF (.text) )
 	{
+		. = ALIGN(0x4);
 		*(.data .data.*)
+		. = ALIGN(0x4);
 		_edata = .;
 	} > ram
 	_sdata = SIZEOF (.data);
 
 	.bss 0x00FF0000 + SIZEOF (.data) :
 	{
+		. = ALIGN(0x4);
 		_start = . ;
 		*(.bss .bss.*)
+		. = ALIGN(0x4);
 		_bend = . ;
 		end = . ;
 	} > ram
