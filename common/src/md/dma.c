@@ -21,84 +21,91 @@ Michael Moffitt 2018 */
 #define DMA_PAL_H40_V30_TRANSFER_BANDWIDTH  14454
 
 // This should be a power of 2, since it is used with the modulo operator.
-#define DMA_QUEUE_DEPTH 64
+#define DMA_QUEUE_DEPTH 128
+
+#define DMA_BUDGET_INF 65536
 
 typedef struct DmaCmd
 {
-	uint16_t type; // op mask 0x300; bus mask 0x3
 	uint32_t src;
+	uint16_t type; // op mask 0x300; bus mask 0x3
 	uint16_t dest;
 	uint16_t n;
 	uint16_t stride;
 } DmaCmd;
 
-static uint32_t dma_budget;
+static volatile uint16_t dma_budget;
 // DMA queue ring buffer.
-static uint16_t dma_queue_write_pos;
-static uint16_t dma_queue_read_pos;
+static volatile uint16_t dma_queue_write_pos;
+static volatile uint16_t dma_queue_read_pos;
 static DmaCmd dma_queue[DMA_QUEUE_DEPTH];
 
 static inline void dma_q_enqueue(uint16_t op, uint16_t bus, uint16_t dest,
                                  uint32_t src, uint16_t n, uint16_t stride)
 {
+	const uint16_t ints_enabled = sys_get_ints_enabled();
+	sys_di();
 	DmaCmd *cmd = &dma_queue[dma_queue_write_pos];
 	dma_queue_write_pos = (dma_queue_write_pos + 1) % DMA_QUEUE_DEPTH;
 	if (dma_queue_write_pos == dma_queue_read_pos) return;
-	cmd->type = (bus | op);
 	cmd->src = src;
+	cmd->type = (bus | op);
 	cmd->dest = dest;
 	cmd->n = n;
 	cmd->stride = stride;
+	sys_ei();
+	if (ints_enabled) sys_ei();
 }
 
-// Configure the DMA queue vblank transfer budget for max_words per vblank.
-// DMA_Q_BUDGET_AUTO uses a calculation based on the current mode.
-void dma_q_set_budget(uint32_t max_words)
+static inline uint32_t calc_dma_cost(DmaCmd *cmd)
 {
-	if (max_words == DMA_Q_BUDGET_AUTO)
+	// Bandwidth is in *bytes* for VRAM transfers, words otherwise, so VRAM
+	// cost is doubled as n specifies words.
+	return ((cmd->type & 0xFF) == DMA_OP_BUS_VRAM) ? (cmd->n << 1) : (cmd->n);
+}
+
+static void internal_dma_queue_proc(uint16_t budget_rem)
+{
+	const uint16_t disp_disabled = !(vdp_get_reg(VDP_MODESET2) &
+	                                 VDP_MODESET2_DISP_EN);
+	while (dma_queue_read_pos != dma_queue_write_pos)
 	{
-		if (vdp_get_raster_width() == 320)
+		DmaCmd *cmd = &dma_queue[dma_queue_read_pos];
+		dma_queue_read_pos = (dma_queue_read_pos + 1) % DMA_QUEUE_DEPTH;
+		uint16_t cost = calc_dma_cost(cmd);
+
+		dma_set_stride(cmd->stride);
+
+		switch(cmd->type & 0xFF00)
 		{
-			if (sys_is_pal())
-			{
-				if (vdp_get_raster_height() == 240)
-				{
-					dma_budget = DMA_PAL_H40_V30_TRANSFER_BANDWIDTH;
-				}
-				else
-				{
-					dma_budget = DMA_PAL_H40_TRANSFER_BANDWIDTH;
-				}
-			}
-			else
-			{
-				dma_budget = DMA_NTSC_H40_TRANSFER_BANDWIDTH;
-			}
+			default:
+				continue;
+			case DMA_CMD_OP_TRANSFER:
+				dma_transfer(cmd->type, cmd->dest, (const void *)(cmd->src),
+				             cmd->n);
+				break;
+			case DMA_CMD_OP_COPY:
+				dma_copy(cmd->type, cmd->dest, (uint16_t)(cmd->src), cmd->n);
+				break;
+			case DMA_CMD_OP_FILL:
+				dma_fill(cmd->type, cmd->dest, (uint16_t)(cmd->src), cmd->n);
+				break;
 		}
-		else
+
+		if (disp_disabled || budget_rem == DMA_Q_BUDGET_UNLIMITED) continue;
+
+		// TODO: If cost is greater than budget_rem, split the DMA up
+		// and do what is possible, and then queue the remainder for the
+		// next vblank and exit. For now, it allows it to go slightly
+		// over budget.
+		// If the display is disabled, budget is entirely ignored.
+		if (cost >= budget_rem)
 		{
-			if (sys_is_pal())
-			{
-				if (vdp_get_raster_height() == 240)
-				{
-					dma_budget = DMA_PAL_H32_V30_TRANSFER_BANDWIDTH;
-				}
-				else
-				{
-					dma_budget = DMA_PAL_H32_TRANSFER_BANDWIDTH;
-				}
-			}
-			else
-			{
-				dma_budget = DMA_NTSC_H32_TRANSFER_BANDWIDTH;
-			}
-				}
+			break;
+		}
+
+		budget_rem -= cost;
 	}
-	else
-	{
-		dma_budget = max_words;
-	}
-	dma_budget = dma_budget / 2;
 }
 
 // Schedule a DMA for next vblank from 68K mem to VRAM
@@ -135,59 +142,59 @@ void dma_q_copy_vram(uint16_t dest, uint16_t src, uint16_t n, uint16_t stride)
 	dma_q_enqueue(DMA_CMD_OP_COPY, DMA_OP_BUS_VRAM, dest, src, n, stride);
 }
 
-static inline uint32_t calc_dma_cost(DmaCmd *cmd)
+// Configure the DMA queue vblank transfer budget for max_words per vblank.
+// DMA_Q_BUDGET_AUTO uses a calculation based on the current mode.
+void dma_q_set_budget(uint16_t max_bytes)
 {
-	// Bandwidth is in *bytes* for VRAM transfers, words otherwise, so VRAM
-	// cost is doubled as n specifies words.
-	return ((cmd->type & 0xFF) == DMA_OP_BUS_VRAM) ? (cmd->n << 1) : (cmd->n);
-}
-
-// Aaah, I'm sorry! It's *really* a DMA stack!
-void dma_q_process(void)
-{
-	uint32_t budget_rem = dma_budget;
-
-	while (dma_queue_read_pos != dma_queue_write_pos && budget_rem > 0)
+	if (max_bytes == DMA_Q_BUDGET_AUTO)
 	{
-		DmaCmd *cmd = &dma_queue[dma_queue_read_pos];
-		dma_queue_read_pos = (dma_queue_read_pos + 1) % DMA_QUEUE_DEPTH;
-		uint16_t cost = calc_dma_cost(cmd);
-
-		dma_set_stride(cmd->stride);
-
-		switch(cmd->type & 0xFF00)
+		if (vdp_get_raster_width() == 320)
 		{
-			default:
-				continue;
-			case DMA_CMD_OP_TRANSFER:
-				dma_transfer(cmd->type, cmd->dest, (const void *)(cmd->src),
-				             cmd->n);
-				break;
-			case DMA_CMD_OP_COPY:
-				dma_copy(cmd->type, cmd->dest, (uint16_t)(cmd->src), cmd->n);
-				break;
-			case DMA_CMD_OP_FILL:
-				dma_fill(cmd->type, cmd->dest, (uint16_t)(cmd->src), cmd->n);
-				break;
-		}
-
-		// TODO: Test any of this beyond "my transfer worked!"
-
-		// TODO: If cost is greater than budget_rem, split the DMA up
-		// and do what is possible, and then queue the remainder for the
-		// next vblank and exit. For now, it allows it to go slightly
-		// over budget.
-		// If the display is disabled, budget is entirely ignored.
-		if (cost >= budget_rem &&
-		            (vdp_get_reg(VDP_MODESET2) & VDP_MODESET2_DISP_EN))
-		{
-			return;
+			if (sys_is_pal())
+			{
+				dma_budget = vdp_get_raster_height() == 240 ?
+				             DMA_PAL_H40_V30_TRANSFER_BANDWIDTH :
+				             DMA_PAL_H40_TRANSFER_BANDWIDTH;
+			}
+			else
+			{
+				dma_budget = DMA_NTSC_H40_TRANSFER_BANDWIDTH;
+			}
 		}
 		else
 		{
-			budget_rem -= cost;
+			if (sys_is_pal())
+			{
+				dma_budget = vdp_get_raster_height() == 240 ?
+				             DMA_PAL_H32_V30_TRANSFER_BANDWIDTH:
+				             DMA_PAL_H32_TRANSFER_BANDWIDTH;
+			}
+			else
+			{
+				dma_budget = DMA_NTSC_H32_TRANSFER_BANDWIDTH;
+			}
 		}
 	}
+	else
+	{
+		dma_budget = max_bytes;
+	}
+
+	if (dma_budget < DMA_Q_BUDGET_UNLIMITED) dma_budget = dma_budget / 2;
+}
+
+void dma_q_process(void)
+{
+	internal_dma_queue_proc(dma_budget);
+}
+
+// Finish all remaining DMAs in the queue.
+void dma_q_complete(void)
+{
+	const uint16_t ints_enabled = sys_get_ints_enabled();
+	sys_di();
+	internal_dma_queue_proc(DMA_Q_BUDGET_UNLIMITED);
+	if (ints_enabled) sys_ei();
 }
 
 void dma_q_flush(void)
@@ -199,6 +206,7 @@ void dma_q_flush(void)
 void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
 {
 	uint32_t ctrl_mask = VDP_CTRL_DMA_BIT;
+	const uint16_t ints_enabled = sys_get_ints_enabled();
 
 	switch(bus & 0x0003)
 	{
@@ -228,11 +236,13 @@ void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
 	VDPPORT_DATA = val << 8;
 	// TODO: Do we care about Z80 here?
+	if (ints_enabled) sys_ei();
 }
 
 void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
 {
 	uint32_t ctrl_mask = VDP_CTRL_DMA_BIT;
+	const uint16_t ints_enabled = sys_get_ints_enabled();
 
 	switch(bus & 0x0003)
 	{
@@ -263,6 +273,7 @@ void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
 
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
 	// TODO: Do we care about Z80 here?
+	if (ints_enabled) sys_ei();
 }
 
 void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
@@ -271,7 +282,7 @@ void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
 	uint32_t transfer_src = (uint32_t)src;
 	uint32_t transfer_limit;
 	uint16_t transfer_len = n;
-	uint16_t intstatus = sys_get_ints_enabled();
+	const uint16_t ints_enabled = sys_get_ints_enabled();
 
 	// check that the source address + length won't cross a 128KIB boundary
 	// based on SGDK's DMA validation
@@ -326,9 +337,6 @@ void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
 	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 
 	sys_z80_bus_release();
-	if (intstatus)
-	{
-		sys_ei();
-	}
+	if (ints_enabled) sys_ei();
 
 }

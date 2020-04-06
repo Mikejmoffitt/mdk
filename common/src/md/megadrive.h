@@ -39,6 +39,8 @@ static inline void megadrive_finish(void)
 {
 	spr_finish();
 	vdp_wait_vblank();
+	io_poll();
+	dma_q_process();
 }
 
 #endif // MEGADRIVE_H

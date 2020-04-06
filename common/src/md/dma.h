@@ -65,14 +65,16 @@ scheduled DMA transfers in a real-world scenario.
 #define DMA_OP_BUS_VRAM 1
 #define DMA_OP_BUS_VSRAM 2
 
-#define DMA_Q_BUDGET_AUTO 0x00000000
+#define DMA_Q_BUDGET_AUTO 0x0000
+#define DMA_Q_BUDGET_UNLIMITED 0xFFFF
 
 // Block on DMA completion.
 static inline void dma_wait(void);
 
-// Configure the DMA queue vblank transfer budget for max_words per vblank.
-// DMA_Q_BUDGET_AUTO uses a calculation based on the current mode.
-void dma_q_set_budget(uint32_t max_words);
+// Configure the DMA queue vblank transfer budget for bytes sent per frame.
+// DMA_Q_BUDGET_AUTO uses a calculation based on the current mode, while
+// DMA_Q_BUDGET_UNLIMITED will disable per-frame transfer budgeting.
+void dma_q_set_budget(uint16_t max_bytes);
 
 // Schedule a DMA for next vblank from 68K mem to VRAM
 void dma_q_transfer_vram(uint16_t dest, const void *src, uint16_t n,
@@ -90,6 +92,9 @@ void dma_q_copy_vram(uint16_t dest, uint16_t src, uint16_t n, uint16_t stride);
 
 // Run at the start of Vblank to process pending DMA requests.
 void dma_q_process(void);
+
+// Finish all remaining DMAs in the queue.
+void dma_q_complete(void);
 
 // Remove any remaining pending DMA transfers from the DMA queue.
 void dma_q_flush(void);
