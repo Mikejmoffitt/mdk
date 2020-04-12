@@ -1,6 +1,7 @@
 
-# Environment - GBIN should point to the m68k-elf-* binaries
-GBIN := /opt/gendev/bin
+# Environment
+MD_ENV := /opt/gendev
+GBIN := $(MD_ENV)/bin
 CC_HOST := cc
 CC := $(GBIN)/m68k-elf-gcc
 AS := $(GBIN)/m68k-elf-gcc
@@ -25,9 +26,11 @@ CFLAGS+=-mcpu=$(CPUTYPE)
 CFLAGS+= -I.
 # CFLAGS+= -ffunction-sections -fdata-sections -fconserve-stack
 ASFLAGS:=$(CFLAGS)
-ASFLAGS:=-Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(COMMONSRCDIR) 
-LDFLAGS:=--gc-sections -nostdlib
+ASFLAGS:=-Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(COMMONSRCDIR)
+LDFLAGS=-L$(MD_ENV)/m68k-elf/lib -L$(MD_ENV)/lib/gcc/m68k-elf/6.3.0
+LDFLAGS+=--gc-sections -nostdlib
 LDFLAGS+= -T$(LDSCRIPT)
+LIBS += -lgcc
 
 # Naming intermediates
 OUTPUT_ELF := $(OBJDIR)/$(OUTPUT_FILE).elf
