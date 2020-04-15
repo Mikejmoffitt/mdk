@@ -4,9 +4,9 @@ Michael Moffitt 2018 */
 #define OPN_H
 
 #define OPN_PORT_ADDR0 *(volatile uint8_t *)0xA04000
-#define OPN_PORT_DATA0 *(volatile uint8_t *)0xA04000
-#define OPN_PORT_ADDR1 *(volatile uint8_t *)0xA04000
-#define OPN_PORT_DATA1 *(volatile uint8_t *)0xA04000
+#define OPN_PORT_DATA0 *(volatile uint8_t *)0xA04001
+#define OPN_PORT_ADDR1 *(volatile uint8_t *)0xA04002
+#define OPN_PORT_DATA1 *(volatile uint8_t *)0xA04003
 
 #define OPN_WAIT while (OPN_PORT_ADDR0 & 0x80)
 
