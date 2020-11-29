@@ -23,9 +23,9 @@ SECTIONS
 	{
 		KEEP(*(.text.keepboot)) *(.text .text.*)
 		. = ALIGN(0x4);
-		*(.rodata .rodata.*)
-		. = ALIGN(0x4);
 		_etext = .;
+		. = ALIGN(0x4);
+		*(.rodata .rodata.*)
 		. = ALIGN(0x4);
 		*(.lit)
 	} > rom

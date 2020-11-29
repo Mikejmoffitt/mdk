@@ -5,9 +5,7 @@ This project aims to deliver some core support toolchain components
 used in developing software for the Sega Genesis / Mega Drive.
 Solutions exist on both ends of the complexity spectrum, with
 straight 68000 assembly programming on one and SGDK on the other.
-Both are great solutions, but it's never a bad time for some not-
-invented-here syndrome to come through and help deliver a third
-option somewhere in the middle.
+This project aims to deliver something a little more in the middle.
 
 This project is oriented towards development on a Linux or Unix-like
 host, and is C-focused. However, as needed, some functionality can be
@@ -27,45 +25,62 @@ memory, initialize variables, set the stack, and move forwards.
 Setup
 =====
 
-Prerequisites
--------------
-This project uses the `m68k-elf-gcc` compiler suite. The easiest way
-to get it installed is probably to install a [Gendev] release, or
-build it yourself.  All that is needed is `m68k-elf-gcc` and Binutils
-(`as`, `ld`, etc).  You may modify the Makefile to point GBIN to
-wherever this lives.  Despite this suggestion, no other parts of SGDK
-or Gendev are relied upon.
+Environment Prerequisites
+-------------------------
+You will a compiler and various utilities.
+
+On Debian (and like operating systems) install the needed packages.
+
+```
+apt install git make gcc-8-m68k-linux-gnu libgcc-8-dev-m68k-cross
+```
+
+
 
 Getting Started
 ---------------
 A simple example program is included in `src/main.c`, but generally
-everything needed is in `src/md`.  `src/util` contains some
+everything needed is in `src/md`. `src/util` contains some
 potentially useful more exotic functions that I do not consider core
 functionality.
 
-Within `src/md` are several Mega Drive components.  For example,
+Within `src/md` are several Mega Drive components. For example,
 `vdp.h` and `vdp.c` contain functions related to the Mega Drive's
-Video Display Processor.  For each component, the header files are
-fairly descriptive.  As a shortcut to include all files, you may use
+Video Display Processor. For each component, the header files are
+fairly descriptive. As a shortcut to include all files, you may use
 
+```
     #include "md/megadrive.h"
+```
 
 To initialize the Mega Drive to sane defaults, call this in `main()`:
 
+```
     megadrive_init();
+```
 
 Afterwards, an infinite loop like this is sufficient:
 
+```
     while(1)
     {
         // Do whatever you want here - draw some text, move some
         // sprites around, run game logic
         megadrive_finish();
     }
+```
 
 To build all this from the terminal:
 
+```
     make
+```
+
+It is recommended to build using multiple threads. For a 4-core CPU:
+
+```
+    make -j16
+```
 
 Components
 ==========
@@ -115,9 +130,9 @@ time. That way, large transfers do not run into the active display
 area. This bandwidth "budget" is configurable.
 
 I recommend nearly exclusively using the DMA queue instead of
-handling DMA timing. Of course, there will be situations where you
-will want to do this manually, and there are no ill effects to
-bypassing the DMA queue.
+handling DMA timing manually. Of course, there will be situations
+where you will want to do this manually. There will be no ill effects
+when bypassing the DMA queue.
 
 Palettes
 --------
@@ -172,7 +187,7 @@ res/
     bar/baz.bin
 ```
 
-the following uint8_t arrays will be defined:
+the following `uint8_t` arrays will be defined:
 
 ```
 extern const uint8_t res_foo_bin[];

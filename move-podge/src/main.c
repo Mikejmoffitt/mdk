@@ -43,6 +43,7 @@ static signed short player_dx;
 static unsigned short player_frame;
 static unsigned short player_facing;
 
+static unsigned short scroll;
 
 static void load_player(void)
 {
@@ -143,18 +144,24 @@ void draw_bg(void)
 	text_puts(VDP_PLANE_A, 7, 11, "MOVE PODGE WITH THE D-PAD");
 
 	// Draw the cubes
+	vdp_set_autoinc(2);
 	for (unsigned short y = 20; y < 24; ++y)
 	{
 		unsigned int dest_base = VRAM_SCRA_BASE + y * 128 + 6;
+		SYS_BARRIER();
 		VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base);
+		SYS_BARRIER();
 		VDPPORT_DATA = 0x62 | (y & 1);
 		VDPPORT_DATA = 0x64 | (y & 1);
+		SYS_BARRIER();
 		VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base + 64);
+		SYS_BARRIER();
 		VDPPORT_DATA = 0x62 | (y & 1);
 		VDPPORT_DATA = 0x64 | (y & 1);
 	}
 
 	// Draw the floor
+	SYS_BARRIER();
 	unsigned int dest_base = VRAM_SCRA_BASE + 24 * 128;
 	VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base);
 	for (unsigned i = 64; i > 0; --i)
@@ -165,6 +172,11 @@ void draw_bg(void)
 	{
 		VDPPORT_DATA = 0x61;
 	}
+
+	// Transfer our scroll coordinate of 0 to VRAM and VSRAM for H and V scroll
+	scroll = 0;
+	dma_q_transfer_vram(VRAM_HSCR_BASE, &scroll, 1, 2);
+	dma_q_transfer_vsram(0, &scroll, 1, 2);
 }
 
 void main(void)

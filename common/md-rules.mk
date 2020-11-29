@@ -1,13 +1,12 @@
+# md-framework common build rules.
 
 # Environment
-MD_ENV := /opt/gendev
-GBIN := $(MD_ENV)/bin
 CC_HOST := cc
-CC := $(GBIN)/m68k-elf-gcc
-AS := $(GBIN)/m68k-elf-gcc
-LD := $(GBIN)/m68k-elf-ld
-NM := $(GBIN)/m68k-elf-nm
-OBJCOPY := $(GBIN)/m68k-elf-objcopy
+CC := m68k-linux-gnu-gcc-8
+AS := m68k-linux-gnu-gcc-8
+LD := m68k-linux-gnu-ld
+NM := m68k-linux-gnu-nm
+OBJCOPY := m68k-linux-gnu-objcopy
 BIN2S := $(UTILDIR)/bin2s
 BIN2H := $(UTILDIR)/bin2h
 MEGALOADER := $(UTILDIR)/megaloader
@@ -20,16 +19,17 @@ MDEMU := $(BLASTEM)
 endif
 
 # Compiler, assembler, and linker flag setup
-CFLAGS+= -Wno-strict-aliasing -ffreestanding
-CFLAGS+= -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
-CFLAGS+=-mcpu=$(CPUTYPE)
-CFLAGS+= -I.
-# CFLAGS+= -ffunction-sections -fdata-sections -fconserve-stack
-ASFLAGS:=$(CFLAGS)
-ASFLAGS:=-Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(COMMONSRCDIR)
-LDFLAGS=-L$(MD_ENV)/m68k-elf/lib -L$(MD_ENV)/lib/gcc/m68k-elf/6.3.0
-LDFLAGS+=--gc-sections -nostdlib
-LDFLAGS+= -T$(LDSCRIPT)
+CFLAGS += -Wno-strict-aliasing -ffreestanding
+CFLAGS += -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
+CFLAGS += -mcpu=68000
+CFLAGS += -I.
+CFLAGS += -O3 -fno-store-merging # Needed to avoid breakage with GCC8.
+CFLAGS += -ffunction-sections -fdata-sections -fconserve-stack
+ASFLAGS := $(CFLAGS)
+ASFLAGS := -Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(COMMONSRCDIR)
+LDFLAGS := -L/usr/lib/gcc-cross/m68k-linux-gnu/8
+LDFLAGS += --gc-sections -nostdlib
+LDFLAGS += -T$(LDSCRIPT)
 LIBS += -lgcc
 
 # Naming intermediates
@@ -89,6 +89,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[  C  ]\e[0m $< --> $@\n"'
 	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -S $< -o $@.asm
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES)
 	@mkdir -p $(dir $@)

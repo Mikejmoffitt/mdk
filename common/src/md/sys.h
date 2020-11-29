@@ -5,6 +5,8 @@ Michael Moffitt 2018 */
 
 #include <stdint.h>
 
+#define SYS_BARRIER() __asm__ __volatile__("": : :"memory")
+
 #define SYS_PORT_VERSION   (*(volatile uint8_t *)0xA10001)
 #define SYS_Z80_PRG_LOC    0xA00000
 #define SYS_Z80_PORT_BUS   (*(volatile uint16_t *)0xA11100)

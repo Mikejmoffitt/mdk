@@ -70,7 +70,7 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s)
 		else
 		{
 			VDPPORT_DATA = VDP_ATTR(((font_vram_pos + *s) - 0x20),
-			                        0, 0, font_pal_line, 0);
+			                        0, 0, font_pal_line, 1);
 		}
 		s++;
 	}

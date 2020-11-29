@@ -45,6 +45,7 @@ static inline void dma_q_enqueue(uint16_t op, uint16_t bus, uint16_t dest,
 {
 	const uint16_t ints_enabled = sys_get_ints_enabled();
 	sys_di();
+	SYS_BARRIER();
 	DmaCmd *cmd = &dma_queue[dma_queue_write_pos];
 	dma_queue_write_pos = (dma_queue_write_pos + 1) % DMA_QUEUE_DEPTH;
 	if (dma_queue_write_pos == dma_queue_read_pos) return;
@@ -53,7 +54,7 @@ static inline void dma_q_enqueue(uint16_t op, uint16_t bus, uint16_t dest,
 	cmd->dest = dest;
 	cmd->n = n;
 	cmd->stride = stride;
-	sys_ei();
+	SYS_BARRIER();
 	if (ints_enabled) sys_ei();
 }
 
@@ -86,11 +87,14 @@ static void internal_dma_queue_proc(uint16_t budget_rem)
 				break;
 			case DMA_CMD_OP_COPY:
 				dma_copy(cmd->type, cmd->dest, (uint16_t)(cmd->src), cmd->n);
+				vdp_wait_dma();
 				break;
 			case DMA_CMD_OP_FILL:
 				dma_fill(cmd->type, cmd->dest, (uint16_t)(cmd->src), cmd->n);
+				vdp_wait_dma();
 				break;
 		}
+
 
 		if (disp_disabled || budget_rem == DMA_Q_BUDGET_UNLIMITED) continue;
 
@@ -109,37 +113,37 @@ static void internal_dma_queue_proc(uint16_t budget_rem)
 }
 
 // Schedule a DMA for next vblank from 68K mem to VRAM
-void dma_q_transfer_vram(uint16_t dest, const void *src, uint16_t n,
+void dma_q_transfer_vram(uint16_t dest, const void *src, uint16_t words,
                          uint16_t stride)
 {
 	dma_q_enqueue(DMA_CMD_OP_TRANSFER, DMA_OP_BUS_VRAM,
-	              dest, (uint32_t )src, n, stride);
+	              dest, (uint32_t )src, words, stride);
 }
 
-void dma_q_transfer_cram(uint16_t dest, const void *src, uint16_t n,
+void dma_q_transfer_cram(uint16_t dest, const void *src, uint16_t words,
                          uint16_t stride)
 {
 	dma_q_enqueue(DMA_CMD_OP_TRANSFER, DMA_OP_BUS_CRAM,
-	              dest, (uint32_t )src, n, stride);
+	              dest, (uint32_t )src, words, stride);
 }
 
-void dma_q_transfer_vsram(uint16_t dest, const void *src, uint16_t n,
+void dma_q_transfer_vsram(uint16_t dest, const void *src, uint16_t words,
                           uint16_t stride)
 {
 	dma_q_enqueue(DMA_CMD_OP_TRANSFER, DMA_OP_BUS_VSRAM,
-	              dest, (uint32_t )src, n, stride);
+	              dest, (uint32_t )src, words, stride);
 }
 
 // Schedule a DMA for next vblank to fill n words at dest with val.
-void dma_q_fill_vram(uint16_t dest, uint16_t val, uint16_t n, uint16_t stride)
+void dma_q_fill_vram(uint16_t dest, uint16_t val, uint16_t bytes, uint16_t stride)
 {
-	dma_q_enqueue(DMA_CMD_OP_FILL, DMA_OP_BUS_VRAM, dest, val, n, stride);
+	dma_q_enqueue(DMA_CMD_OP_FILL, DMA_OP_BUS_VRAM, dest, val, bytes, stride);
 }
 
 // Schedule a DMA for next vblank to copy n words from VRAM src to VRAM dest.
-void dma_q_copy_vram(uint16_t dest, uint16_t src, uint16_t n, uint16_t stride)
+void dma_q_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stride)
 {
-	dma_q_enqueue(DMA_CMD_OP_COPY, DMA_OP_BUS_VRAM, dest, src, n, stride);
+	dma_q_enqueue(DMA_CMD_OP_COPY, DMA_OP_BUS_VRAM, dest, src, bytes, stride);
 }
 
 // Configure the DMA queue vblank transfer budget for max_words per vblank.
@@ -193,7 +197,9 @@ void dma_q_complete(void)
 {
 	const uint16_t ints_enabled = sys_get_ints_enabled();
 	sys_di();
+	SYS_BARRIER();
 	internal_dma_queue_proc(DMA_Q_BUDGET_UNLIMITED);
+	SYS_BARRIER();
 	if (ints_enabled) sys_ei();
 }
 
@@ -203,7 +209,7 @@ void dma_q_flush(void)
 	dma_queue_write_pos = 0;
 }
 
-void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
+void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t bytes)
 {
 	uint32_t ctrl_mask = VDP_CTRL_DMA_BIT;
 	const uint16_t ints_enabled = sys_get_ints_enabled();
@@ -224,22 +230,26 @@ void dma_fill(uint16_t bus, uint16_t dest, uint16_t val, uint16_t n)
 	}
 
 	sys_di();
+	SYS_BARRIER();
+
 	vdp_wait_dma();
 	vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 
-	// Configure DMA length
-	vdp_set_reg(VDP_DMALEN1, n & 0xFF);
-	vdp_set_reg(VDP_DMALEN2, (n >> 8) & 0xFF);
+	vdp_set_reg(VDP_DMALEN1, bytes & 0xFF);
+	vdp_set_reg(VDP_DMALEN2, (bytes >> 8) & 0xFF);
 
+	SYS_BARRIER();
 	vdp_set_reg(VDP_DMASRC3, VDP_DMA_SRC_FILL);
 
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
 	VDPPORT_DATA = val << 8;
-	// TODO: Do we care about Z80 here?
+	vdp_wait_dma();
+	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
+	SYS_BARRIER();
 	if (ints_enabled) sys_ei();
 }
 
-void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
+void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t bytes)
 {
 	uint32_t ctrl_mask = VDP_CTRL_DMA_BIT;
 	const uint16_t ints_enabled = sys_get_ints_enabled();
@@ -259,29 +269,33 @@ void dma_copy(uint16_t bus, uint16_t dest, uint16_t src, uint16_t n)
 			break;
 	}
 
+	sys_di();
+	SYS_BARRIER();
 	vdp_wait_dma();
+	
 	vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 
-	// Configure DMA length
-	vdp_set_reg(VDP_DMALEN1, n & 0xFF);
-	vdp_set_reg(VDP_DMALEN2, (n >> 8) & 0xFF);
+	vdp_set_reg(VDP_DMALEN1, bytes & 0xFF);
+	vdp_set_reg(VDP_DMALEN2, (bytes >> 8) & 0xFF);
 
 	vdp_set_reg(VDP_DMASRC1, src & 0xFF);
 	src = src >> 8;
 	vdp_set_reg(VDP_DMASRC2, src & 0xFF);
+	SYS_BARRIER();
 	vdp_set_reg(VDP_DMASRC3, VDP_DMA_SRC_COPY);
 
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
-	// TODO: Do we care about Z80 here?
+	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
+	SYS_BARRIER();
 	if (ints_enabled) sys_ei();
 }
 
-void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
+void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t words)
 {
 	uint32_t ctrl_mask = VDP_CTRL_DMA_BIT;
 	uint32_t transfer_src = (uint32_t)src;
 	uint32_t transfer_limit;
-	uint16_t transfer_len = n;
+	uint16_t transfer_len = words;
 	const uint16_t ints_enabled = sys_get_ints_enabled();
 
 	// check that the source address + length won't cross a 128KIB boundary
@@ -294,7 +308,7 @@ void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
 	{
 		dma_transfer(bus, dest + transfer_limit,
 		             (const void *)(transfer_src + transfer_limit),
-		             n - (transfer_limit >> 1));
+		             words - (transfer_limit >> 1));
 		transfer_len = transfer_limit >> 1;
 	}
 
@@ -314,6 +328,8 @@ void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
 	}
 
 	sys_di();
+	SYS_BARRIER();
+	sys_z80_bus_req();
 
 	vdp_wait_dma();
 	vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
@@ -322,21 +338,21 @@ void dma_transfer(uint16_t bus, uint16_t dest, const void *src, uint16_t n)
 	vdp_set_reg(VDP_DMALEN1, transfer_len & 0xFF);
 	vdp_set_reg(VDP_DMALEN2, (transfer_len >> 8) & 0xFF);
 
+	SYS_BARRIER();
 	transfer_src = transfer_src >> 1;
 	vdp_set_reg(VDP_DMASRC1, transfer_src & 0xFF);
 	transfer_src = transfer_src >> 8;
 	vdp_set_reg(VDP_DMASRC2, transfer_src & 0xFF);
+	SYS_BARRIER();
 	transfer_src = transfer_src >> 8;
 	vdp_set_reg(VDP_DMASRC3, transfer_src & 0x7F);
 
-	sys_z80_bus_req();
-
-	// Set write address
 	VDPPORT_CTRL32 = (ctrl_mask | VDP_CTRL_ADDR(dest));
 
 	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
-
 	sys_z80_bus_release();
+	SYS_BARRIER();
 	if (ints_enabled) sys_ei();
+
 
 }

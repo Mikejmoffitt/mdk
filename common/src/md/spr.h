@@ -1,8 +1,8 @@
 /* md-toolchain sprite support
-Michael Moffitt */
+Michael Moffitt 2018-2020 */
 
-#ifndef SPR_H
-#define SPR_H
+#ifndef MD_SPR_H
+#define MD_SPR_H
 
 #include "md/vdp.h"
 #include "md/dma.h"
@@ -31,10 +31,6 @@ extern uint8_t g_sprite_count;
 // Clears sprites and initialize g_sprite_next.
 static inline void spr_init(void);
 
-// Place a sprite. Tile index is VRAM position / 32.
-#define spr_put(x, y, attr, size) \
-_spr_put((((x) << 16) | (y)), ((attr << 16) | (size)))
-static inline void _spr_put(int32_t xy, uint32_t attrsize);
 // Terminate the sprite list and schedule a DMA. Resets g_sprite_next.
 void spr_finish(void);
 
@@ -45,19 +41,15 @@ static inline void spr_init(void)
 	spr_finish();
 }
 
-// Place a sprite.
-static inline void _spr_put(int32_t xy, uint32_t attrsize)
+// Place a sprite. Tile index is VRAM position / 32.
+static inline void spr_put(int16_t x, int16_t y, uint16_t attr, uint8_t size)
 {
-	if (g_sprite_count >= SPR_MAX)
-	{
-		return;
-	}
+	if (g_sprite_count >= SPR_MAX) return;
 	SprSlot *spr = &g_sprite_table[g_sprite_count];
-	spr->link = g_sprite_count + 1;
-	spr->xpos = (xy >> 16) + 128;
-	spr->ypos = (xy & 0xFFFF) + 128;
-	spr->attr = attrsize >> 16;
-	spr->size = attrsize & 0xFF;
-	g_sprite_count++;
+	spr->ypos = y + 128;
+	spr->size = size;
+	spr->link = ++g_sprite_count;
+	spr->attr = attr;
+	spr->xpos = x + 128;
 }
-#endif // SPR_H
+#endif  // MD_SPR_H

@@ -1,7 +1,7 @@
 /* md-toolchain palette support functions
-Michael Moffitt 2018 */
-#ifndef PAL_H
-#define PAL_H
+Michael Moffitt 2018-2020 */
+#ifndef MD_PAL_H
+#define MD_PAL_H
 
 #include <stdint.h>
 
@@ -18,4 +18,4 @@ uint16_t pal_get(uint8_t idx);
 // Len is in words (1 word per palette entry)
 void pal_upload(uint8_t dest, const void *source, uint8_t len);
 
-#endif // PAL_H
+#endif // MD_PAL_H

@@ -1,7 +1,7 @@
 /* md-toolchain I/O peripheral support
-Michael Moffitt 2018 */
-#ifndef IO_H
-#define IO_H
+Michael Moffitt 2018-2020 */
+#ifndef MD_IO_H
+#define MD_IO_H
 
 #include <stdint.h>
 
@@ -68,4 +68,4 @@ void io_gamepad_en(uint8_t port);
 // Make sure to enable thint on the VDP (vdp_set_thint_en)
 void io_thint_en(uint8_t port, uint8_t enabled);
 
-#endif // IO_H
+#endif // MD_IO_H

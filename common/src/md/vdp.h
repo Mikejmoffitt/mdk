@@ -3,6 +3,7 @@ MIchael Moffitt 2018 */
 #ifndef VDP_H
 #define VDP_H
 
+#include "md/sys.h"
 #include <stdint.h>
 
 // Tile / sprite attribute definition
@@ -90,6 +91,8 @@ MIchael Moffitt 2018 */
 #define VDP_MODESET1_BASE 0x04
 #define VDP_MODESET1_LBLANK 0x20
 #define VDP_MODESET1_HINT_EN 0x10
+#define VDP_MODESET1_VC_ON_HS = 0x08
+#define VDP_MODESET1_COLOR_LSB 0x04
 #define VDP_MODESET1_HVCOUNT_STOP 0x02
 #define VDP_MODESET1_OVERLAY 0x01
 
@@ -118,6 +121,7 @@ MIchael Moffitt 2018 */
 #define VDP_SET(regbase, mask, en) \
 do \
 { \
+	SYS_BARRIER();\
 	if(en) \
 	{ \
 		vdp_set_reg(regbase, vdp_get_reg(regbase) | (mask)); \
@@ -215,10 +219,6 @@ uint16_t vdp_get_hscroll_base(void);
 // Scroll plane config
 static inline void vdp_set_hscroll_mode(VdpHscrollMode mode);
 static inline void vdp_set_vscroll_mode(VdpVscrollMode mode);
-void vdp_set_scroll_x(VdpPlane plane, uint16_t value);
-void vdp_set_scroll_y(VdpPlane plane, uint16_t value);
-void vdp_hsram_upload(void *hsram_data);
-void vdp_vsram_upload(void *vsram_data);
 static inline void vdp_set_plane_size(VdpPlaneSize size);
 static inline void vdp_set_window_top(uint8_t height);
 static inline void vdp_set_window_bottom(uint8_t height);

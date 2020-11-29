@@ -13,6 +13,8 @@
 
 #include "res.h"
 
+static uint16_t x_scroll, y_scroll;
+
 void main(void)
 {
 	// Get the megadrive ready to go! (See md/megadrive.h)
@@ -25,7 +27,15 @@ void main(void)
 
 	// Print a simple message in the center of plane A
 	text_puts(VDP_PLANE_A, 14, 11, "Hello World");
- 
+
+	// Center the screen at 0, 0.
+	x_scroll = 0;
+	y_scroll = 0;
+
+	// Transfer our scroll coordinates to VRAM and VSRAM.
+	dma_q_transfer_vram(VRAM_HSCR_BASE, &x_scroll, 1, 2);
+	dma_q_transfer_vsram(0, &y_scroll, 1, 2);
+
 	while (1)
 	{
 		megadrive_finish(); // Terminate the sprite list and wait for vblank

@@ -10,8 +10,6 @@ uint8_t g_vdp_regvalues[0x18];
 static uint16_t plane_base[3];
 static uint16_t sprite_base;
 static uint16_t hscroll_base;
-static uint16_t hscroll_table[480];
-static uint16_t vscroll_table[0x40];
 
 void vdp_init(void)
 {
@@ -52,11 +50,14 @@ void vdp_init(void)
 	vdp_set_plane_base(VDP_PLANE_WINDOW, VRAM_SCRW_BASE);
 	vdp_set_sprite_base(VRAM_SPR_BASE);
 	vdp_set_hscroll_base(VRAM_HSCR_BASE);
+}
 
-	vdp_set_scroll_x(VDP_PLANE_A, 0);
-	vdp_set_scroll_x(VDP_PLANE_B, 0);
-	vdp_set_scroll_y(VDP_PLANE_A, 0);
-	vdp_set_scroll_y(VDP_PLANE_B, 0);
+void vdp_wait_vblank_status(void)
+{
+	while (!(vdp_get_status() & VDP_STATUS_VBLANK))
+	{
+		__asm__ volatile ("\tnop\n");
+	}
 }
 
 void vdp_wait_vblank(void)
@@ -88,58 +89,6 @@ static inline uint16_t hsram_len_calc(void)
 			break;
 	}
 	return len;
-}
-
-void vdp_set_scroll_x(VdpPlane plane, uint16_t value)
-{
-	if (plane > VDP_PLANE_B)
-	{
-		return;
-	}
-	uint16_t len = hsram_len_calc();
-	for (uint16_t i = 0; i < len; i++)
-	{
-		hscroll_table[i*2 + plane] = 1024 - value;
-	}
-	vdp_hsram_upload((void *)hscroll_table);
-}
-
-void vdp_set_scroll_y(VdpPlane plane, uint16_t value)
-{
-	if (plane > VDP_PLANE_B)
-	{
-		return;
-	}
-	uint8_t scroll_mode = vdp_get_reg(VDP_MODESET3) & VDP_MODESET3_VSCROLL_CELL;
-	// TODO: Replace this with a DMA fill?
-	if (scroll_mode)
-	{
-		for (uint16_t i = 0; i < vdp_get_raster_width() / 16; i++)
-		{
-			vscroll_table[i*2 + plane] = value;
-		}
-	}
-	else
-	{
-		vscroll_table[plane] = value;
-	}
-	vdp_vsram_upload((void *)vscroll_table);
-}
-
-void vdp_vsram_upload(void *vsram_data)
-{
-	uint16_t len = 1;
-	if (vdp_get_reg(VDP_MODESET3) & VDP_MODESET3_VSCROLL_CELL)
-	{
-		len = vdp_get_raster_width() / 16;
-	}
-	dma_q_transfer_vsram(0, (void *)vsram_data, len * 2, 2);
-}
-
-void vdp_hsram_upload(void *hsram_data)
-{
-	uint16_t len = hsram_len_calc();
-	dma_q_transfer_vram(hscroll_base, (void *)hsram_data, len * 2, 2);
 }
 
 void vdp_set_plane_base(VdpPlane plane, uint16_t value)

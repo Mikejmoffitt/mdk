@@ -21,12 +21,12 @@ void scroll_movement(void)
 	uint16_t y_moved = 0;
 	if (io_pad_read(0) & BTN_RIGHT)
 	{
-		xs--;
+		xs++;
 		x_moved = 1;
 	}
 	else if (io_pad_read(0) & BTN_LEFT)
 	{
-		xs++;
+		xs--;
 		x_moved = 1;
 	}
 	if (io_pad_read(0) & BTN_DOWN)
@@ -41,11 +41,11 @@ void scroll_movement(void)
 	}
 	if (x_moved)
 	{
-		vdp_set_scroll_x(VDP_PLANE_A, xs);
+		dma_q_transfer_vram(VRAM_HSCR_BASE, &xs, 1, 2);
 	}
 	if (y_moved)
 	{
-		vdp_set_scroll_y(VDP_PLANE_A, ys);
+		dma_q_transfer_vsram(0, &ys, 1, 2);
 	}
 }
 

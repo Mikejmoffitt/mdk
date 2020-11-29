@@ -32,7 +32,7 @@ void io_poll(void)
 	sys_z80_bus_release();
 }
 
-uint16_t io_pad_read(uint8_t port)
+MdButton io_pad_read(uint8_t port)
 {
 	if (port > 2)
 	{

@@ -1,19 +1,20 @@
 // md-toolchain Top-level Sega Megadrive support routines and structures
-// 2018 Michael Moffitt
+// 2018-2020 Michael Moffitt
 // ===========================================================================
 
 
-#ifndef MEGADRIVE_H
-#define MEGADRIVE_H
+#ifndef MD_MEGADRIVE_H
+#define MD_MEGADRIVE_H
 
-#include "md/vdp.h" // VDP control: all things graphics and some more
-#include "md/sys.h" // System control: interrupts, sub-CPU control
-#include "md/io.h" // Controller port I/O
-#include "md/spr.h" // Sprite support
-#include "md/dma.h" // DMA control and scheduling
-#include "md/pal.h" // Palette read/write via ports or DMA
-#include "md/opn.h" // YM2610 FM sound chip
-#include "md/psg.h" // SN76489-compatible PSG sound chip
+#include "md/vdp.h"   // VDP control: all things graphics and some more
+#include "md/sys.h"   // System control: interrupts, sub-CPU control
+#include "md/io.h"    // Controller port I/O
+#include "md/spr.h"   // Sprite support
+#include "md/dma.h"   // DMA control and scheduling
+#include "md/pal.h"   // Palette read/write via ports or DMA
+#include "md/opn.h"   // YM2610 FM sound chip
+#include "md/psg.h"   // SN76489-compatible PSG sound chip
+#include "md/sram.h"  // Support for battery-backed SRAM
 
 // (optional) default startup.
 // * Initializes VDP with VDP defaults (see vdp.c):
@@ -43,4 +44,4 @@ static inline void megadrive_finish(void)
 	dma_q_process();
 }
 
-#endif // MEGADRIVE_H
+#endif // MD_MEGADRIVE_H

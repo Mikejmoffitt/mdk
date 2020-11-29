@@ -6,8 +6,6 @@ SprSlot g_sprite_table[SPR_MAX];
 SprSlot *g_sprite_next; // Points to the next open sprite slot.
 uint8_t g_sprite_count;
 
-
-
 void spr_finish(void)
 {
 	if (g_sprite_count > 0)
