@@ -29,13 +29,8 @@ Environment Prerequisites
 -------------------------
 You will a compiler and various utilities.
 
-On Debian (and like operating systems) install the needed packages.
-
-```
-apt install git make gcc-8-m68k-linux-gnu libgcc-8-dev-m68k-cross
-```
-
-
+For now, the easiest way to install the needed m68k-elf toolchain is
+to install "gendev" from https://github.com/kubilus1/gendev.
 
 Getting Started
 ---------------
