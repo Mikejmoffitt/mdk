@@ -26,8 +26,8 @@ typedef int16_t fix16_t;
 // Fixed point multiplication and division
 // TODO: We need libGCC or something in here for the multiplication
 #define FIX16MUL(x, y) (((x) * (y)) >> FIX16_PRECISION_BITS)
-#define FIX16DIV(x, y) (((x) << FI16_PRECISION_BITS) / (y))
+#define FIX16DIV(x, y) (((x) << FIX16_PRECISION_BITS) / (y))
 #define FIX32MUL(x, y) (((x) * (y)) >> FIX32_PRECISION_BITS)
-#define FIX32DIV(x, y) (((x) << FI32_PRECISION_BITS) / (y))
+#define FIX32DIV(x, y) (((x) << FIX32_PRECISION_BITS) / (y))
 
 #endif // FIXED_H
