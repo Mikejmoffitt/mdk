@@ -120,13 +120,13 @@ $(OBJDIR)/%.o: $(OBJDIR)/%.s
 $(OBJDIR)/res.s: $(BIN2S) $(RESOURCES_LIST)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[95m[ BIN ]\e[0m $^ --> $@\n"'
-	@$^ > $@
+	@-$^ > $@
 
 # Generates header entries for resource data
 $(RES_HEADER): $(BIN2H) $(RESOURCES_LIST)
 	@bash -c 'printf " \e[95m[RES.H]\e[0m $^ --> $@\n"'
 	@printf '#ifndef _RES_AUTOGEN_H\n#define _RES_AUTOGEN_H\n' > $@
-	@$^ >> $@
+	@-$^ >> $@
 	@printf '#endif  // _RES_AUTOGEN_H\n' >> $@
 
 res_post:
@@ -145,3 +145,4 @@ clean:
 	@-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
 	@-rm -f $(OUTPUT_ELF) $(OUTPUT_UNPAD)
 	@-rm -f $(OBJECTS_RES) $(OBJDIR)/res.s $(RES_HEADER)
+	@-rm -rf $(OBJDIR)

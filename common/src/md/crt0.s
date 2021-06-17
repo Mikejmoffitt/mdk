@@ -111,31 +111,50 @@ _v_table:
 	.long	_v_unimp
 
 	/* Sega Megadrive / Genesis header */
+	/* Console name */
+	/* 16:   ________________ */
 	.ascii	"SEGA MEGA DRIVE "
-	.ascii	"(C) MOFFITT 2018"
-	.ascii	"TITLE EU TITLE EU TITLE EU TITLE EU TITLE EU    "
-	.ascii	"TITLE J TITLE J TITLE J TITLE J TITLE J TITLE J "
-	.ascii	"GM 12345678-00"
+	/* Copyright information */
+	/* 16:   ________________ */
+	.ascii	"(C)MOFT 2020.AUG"
+	/* Domestic name*/
+	/* 48:   ________________________________________________ */
+	.ascii	"LYLE IN CUBE SECTOR                             "
+	/* Overseas name*/
+	/* 48:   ________________________________________________ */
+	.ascii	"LYLE IN CUBE SECTOR                             "
+	/* Serial number */
+	/* 16:   _______________*/
+	.ascii	"GM 68000420-69"
+	/* Checksum (2 bytes) */
 	.short	0x0000
-	.ascii	"J               "
+	/* I/O Support */
+	/* 16:   ________________ */
+	.ascii	"JD              "
+	/* ROM start and end */
 	.long	0
-	.long	0x00400000
+	.long	0x001FFFFF
+	/* Work RAM start and end */
 	.long	0x000FF000
 	.long	0x000FFFFF
 	/* Backup memory */
-	.ascii	"    "
-	/* Backup RAM start */
-	.ascii	"    "
-	/* Backup RAM end */
-	.ascii	"    "
+	.ascii	"RA"
+	.byte	0xF8
+	.byte	0x20
+	/* Backup RAM start and end*/
+	.long	0x200001
+	.long	0x20FFFF
 	/* Modem */
+	/* 12:   ____________ */
 	.ascii	"            "
-	/* Notes */
-	.ascii	"                "
-	.ascii	"                "
-	.ascii	"        "
+	/* Reserved */
+	/* 40:   ________________________________________ */
+	.ascii	"                                        "
 	/* Country codes */
-	.ascii	"JUE             "
+	.ascii	"JUE"
+	/* MReserved */
+	/* 13:   _____________ */
+	.ascii	"             "
 
 	.section	.text
 _start:
@@ -186,6 +205,9 @@ softreset:
 	move.l	#0xFFFFE0, %sp
 	jmp	start
 
+.include	"md/irq.inc"
+.include	"md/sram.inc"
+
 _v_access_fault:
 _v_access_error:
 _v_illegal_instruction:
@@ -222,4 +244,3 @@ _v_trap0xe:
 _v_trap0xf:
 _v_unimp:
 	rte
-.include	"md/irq.inc"

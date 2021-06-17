@@ -51,12 +51,12 @@ MIchael Moffitt 2018 */
 
 // Default VRAM layout, assuming 64x32-cell planes
 // 0000-BFFF (1536 tiles) free
-#define VRAM_SCRA_BASE	0xC000
-#define VRAM_SCRW_BASE	0xD000
-#define VRAM_SCRB_BASE	0xE000
+#define VRAM_SCRA_BASE_DEFAULT	0xC000
+#define VRAM_SCRW_BASE_DEFAULT	0xD000
+#define VRAM_SCRB_BASE_DEFAULT	0xE000
 // F000-F7FF (64 tiles) free
-#define VRAM_HSCR_BASE	0xF800
-#define VRAM_SPR_BASE	0xFC00
+#define VRAM_HSCR_BASE_DEFAULT	0xF800
+#define VRAM_SPR_BASE_DEFAULT	0xFC00
 
 // VRAM control words
 
@@ -209,9 +209,15 @@ static inline void vdp_set_hint_line(uint8_t line);
 void vdp_wait_vblank(void);
 
 // Address configuration
+
+// Plane A, B:   Multiples of $2000
+// Window plane: Multiples of $1000 in H40, $0800 in H32
 void vdp_set_plane_base(VdpPlane plane, uint16_t value);
+// Multiples of $0200
 void vdp_set_sprite_base(uint16_t value);
+// Multiples of $0400
 void vdp_set_hscroll_base(uint16_t value);
+
 uint16_t vdp_get_plane_base(VdpPlane plane);
 uint16_t vdp_get_sprite_base(void);
 uint16_t vdp_get_hscroll_base(void);
@@ -220,6 +226,8 @@ uint16_t vdp_get_hscroll_base(void);
 static inline void vdp_set_hscroll_mode(VdpHscrollMode mode);
 static inline void vdp_set_vscroll_mode(VdpVscrollMode mode);
 static inline void vdp_set_plane_size(VdpPlaneSize size);
+static inline VdpPlaneSize vdp_plane_size_from_cells(int16_t h_cells,
+                                                     int16_t v_cells);
 static inline void vdp_set_window_top(uint8_t height);
 static inline void vdp_set_window_bottom(uint8_t height);
 static inline void vdp_set_window_right(uint8_t width);
@@ -317,6 +325,12 @@ static inline void vdp_set_vscroll_mode(VdpVscrollMode mode)
 static inline void vdp_set_plane_size(VdpPlaneSize size)
 {
 	vdp_set_reg(VDP_PLANESIZE, size);
+}
+
+static inline VdpPlaneSize vdp_plane_size_from_cells(int16_t h_cells,
+                                                     int16_t v_cells)
+{
+	return ((h_cells / 32) - 1) | (((v_cells / 32) - 1) << 4);
 }
 
 static inline void vdp_set_window_top(uint8_t height)

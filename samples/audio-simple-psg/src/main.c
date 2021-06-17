@@ -1,20 +1,15 @@
-// md-toolchain example main.c
-// Michael Moffitt 2018
+// md-toolchain example "psg" main.c
 // Damian Yerrick 2019
+// Michael Moffitt 2018
 //
-// This main plays two chords through the programmable sound
+// This demo plays two chords through the programmable sound
 // generator (PSG) that the MD inherits from the Master System.
-
-// megadrive.h is an umbrella for all headers in src/md. Specific modules like
-// md/vdp.h do not need to be individually included. However, utility funcitons
-// are not included, as they are not core support functions.
 #include "md/megadrive.h"
 
 #include "util/text.h"
 #include "util/plane.h"
 
-extern const unsigned char res_font_gfx_bin[];
-extern const unsigned char res_font_pal_bin[];
+#include "res.h"
 
 struct Chord
 {
@@ -34,10 +29,10 @@ struct Chord
 static const struct Chord saygah[] =
 {
 	// E flat, B flat, G, half a second
-	111860.8/155.5635, 111860.8/233.0819, 111860.8/391.9954, 30,
+	{{(111860.8/155.5635), (111860.8/233.0819), (111860.8/391.9954)}, 50},
 	// C, G, E, one second
-	111860.8/130.8128, 111860.8/195.9977, 111860.8/329.6276, 60,
-	0, 0, 0, 0
+	{{(111860.8/130.8128), (111860.8/195.9977), (111860.8/329.6276)}, 60},
+	{{0, 0, 0}, 0}
 };	
 
 void main(void)
@@ -82,5 +77,4 @@ void main(void)
 	{
 		megadrive_finish();
 	}
-
 }

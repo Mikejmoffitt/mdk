@@ -21,7 +21,7 @@ Michael Moffitt 2018 */
 #define DMA_PAL_H40_V30_TRANSFER_BANDWIDTH  14454
 
 // This should be a power of 2, since it is used with the modulo operator.
-#define DMA_QUEUE_DEPTH 128
+#define DMA_QUEUE_DEPTH 256
 
 #define DMA_BUDGET_INF 65536
 

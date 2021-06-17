@@ -1,6 +1,6 @@
-// md-toolchain example "objay" main.c
-// Michael Moffitt 2018
+// md-toolchain example "move-podge" main.c
 // Damian Yerrick 2018, 2019
+// Michael Moffitt 2018
 //
 // This main shows a character's walk cycle.
 
@@ -12,10 +12,7 @@
 #include "util/text.h"
 #include "util/plane.h"
 
-extern const unsigned char obj_font_gfx_bin[];
-extern const unsigned char obj_font_pal_bin[];
-extern const unsigned char obj_PodgeH24_gfx_bin[];
-extern const unsigned char obj_PodgeH24_pal_bin[];
+#include "res.h"
 
 /* Color notes
 
@@ -147,7 +144,7 @@ void draw_bg(void)
 	vdp_set_autoinc(2);
 	for (unsigned short y = 20; y < 24; ++y)
 	{
-		unsigned int dest_base = VRAM_SCRA_BASE + y * 128 + 6;
+		unsigned int dest_base = VRAM_SCRA_BASE_DEFAULT + y * 128 + 6;
 		SYS_BARRIER();
 		VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base);
 		SYS_BARRIER();
@@ -162,7 +159,7 @@ void draw_bg(void)
 
 	// Draw the floor
 	SYS_BARRIER();
-	unsigned int dest_base = VRAM_SCRA_BASE + 24 * 128;
+	unsigned int dest_base = VRAM_SCRA_BASE_DEFAULT + 24 * 128;
 	VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base);
 	for (unsigned i = 64; i > 0; --i)
 	{
@@ -175,7 +172,7 @@ void draw_bg(void)
 
 	// Transfer our scroll coordinate of 0 to VRAM and VSRAM for H and V scroll
 	scroll = 0;
-	dma_q_transfer_vram(VRAM_HSCR_BASE, &scroll, 1, 2);
+	dma_q_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &scroll, 1, 2);
 	dma_q_transfer_vsram(0, &scroll, 1, 2);
 }
 

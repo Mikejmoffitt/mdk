@@ -41,7 +41,7 @@ void scroll_movement(void)
 	}
 	if (x_moved)
 	{
-		dma_q_transfer_vram(VRAM_HSCR_BASE, &xs, 1, 2);
+		dma_q_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &xs, 1, 2);
 	}
 	if (y_moved)
 	{

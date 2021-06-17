@@ -45,11 +45,11 @@ void vdp_init(void)
 	vdp_set_window_top(0);
 	vdp_set_window_left(0);
 	// Set up VRAM base addresses
-	vdp_set_plane_base(VDP_PLANE_A, VRAM_SCRA_BASE);
-	vdp_set_plane_base(VDP_PLANE_B, VRAM_SCRB_BASE);
-	vdp_set_plane_base(VDP_PLANE_WINDOW, VRAM_SCRW_BASE);
-	vdp_set_sprite_base(VRAM_SPR_BASE);
-	vdp_set_hscroll_base(VRAM_HSCR_BASE);
+	vdp_set_plane_base(VDP_PLANE_A, VRAM_SCRA_BASE_DEFAULT);
+	vdp_set_plane_base(VDP_PLANE_B, VRAM_SCRB_BASE_DEFAULT);
+	vdp_set_plane_base(VDP_PLANE_WINDOW, VRAM_SCRW_BASE_DEFAULT);
+	vdp_set_sprite_base(VRAM_SPR_BASE_DEFAULT);
+	vdp_set_hscroll_base(VRAM_HSCR_BASE_DEFAULT);
 }
 
 void vdp_wait_vblank_status(void)

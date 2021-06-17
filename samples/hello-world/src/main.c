@@ -33,7 +33,7 @@ void main(void)
 	y_scroll = 0;
 
 	// Transfer our scroll coordinates to VRAM and VSRAM.
-	dma_q_transfer_vram(VRAM_HSCR_BASE, &x_scroll, 1, 2);
+	dma_q_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &x_scroll, 1, 2);
 	dma_q_transfer_vsram(0, &y_scroll, 1, 2);
 
 	while (1)
