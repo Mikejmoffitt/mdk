@@ -37,6 +37,8 @@ LDFLAGS += --gc-sections -nostdlib
 LDFLAGS += -T$(LDSCRIPT)
 LIBS += -lgcc
 
+CFLAGS += -DTARGET_SYSTEM=$(TARGET_SYSTEM)
+
 # Naming intermediates
 OUTPUT_ELF := $(OBJDIR)/$(OUTPUT_FILE).elf
 OUTPUT_UNPAD := $(OBJDIR)/$(OUTPUT_FILE).gen
@@ -51,7 +53,14 @@ RES_HEADER := res.h
 
 .PHONY: all vars $(RES_HEADER)
 
+# Generic var for additional files, etc. that are a build prereq.
+EXTERNAL_DEPS ?=
+EXTERNAL_ARTIFACTS ?=
+
 all: $(BLASTEM) $(BINCLUDE) $(MEGALOADER) $(OUTPUT_GEN)
+
+# Generic target that is intended to be overridden.
+ext_deps: $(EXTERNAL_DEPS)
 
 vars:
 	@echo "CFLAGS is" "$(CFLAGS)"
@@ -90,23 +99,24 @@ $(OBJDIR)/$(OUTPUT_FILE).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM)
 	@bash -c 'printf " \e[36m[ LNK ]\e[0m ... --> $@\n"'
 	@$(LD) -o $@ $(LDFLAGS) $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM) $(LIBS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER)
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[  C  ]\e[0m $< --> $@\n"'
 	@$(CC) $(CFLAGS) -c $< -o $@
 	@$(CC) $(CFLAGS) -S $< -o $@.asm
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES)
+$(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[33m[ ASM ]\e[0m $< --> $@\n"'
 	@$(AS) $(ASFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: $(COMMONSRCDIR)/%.c $(OBJECTS_RES)
+$(OBJDIR)/%.o: $(COMMONSRCDIR)/%.c $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[ C:C ]\e[0m $< --> $@\n"'
 	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -S $< -o $@.asm
 
-$(OBJDIR)/%.o: $(COMMONSRCDIR)/%.s $(OBJECTS_RES)
+$(OBJDIR)/%.o: $(COMMONSRCDIR)/%.s $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[33m[C:ASM]\e[0m $< --> $@\n"'
 	@$(AS) $(ASFLAGS) -c $< -o $@
@@ -120,13 +130,13 @@ $(OBJDIR)/%.o: $(OBJDIR)/%.s
 $(OBJDIR)/res.s: $(BIN2S) $(RESOURCES_LIST)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[95m[ BIN ]\e[0m $^ --> $@\n"'
-	@-$^ > $@
+	@$^ > $@
 
 # Generates header entries for resource data
 $(RES_HEADER): $(BIN2H) $(RESOURCES_LIST)
 	@bash -c 'printf " \e[95m[RES.H]\e[0m $^ --> $@\n"'
 	@printf '#ifndef _RES_AUTOGEN_H\n#define _RES_AUTOGEN_H\n' > $@
-	@-$^ >> $@
+	@$^ >> $@
 	@printf '#endif  // _RES_AUTOGEN_H\n' >> $@
 
 res_post:
@@ -139,10 +149,13 @@ debug: all
 	@exec $(MDEMU) -m gen -d $(OUTPUT_GEN)
 
 test: all
-	@exec $(MDEMU) -m gen $(OUTPUT_GEN)
+	@bash -c 'PULSE_LATENCY_MSEC=80 $(MDEMU) -m gen $(OUTPUT_GEN)'
+
+mame: all
+	@exec mame megadrij -cart $(OUTPUT_GEN) -debug -r 640x480
 
 clean:
 	@-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
 	@-rm -f $(OUTPUT_ELF) $(OUTPUT_UNPAD)
 	@-rm -f $(OBJECTS_RES) $(OBJDIR)/res.s $(RES_HEADER)
-	@-rm -rf $(OBJDIR)
+	echo $(EXTERNAL_ARTIFACTS) | xargs --no-run-if-empty rm -f $(EXTERNAL_ARTIFACTS)

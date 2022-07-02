@@ -3,6 +3,7 @@ MIchael Moffitt 2018 */
 #ifndef VDP_H
 #define VDP_H
 
+#include "md/mmio.h"
 #include "md/sys.h"
 #include <stdint.h>
 
@@ -80,11 +81,6 @@ MIchael Moffitt 2018 */
 #define VDP_VSRAMDEST(DEST)		(0x00104000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
 #define VDP_VSRAM32DEST(DEST)	(0x40000010 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
 #define VDP_CRAMDEST(DEST)		(0x0000C000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-
-#define VDPPORT_DATA	(*(volatile uint16_t*)0xC00000)
-#define VDPPORT_CTRL	(*(volatile uint16_t*)0xC00004)
-#define VDPPORT_CTRL32	(*(volatile uint32_t*)0xC00004)
-#define VDPPORT_HVCOUNT (*(volatile uint16_t*)0xC00008)
 
 #define VDP_REG_WRITE(reg, val) do { VDPPORT_CTRL = 0x8000 | (reg << 8) | (val); } while(0)
 
@@ -245,16 +241,17 @@ void vdp_set_raster_height(uint8_t height); // 224 or 240
 void vdp_set_raster_width(uint16_t width); // 320 or 256
 uint8_t vdp_get_raster_height(void);
 uint16_t vdp_get_raster_width(void);
-// static inline uint16_t vdp_get_hvcount(void);
-
 
 // Data transfer and DMA configuration
 static inline void vdp_set_autoinc(uint8_t inc);
-static inline void vdp_wait_dma(void);
+static inline void vdp_set_addr(uint16_t addr);
+static inline void vdp_write(uint16_t value);
+static inline uint16_t vdp_read(void);
+
 static inline void vdp_poke(uint16_t addr, uint16_t value);
 static inline uint16_t vdp_peek(uint16_t addr);
 
-
+static inline void vdp_wait_dma(void);
 
 // Accessors
 static inline void vdp_set_reg(uint8_t num, uint8_t val)
@@ -386,6 +383,21 @@ static inline void vdp_set_autoinc(uint8_t inc)
 	vdp_set_reg(VDP_AUTOINC, inc);
 }
 
+static inline void vdp_set_addr(uint16_t addr)
+{
+	VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(addr);
+}
+
+static inline void vdp_write(uint16_t value)
+{
+	VDPPORT_DATA = value;
+}
+
+static inline uint16_t vdp_read(void)
+{
+	return VDPPORT_DATA;
+}
+
 static inline void vdp_wait_dma(void)
 {
 	while(vdp_get_status() & VDP_STATUS_DMA)
@@ -396,14 +408,14 @@ static inline void vdp_wait_dma(void)
 
 static inline void vdp_poke(uint16_t addr, uint16_t value)
 {
-	VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(addr);
-	VDPPORT_DATA = value;
+	vdp_set_addr(addr);
+	vdp_write(value);
 }
 
 static inline uint16_t vdp_peek(uint16_t addr)
 {
-	VDPPORT_CTRL32 = VDP_CTRL_VRAM_READ | VDP_CTRL_ADDR(addr);
-	return VDPPORT_DATA;
+	vdp_set_addr(addr);
+	return vdp_read();
 }
 
 // HV Counter

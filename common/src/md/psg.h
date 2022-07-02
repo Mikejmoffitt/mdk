@@ -6,6 +6,7 @@ Michael Moffitt 2018-2020 */
 // TODO: PSG noise control
 
 // Base note frequencies - tuned to 4th octave
+#define PSG_BASE_C 0x1AC
 #define PSG_BASE_Db 0x194
 #define PSG_BASE_D 0x17D
 #define PSG_BASE_Eb 0x168
@@ -17,7 +18,6 @@ Michael Moffitt 2018-2020 */
 #define PSG_BASE_A 0x0FE
 #define PSG_BASE_Bb 0x0F0
 #define PSG_BASE_B 0x0E2
-#define PSG_BASE_C 0x358
 
 #define PSG_NOTE_Db 1
 #define PSG_NOTE_D  2

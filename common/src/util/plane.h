@@ -16,7 +16,7 @@ static inline void plane_clear(VdpPlane plane)
 	sys_di();
 	vdp_wait_dma();
 	vdp_set_autoinc(1);
-	dma_fill_vram(plane_dest, 0, plane_size);
+	dma_q_fill_vram(plane_dest, 0, plane_size, 1);
 	vdp_wait_dma();
 	sys_ei();
 }

@@ -1,5 +1,5 @@
 # Configuration
-OUTPUT_FILE := hello-ex
+OUTPUT_FILE := controller-demo
 OUTPUT_EXT := gen
 OUTPUT_VERSION := wip
 

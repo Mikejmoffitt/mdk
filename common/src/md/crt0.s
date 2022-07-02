@@ -1,5 +1,5 @@
-/* md-toolchain header and C runtime startup
-Michael Moffitt 2018 */
+/* md-toolchain header, interrupts, and C runtime startup
+Michael Moffitt 2021 */
 
 	.section	.text.keepboot
 
@@ -16,6 +16,7 @@ Michael Moffitt 2018 */
 	.extern _v_irq5
 	.extern _v_irq6
 	.extern _v_irq7
+	.extern megadrive_init
 
 	.global	_v_table
 	.global	_start
@@ -156,7 +157,6 @@ _v_table:
 	/* 13:   _____________ */
 	.ascii	"             "
 
-	.section	.text
 _start:
 start:
 	/* disable ints */
@@ -203,9 +203,11 @@ start:
 	.global	softreset
 softreset:
 	move.l	#0xFFFFE0, %sp
+	jsr	megadrive_init
 	jmp	start
 
 .include	"md/irq.inc"
+.include	"md/io.inc"
 .include	"md/sram.inc"
 
 _v_access_fault:

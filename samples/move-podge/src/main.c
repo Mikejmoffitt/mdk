@@ -52,7 +52,7 @@ static void load_player(void)
 
 static void move_player(void)
 {
-	unsigned short cur_keys = io_pad_read(0);
+	unsigned short cur_keys = md_io_pad_read(0);
 	// Acceleration and braking while moving right
 	if (player_dx >= 0)
 	{
