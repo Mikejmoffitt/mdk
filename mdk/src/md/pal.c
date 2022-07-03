@@ -3,38 +3,19 @@ Michael Moffitt 2018 */
 #include "md/pal.h"
 #include "md/dma.h"
 
-#define PAL_DIRTY_0 1
-#define PAL_DIRTY_1 2
-#define PAL_DIRTY_2 4
-#define PAL_DIRTY_3 8
-
 static uint16_t s_palette[64];
-static uint16_t s_dirty = (PAL_DIRTY_0 | PAL_DIRTY_1 |
-                           PAL_DIRTY_2 | PAL_DIRTY_3);
+static uint16_t s_dirty = 0xF;
 
-void pal_set(uint8_t idx, uint16_t val)
+void md_pal_set(uint8_t idx, uint16_t val)
 {
 	s_palette[idx % 64] = val;
 }
 
-void pal_upload(uint8_t dest, const void *source, uint8_t len)
+void md_pal_upload(uint8_t dest, const void *source, uint8_t len)
 {
 	if (dest >= 64) return;
-	switch ((dest >> 4) % 4)
-	{
-		case 0:
-			s_dirty |= PAL_DIRTY_0;
-			break;
-		case 1:
-			s_dirty |= PAL_DIRTY_1;
-			break;
-		case 2:
-			s_dirty |= PAL_DIRTY_2;
-			break;
-		case 3:
-			s_dirty |= PAL_DIRTY_3;
-			break;
-	}
+	const uint16_t pal_line = (dest >> 4) % 4;
+	s_dirty |= (1 << pal_line);
 	const uint16_t *source_16 = (const uint16_t *)source;
 	for (int16_t i = 0; i < len; i++)
 	{
@@ -42,7 +23,7 @@ void pal_upload(uint8_t dest, const void *source, uint8_t len)
 	}
 }
 
-void pal_poll(void)
+void md_pal_poll(void)
 {
 	switch (s_dirty)
 	{
@@ -117,3 +98,8 @@ void pal_poll(void)
 	}
 	s_dirty = 0;
 }
+
+#undef PAL_DIRTY_0
+#undef PAL_DIRTY_1
+#undef PAL_DIRTY_2
+#undef PAL_DIRTY_3

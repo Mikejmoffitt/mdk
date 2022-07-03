@@ -1,6 +1,6 @@
 # Project meta configuration
-PROJECT_NAME := audio-simple-psg
-MDKROOT := ../../mdk
+PROJECT_NAME := blank-mdk-project
+MDKROOT := mdk
 
 # Project directories.
 SRCDIR := src

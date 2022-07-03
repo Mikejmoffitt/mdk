@@ -1,24 +1,24 @@
-// md-toolchain print utility functions
-// Michael Moffitt 2018
+// mdk print utility functions
+// Michael Moffitt 2018-2022
 #include "util/text.h"
 
-static uint16_t font_vram_pos;
-static uint16_t font_pal_line;
+static uint16_t s_font_vram_pos;
+static uint16_t s_font_pal_line;
 
 void text_init(const unsigned char *font_chr, uint16_t font_len,
                uint16_t vram_pos,
                const unsigned char *font_pal, uint16_t pal_line)
 {
-	font_vram_pos = vram_pos;
-	font_pal_line = pal_line & 0x3;
+	s_font_vram_pos = vram_pos;
+	s_font_pal_line = pal_line & 0x3;
 	if (font_chr)
 	{
-		dma_q_transfer_vram(font_vram_pos, (void *)font_chr, font_len/2, 2);
+		dma_q_transfer_vram(s_font_vram_pos, (void *)font_chr, font_len/2, 2);
 	}
-	font_vram_pos /= 32;  // convert to tile number
+	s_font_vram_pos /= 32;  // convert to tile number
 	if (font_pal)
 	{
-		pal_upload(font_pal_line * 16, (void *)font_pal, 16);
+		md_pal_upload(s_font_pal_line * 16, (void *)font_pal, 16);
 	}
 }
 
@@ -33,7 +33,7 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s)
 	uint16_t line_inc = 64;
 	vdp_wait_dma();
 	vdp_set_autoinc(2);
-	switch(plane_size)
+	switch (plane_size)
 	{
 		default:
 			return;
@@ -69,8 +69,8 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s)
 		}
 		else
 		{
-			VDPPORT_DATA = VDP_ATTR(((font_vram_pos + *s) - 0x20),
-			                        0, 0, font_pal_line, 1);
+			VDPPORT_DATA = VDP_ATTR(((s_font_vram_pos + *s) - 0x20),
+			                        0, 0, s_font_pal_line, 1);
 		}
 		s++;
 	}
@@ -78,5 +78,5 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s)
 
 uint16_t text_get_vram_pos(void)
 {
-	return font_vram_pos;
+	return s_font_vram_pos;
 }

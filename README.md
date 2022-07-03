@@ -1,26 +1,34 @@
-Sega Genesis / Mega Drive Framework
-===================================
+MDK: Mega Drive Software Development Kit
+=======================================
 
-This project aims to deliver some core support toolchain components
-used in developing software for the Sega Genesis / Mega Drive.
-Solutions exist on both ends of the complexity spectrum, with
-straight 68000 assembly programming on one and SGDK on the other.
-This project aims to deliver something a little more in the middle.
+Origin
+------
+This project was born out of my wanting to write my own C support code for Mega Drive when I was working on a particular game.
+I had developed it in another SDK, but between a mismatch in code style, old code not aging well, and some functionally completely breaking when I updated to a newer version, I wanted to feel a little more in control of my project.
+So, I started fresh, and tried to compartmentalize all of my code that interacted with the MD hardware, keeping it divorced from the game logic where sensible.
+This project continues to receive updates as I add features or change it during the development of that game.
 
-This project is oriented towards development on a Linux or Unix-like
-host, and is C-focused. However, as needed, some functionality can be
-implemented in 68000 assembly. Presently, this is limited to the C
-runtime startup, and IRQ handlers.
+IT IS NOT YET STABLE! The API may change at any time, until that game is done.
 
-Rather than provide a library to link against, this project is
-intended to act as a skeleton that is the basis of another project.
-MD support functions may be compiled and used.
 
+Goals
+-----
+This project aims to supply a set of minimal support code for use in making software for Sega Mega Drive, Genesis, System C, and System C2 platforms using the C programming language.
+Current solutions exist on both ends of the complexity spectrum, with straight 68000 assembly programming on one and SGDK on the other.
+This project aims to deliver something a little more in the middle in terms of weight and simplicity.
+
+This project is oriented towards development on a Linux or Unix-like host, and is implemented as a mixture of C and assembly.
+
+Rather than provide a library to link against, this project is intended to act as a skeleton that is the basis of another project.
+MD support functions may be compiled and used. The suggested use case is to make an `mdk` submodule for a project.
+
+Sample code and Makefiles exist in the `samples/` directory. 
 A makefile is provided that will recursively look for source files
 in the `src/` directory. It links using the provided linker script,
 which puts ROM from $000000 to $3FFFFF and RAM at $FF0000-$FFFFFF.
 The crt0 startup code does nothing more than satisfy TMSS, clear main
 memory, initialize variables, set the stack, and move forwards.
+
 
 Setup
 =====
@@ -32,50 +40,79 @@ You will a compiler and various utilities.
 For now, the easiest way to install the needed m68k-elf toolchain is
 to install "gendev" from https://github.com/kubilus1/gendev.
 
-Getting Started
----------------
-A simple example program is included in `src/main.c`, but generally
-everything needed is in `src/md`. `src/util` contains some
-potentially useful more exotic functions that I do not consider core
-functionality.
+Cloning the Submodule
+--------------------
 
-Within `src/md` are several Mega Drive components. For example,
-`vdp.h` and `vdp.c` contain functions related to the Mega Drive's
-Video Display Processor. For each component, the header files are
-fairly descriptive. As a shortcut to include all files, you may use
+If you are starting a fresh project, I'd suggest cloning this repro as a submodule in the project root:
 
 ```
-    #include "md/megadrive.h"
+    $ git submodule add git@github.com:mikejmoffitt/mdk mdk
+    $ git commit -m "Added MDK submodule."
 ```
 
-To initialize the Mega Drive to sane defaults, call this in `main()`:
+Makefile
+------------
+
+If you are starting fresh, I recommend copying the contents of blank-project into your root and using that:
+
+```
+    $ cp -r mdk/blank-project .
+```
+
+This makefile searches in the `src` directory recursively for any .c files or .s files, and compiles or assembles them accordingly.
+In addition, files placed in `res` are included in binary form. Their usage is detailed further below.
+
+You may edit the Makefile to reflect the name of your project.
+
+You may also declare any external build dependencies with `EXTERNAL_DEPS`, and make the build system aware of externally generated artifacts with `EXTERNAL_ARTIFACTS` (so they can be cleaned when the `clean` target is run).
+
+At this stage, you should be able to build your project, though it will not do anything interesting.
+
+```
+    $ make
+```
+
+It's not required to do so, but you may want to edit mdk/header.inc to include your project metadata as well.
+
+Utils
+-----
+
+MDK relies on a few host-side utilities, so you will want to include `utils/` in your project.
+
+SDK Usage
+=========
+
+Paths and Sources
+-----------------
+MDK presents two directories in your source path: `md`, which contains the core Mega Drive-related functionality, and `util`, which has useful auxiliary functions that aren't considered core functions.
+
+Different components are in `md`, and their header files will provide useful structures, enums, and documentation.
+However, `md/megadrive.h` exists to declare a function which initializes all of these components, and if included you may avoid referencing each component separately.
+
+Interaction
+-----------
+The C runtime startup code clears RAM, sets up initial data for static variables, sets up the stack, and jumps to `main()`.
+That's all that is done out of the C programmer's sight. However, I'd recommend making the very first line in `main()` a call to `megadrive_init()`:
 
 ```
     megadrive_init();
 ```
 
-Afterwards, an infinite loop like this is sufficient:
+This sets the Mega Drive to sane defaults, and initializes various helper systems for the peripherals.
+Following that, an infinite loop like this is sufficient:
 
 ```
     while(1)
     {
-        // Do whatever you want here - draw some text, move some
-        // sprites around, run game logic
+        // Your logic goes here!
         megadrive_finish();
     }
 ```
 
-To build all this from the terminal:
+Samples
+-------
 
-```
-    make
-```
-
-It is recommended to build using multiple threads. For a 4-core CPU:
-
-```
-    make -j16
-```
+Check out the samples/ directory for some small example projects that show usage of the SDK.
 
 Components
 ==========
@@ -84,9 +121,18 @@ files. I will summarize the components here.
 
 Mega Drive
 ----------
-`megadrive.h` simply hosts a generalized system init function, which
-is detailed within the header. It also contains `megadrive_finish()`,
-which terminates the sprite list and waits for vblank.
+
+`megadrive_finish()` should be called at the end of one frame of execution\*, and will do the following things:
+  * Terminate the sprite list
+  * Queue any CRAM (palette) memory transfers
+  * Wait for vertical blank to begin
+  * Poll controllers and store button state
+  * Process pending DMA transfers (to VRAM, CRAM, or VSRAM)
+
+You can see the body of `megadrive_finish()` in md/megadrive.h. As with almost everything in this project, you aren't required to use it. Feel free to copy the parts you like, or call them elsewhere, if you really want to.
+
+\* Small note on execution timing and vblank: On a system with fixed specifications like the Mega Drive, it is not only normal but also recommended that one "tick" of game engine execution occur synchronously with the refresh of the screen.
+As a result, it's typical that one frame of logic runs, and then waits for the end of the frame. I am not doing anything from stopping you from running your game based on timer reads from the OPN or something, if you really want to.
 
 Interrupt Handlers
 ------------------
@@ -118,38 +164,40 @@ DMA is the only efficient way to do this. However, timing a DMA can
 be complicated, as it not only ties up the CPU bus, but faces VRAM
 contention during the active display region.
 
-The DMA functions all have queued counterparts. Queued DMAs will be
-executed right at the start of vertical blank, and will roughly be
-throttled to not exceed the maximum bandwidth attainable during that
-time. That way, large transfers do not run into the active display
-area. This bandwidth "budget" is configurable.
+DMA transfers are registered with calls to the DMA queue functions, and that list is processed during vertical blank (from `dma_q_process()`).
+A single high-priority slot exists for the sake of the sprite table, which will be checked and transferred before any others.
 
-I recommend nearly exclusively using the DMA queue instead of
-handling DMA timing manually. Of course, there will be situations
-where you will want to do this manually. There will be no ill effects
-when bypassing the DMA queue.
+If you really want a DMA to occur immediately, you may call `dma_q_process()` right after queueing a transfer.
 
 Palettes
 --------
-`pal.h` has functions for uploading an entire palette, or setting
-individual colors.
+`pal.h` has functions for uploading an entire palette, or setting individual colors.
+It operates on a 64-entry palette cache in work RAM, and keeps track of whether a palette "line" (16-color grouping native to the video system) has changed.
+Accordingly, it will queue a transfer with DMA to be done during vertical blank.
 
 IO
 --
-`io.h` is used to get controller data. You may poll the controller
-directly, but the vblank ISR already does it for you. `io_pad_read`
-returns the last controller state, updated at the last vblank.
-Be sure to save it to a local variable so that it does not change
-out from under your program in case of a lag frame.
+`io.h` is used to get controller data. It supports 3 and 6 button controllers, and SMS controllers with a caveat.
+
+A six-button pad is detected with a simple herusitic, and a special bit is set in the returned data (MD_PAD_6B).
+You may test this bit to determine if a six-button pad is in use.
+
+If no pad is plugged in, `MD_PAD_UNPLUGGED` is set in the controller data.
+If an SMS controller is in use, this bit may get set as a side effect.
+It is safe to ignore this bit.
 
 Sprites
 -------
 `spr.h` houses sprite placement functions. The sprite table is
 exposed under a global symbol `g_sprite_table`, but sprite placement
-is easy using the `spr_put` inline function.  Sprites are placed into
+is easy using the `spr_put()` inline function.  Sprites are placed into
 a buffer in main memory with this function.  Once a frame's
-calculation is finished, `spr_finish` will terminate the sprite list
+calculation is finished, `spr_finish()` will terminate the sprite list
 properly, and schedule a DMA transfer of the sprite table to VRAM.
+
+`spr_mask_line_full` will insert a "magic sprite" that masks off any other sprites appearing on the specified scanline.
+
+`spr_finish()` is called by `megadrive_finish()`, so if you are using that, you do not need to worry about it.
 
 System
 ------
@@ -158,7 +206,25 @@ Interrupts may be disabled and enabled, as well as Z80 bus
 manipulation and initialization. The status register can be checked
 too, to retrieve the system region, revision, refresh rate, etc.
 
-OPN and PSG
+Interrupts and Exceptions
+-------------------------
+`irq.h` presents `md_irq_register()` by which a callback can be associated with interrupts and excepptions.
+
+
+```
+    void irq_callback(void);
+    { ... }
+
+    md_irq_register(MD_IRQ_VBLANK, irq_callback);
+```
+
+They are called safely from an interrupt context, with register clobber protection.
+
+If you are a geek and wrote an interrupt handler in assembly, and know how to safely treat registers, you may call `m_irq_register_unsafe()` instead.
+
+The vertical blank ISR clears a flag related to frame timing, and then calls the callback if it is there. Registering a callback will not interfere with normal operation.
+
+Sound
 -----------
 `opn.h` and `psg.h` contain functions for talking to the FM and PSG
 sound hardware, respectively.  You may use these to create your own
@@ -166,8 +232,8 @@ sound driver, but that task is typically relegated to the Z80.  You
 might find the PSG channel pitch to be a better debugging tool than
 it appears at first glance.
 
-Binary Inclusion
-================
+Including Binary Data
+=====================
 
 A tool called `bin2s` is included with this project, and is a build
 target for the host machine.  It takes several binary files and
@@ -209,24 +275,16 @@ TODO
 This project is far from complete. In no particular order, there are
 some tasks I'd like to get taken care of:
 
-* **Z80 development**  
+* **Z80 development**
   I would like for Z80 sound driver development to be a first-class
   endeavor. Providing a few sample drivers for different needs would
   not be a bad idea (include Echo, XGM, my own engine, and a simple
   PCM playback reference driver perhaps).
-* **Serial support**  
-  `io.h` is supposed to also allow for control of the controller
-  ports for serial transfers. Some of the code is written, but it
-  needs the most work and is the lowest priority.
-* **Input devices**  
-  io.h should also support a variety of controllers.  Right now, it
-  operates under the assumption that a 3-button pad is used.
-  Eventually we seek to support the 6-button pad and mouse.
-* **DMA slicing**  
+* **DMA slicing**
   If a VRAM transfer is projected to overrun the remaining bandwidth,
   it should be split into one or more smaller transfers, deferred to
   the next vblank.
-* **Tilemap support**
+* **Tilemap functions**
   This is not a core function, but I would like to include a
   reference implementation of a simple scrolling tilemap in
   `src/util/plane.c`.  Right now, `plane.h` only offers a function

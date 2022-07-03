@@ -9,14 +9,13 @@ Michael Moffitt 2021 */
 	.extern	_sdata
 	.extern	main
 
-	.extern _v_irq1
-	.extern _v_irq2
-	.extern _v_irq3
-	.extern _v_irq4
-	.extern _v_irq5
-	.extern _v_irq6
-	.extern _v_irq7
-	.extern megadrive_init
+	.extern	_v_irq1
+	.extern	_v_irq2
+	.extern	_v_irq3
+	.extern	_v_irq4
+	.extern	_v_irq5
+	.extern	_v_irq6
+	.extern	_v_irq7
 
 	.global	_v_table
 	.global	_start
@@ -111,51 +110,7 @@ _v_table:
 	.long	_v_unimp
 	.long	_v_unimp
 
-	/* Sega Megadrive / Genesis header */
-	/* Console name */
-	/* 16:   ________________ */
-	.ascii	"SEGA MEGA DRIVE "
-	/* Copyright information */
-	/* 16:   ________________ */
-	.ascii	"(C)MOFT 2020.AUG"
-	/* Domestic name*/
-	/* 48:   ________________________________________________ */
-	.ascii	"LYLE IN CUBE SECTOR                             "
-	/* Overseas name*/
-	/* 48:   ________________________________________________ */
-	.ascii	"LYLE IN CUBE SECTOR                             "
-	/* Serial number */
-	/* 16:   _______________*/
-	.ascii	"GM 68000420-69"
-	/* Checksum (2 bytes) */
-	.short	0x0000
-	/* I/O Support */
-	/* 16:   ________________ */
-	.ascii	"JD              "
-	/* ROM start and end */
-	.long	0
-	.long	0x001FFFFF
-	/* Work RAM start and end */
-	.long	0x000FF000
-	.long	0x000FFFFF
-	/* Backup memory */
-	.ascii	"RA"
-	.byte	0xF8
-	.byte	0x20
-	/* Backup RAM start and end*/
-	.long	0x200001
-	.long	0x20FFFF
-	/* Modem */
-	/* 12:   ____________ */
-	.ascii	"            "
-	/* Reserved */
-	/* 40:   ________________________________________ */
-	.ascii	"                                        "
-	/* Country codes */
-	.ascii	"JUE"
-	/* MReserved */
-	/* 13:   _____________ */
-	.ascii	"             "
+.include	"header.inc"
 
 _start:
 start:
@@ -203,7 +158,6 @@ start:
 	.global	softreset
 softreset:
 	move.l	#0xFFFFE0, %sp
-	jsr	megadrive_init
 	jmp	start
 
 .include	"md/irq.inc"

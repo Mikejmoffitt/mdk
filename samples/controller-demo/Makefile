@@ -1,24 +1,21 @@
-# Configuration
-OUTPUT_FILE := controller-demo
-OUTPUT_EXT := gen
-OUTPUT_VERSION := wip
+# Project meta configuration
+PROJECT_NAME := controller-demo
+MDKROOT := ../../mdk
 
-BASE_FRAMEWORK_DIR := ../..
-
-CPUTYPE := 68000
+# Project directories.
 SRCDIR := src
-COMMONSRCDIR := $(BASE_FRAMEWORK_DIR)/common/src
 RESDIR := res
 OBJDIR := obj
-UTILDIR := $(BASE_FRAMEWORK_DIR)/util
-CFLAGS := -I$(SRCDIR) -I$(OBJDIR) -I$(COMMONSRCDIR) -Wall -Wextra -O2 -std=c11 -Wno-unused-function #-Werror
-HOSTCFLAGS := -Os -std=c11
-LDSCRIPT := $(BASE_FRAMEWORK_DIR)/common/md.ld
+
+# Sources.
 SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
 SOURCES_ASM := $(shell find $(SRCDIR)/ -type f -name '*.s')
-COMMONSOURCES_C := $(shell find $(COMMONSRCDIR)/ -type f -name '*.c')
-COMMONSOURCES_ASM := $(shell find $(COMMONSRCDIR)/ -type f -name '*.s')
-RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*.bin')
-LIBS :=
+RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*')
 
-include $(BASE_FRAMEWORK_DIR)/common/md-rules.mk
+# Compiler flags.
+CFLAGS := -I$(SRCDIR) -I$(OBJDIR) -I$(MDKSRCDIR)
+
+include $(MDKROOT)/md-rules.mk
+
+# Any additional build targets may go here.
+# Please read about EXTERNAL_DEPS and EXTERNAL_ARTIFACTS in readme.md.

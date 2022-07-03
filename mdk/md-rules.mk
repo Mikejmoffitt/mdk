@@ -4,6 +4,13 @@
 MD_ENV := /opt/toolchains/gen/m68k-elf
 GBIN := $(MD_ENV)/bin
 
+MDKSRCDIR := $(MDKROOT)/src
+LDSCRIPT := $(MDKROOT)/md.ld
+UTILDIR := $(MDKROOT)/util
+MDKSOURCES_C := $(shell find $(MDKSRCDIR)/ -type f -name '*.c')
+MDKSOURCES_ASM := $(shell find $(MDKSRCDIR)/ -type f -name '*.s')
+
+HOSTCFLAGS := -O3 -std=c11
 CC_HOST := cc
 CC := $(GBIN)/m68k-elf-gcc
 AS := $(GBIN)/m68k-elf-gcc
@@ -12,6 +19,7 @@ NM := $(GBIN)/m68k-elf-nm
 OBJCOPY := $(GBIN)/m68k-elf-objcopy
 BIN2S := $(UTILDIR)/bin2s
 BIN2H := $(UTILDIR)/bin2h
+BINPAD := $(UTILDIR)/binpae
 MEGALOADER := $(UTILDIR)/megaloader
 PNGTO := $(UTILDIR)/pngto
 BLASTEM := $(UTILDIR)/blastem64-*/blastem
@@ -21,32 +29,39 @@ ifeq ($(MDEMU),)
 MDEMU := $(BLASTEM)
 endif
 
+# If the user didn't specify the MDK root dir, assume it's at the project root.
+ifeq ($(MDKROOT),)
+MDKROOT := mdk
+endif
+
 # Compiler, assembler, and linker flag setup
 CFLAGS += -Wno-strict-aliasing -ffreestanding
 CFLAGS += -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
+CFLAGS += -fdata-sections -ffunction-sections
 CFLAGS += -mcpu=68000
-CFLAGS += -I.
+CFLAGS += -I$(SRCDIR) -I$(MDKSRCDIR) -I.
 CFLAGS += -O3
+CFLAGS += -std=c11
+CFLAGS += -Wall -Wextra -Wno-unused-function
 CFLAGS += # -fno-store-merging # Needed to avoid breakage with GCC8.
 CFLAGS += -ffunction-sections -fdata-sections -fconserve-stack
-ASFLAGS := $(CFLAGS)
-ASFLAGS := -Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(COMMONSRCDIR)
+ASFLAGS := -Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(MDKSRCDIR)
 # LDFLAGS := -L/usr/lib/gcc-cross/m68k-linux-gnu/8
 LDFLAGS := -L$(MD_ENV)/m68k-elf/lib -L$(MD_ENV)/lib/gcc/m68k-elf/6.3.0
 LDFLAGS += --gc-sections -nostdlib
 LDFLAGS += -T$(LDSCRIPT)
+LDFLAGS += -Map $(PROJECT_NAME).map
 LIBS += -lgcc
 
 CFLAGS += -DTARGET_SYSTEM=$(TARGET_SYSTEM)
 
 # Naming intermediates
-OUTPUT_ELF := $(OBJDIR)/$(OUTPUT_FILE).elf
-OUTPUT_UNPAD := $(OBJDIR)/$(OUTPUT_FILE).gen
-OUTPUT_GEN := $(OUTPUT_FILE).gen
+OUTPUT_ELF := $(OBJDIR)/$(PROJECT_NAME).elf
+OUTPUT_GEN := $(PROJECT_NAME).gen
 OBJECTS_C := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SOURCES_C)) \
-  $(patsubst $(COMMONSRCDIR)/%.c,$(OBJDIR)/%.o,$(COMMONSOURCES_C))
+  $(patsubst $(MDKSRCDIR)/%.c,$(OBJDIR)/%.o,$(MDKSOURCES_C))
 OBJECTS_ASM := $(patsubst $(SRCDIR)/%.s,$(OBJDIR)/%.o,$(SOURCES_ASM)) \
-  $(patsubst $(COMMONSRCDIR)/%.s,$(OBJDIR)/%.o,$(COMMONSOURCES_ASM))
+  $(patsubst $(MDKSRCDIR)/%.s,$(OBJDIR)/%.o,$(MDKSOURCES_ASM))
 OBJECTS_RES := $(OBJDIR)/res.o
 
 RES_HEADER := res.h
@@ -64,8 +79,8 @@ ext_deps: $(EXTERNAL_DEPS)
 
 vars:
 	@echo "CFLAGS is" "$(CFLAGS)"
-	@echo "COMMONSOURCES_C is" "$(COMMONSOURCES_C)"
-	@echo "COMMONSOURCES_ASM is" "$(COMMONSOURCES_ASM)"
+	@echo "MDKSOURCES_C is" "$(MDKSOURCES_C)"
+	@echo "MDKSOURCES_ASM is" "$(MDKSOURCES_ASM)"
 	@echo "SOURCES_C is" "$(SOURCES_C)"
 	@echo "SOURCES_ASM is" "$(SOURCES_ASM)"
 	@echo "OBJECTS_C is" "$(OBJECTS_C)"
@@ -79,83 +94,87 @@ $(MEGALOADER): $(UTILDIR)/megaloader.c
 	@$(CC_HOST) -D_DEFAULT_SOURCE $< -o $@ $(HOSTCFLAGS)
 
 $(BIN2S): $(UTILDIR)/bin2s.c
-	@$(CC_HOST) $^ -o $@ -Os  $(HOSTCFLAGS)
+	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
 
 $(BIN2H): $(UTILDIR)/bin2h.c
-	@$(CC_HOST) $^ -o $@ -Os  $(HOSTCFLAGS)
+	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
+
+$(BINPAD): $(UTILDIR)/binpad.c
+	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
 
 $(PNGTO): $(UTILDIR)/pngto.c $(UTILDIR)/musl_getopt.c $(UTILDIR)/lodepng.c $(UTILDIR)/indexedimage.c
-	@$(CC_HOST) $^ -o $@ -Os -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
+	@$(CC_HOST) $^ -o $@ -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
 
-$(OUTPUT_GEN): $(OUTPUT_ELF)
+$(OUTPUT_GEN): $(OUTPUT_ELF) $(BINPAD)
 	@bash -c 'printf " \e[36m[ PAD ]\e[0m ... --> $@\n"'
-	@$(OBJCOPY) -O binary $< $(OUTPUT_UNPAD)
-	@dd if=$(OUTPUT_UNPAD) of=$@ bs=512 conv=sync status=none
-	@rm $(OUTPUT_UNPAD)
+	$(OBJCOPY) -O binary $< $@
+	$(BINPAD) $@
 	@bash -c 'printf "\e[92m [ OK! ]\e[0m --> $(OUTPUT_GEN)\n"'
 
-$(OBJDIR)/$(OUTPUT_FILE).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM)
+$(OBJDIR)/$(PROJECT_NAME).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[36m[ LNK ]\e[0m ... --> $@\n"'
-	@$(LD) -o $@ $(LDFLAGS) $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM) $(LIBS)
+	$(LD) -o $@ $(LDFLAGS) $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM) $(LIBS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[  C  ]\e[0m $< --> $@\n"'
-	@$(CC) $(CFLAGS) -c $< -o $@
-	@$(CC) $(CFLAGS) -S $< -o $@.asm
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -S $< -o $@.asm
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[33m[ ASM ]\e[0m $< --> $@\n"'
-	@$(AS) $(ASFLAGS) -c $< -o $@
+	$(AS) $(ASFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: $(COMMONSRCDIR)/%.c $(OBJECTS_RES) ext_deps
+$(OBJDIR)/%.o: $(MDKSRCDIR)/%.c $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[ C:C ]\e[0m $< --> $@\n"'
-	@$(CC) $(CFLAGS) -c $< -o $@
-	@$(CC) $(CFLAGS) -S $< -o $@.asm
+	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -S $< -o $@.asm
 
-$(OBJDIR)/%.o: $(COMMONSRCDIR)/%.s $(OBJECTS_RES) ext_deps
+$(OBJDIR)/%.o: $(MDKSRCDIR)/%.s $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[33m[C:ASM]\e[0m $< --> $@\n"'
-	@$(AS) $(ASFLAGS) -c $< -o $@
+	$(AS) $(ASFLAGS) -c $< -o $@
 
 # Converts res.s and other intermediate files generated by util
 $(OBJDIR)/%.o: $(OBJDIR)/%.s
 	@bash -c 'printf " \e[33m[B:ASM]\e[0m $< --> $@\n"'
-	@$(AS) $(ASFLAGS) -c $< -o $@
+	$(AS) -c $< -o $@
 
 # Converts a file to object files
 $(OBJDIR)/res.s: $(BIN2S) $(RESOURCES_LIST)
-	@mkdir -p $(dir $@)
+	mkdir -p $(dir $@)
 	@bash -c 'printf " \e[95m[ BIN ]\e[0m $^ --> $@\n"'
-	@$^ > $@
+	$^ > $@
 
 # Generates header entries for resource data
 $(RES_HEADER): $(BIN2H) $(RESOURCES_LIST)
 	@bash -c 'printf " \e[95m[RES.H]\e[0m $^ --> $@\n"'
 	@printf '#ifndef _RES_AUTOGEN_H\n#define _RES_AUTOGEN_H\n' > $@
-	@$^ >> $@
+	$^ >> $@
 	@printf '#endif  // _RES_AUTOGEN_H\n' >> $@
 
 res_post:
-	@printf
+	printf
 
 flash: all
-	@exec $(MEGALOADER) md $(OUTPUT_GEN) /dev/ttyUSB0 2> /dev/null
+	$(MEGALOADER) md $(OUTPUT_GEN) /dev/ttyUSB0 2> /dev/null
 
 debug: all
-	@exec $(MDEMU) -m gen -d $(OUTPUT_GEN)
+	$(MDEMU) -m gen -d $(OUTPUT_GEN)
 
 test: all
-	@bash -c 'PULSE_LATENCY_MSEC=80 $(MDEMU) -m gen $(OUTPUT_GEN)'
+	bash -c 'PULSE_LATENCY_MSEC=80 $(MDEMU) -m gen $(OUTPUT_GEN)'
 
 mame: all
-	@exec mame megadrij -cart $(OUTPUT_GEN) -debug -r 640x480
+	exec mame megadrij -cart $(OUTPUT_GEN) -debug -r 640x480
 
 clean:
-	@-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
-	@-rm -f $(OUTPUT_ELF) $(OUTPUT_UNPAD)
-	@-rm -f $(OBJECTS_RES) $(OBJDIR)/res.s $(RES_HEADER)
+	-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
+	-rm -f $(OUTPUT_ELF)
+	-rm -f $(OBJECTS_RES) $(OBJDIR)/res.s $(RES_HEADER)
+	-rm -rf $(OBJDIR)
+	-rm -f $(PROJECT_NAME).map
 	echo $(EXTERNAL_ARTIFACTS) | xargs --no-run-if-empty rm -f $(EXTERNAL_ARTIFACTS)

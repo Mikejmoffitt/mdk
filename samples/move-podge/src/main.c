@@ -47,7 +47,7 @@ static void load_player(void)
 	player_x = 64 << 8;
 	player_dx = player_frame = player_facing = 0;
 	dma_q_transfer_vram(PLAYER_CEL_ADDR, (void *)obj_PodgeH24_gfx_bin, 32*6*8/2, 2);
-	pal_upload(32, (void *)obj_PodgeH24_pal_bin, 16);
+	md_pal_upload(32, (void *)obj_PodgeH24_pal_bin, 16);
 }
 
 static void move_player(void)

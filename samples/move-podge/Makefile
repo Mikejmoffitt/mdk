@@ -1,23 +1,13 @@
 # Configuration
 OUTPUT_FILE := move-podge
-OUTPUT_EXT := gen
-OUTPUT_VERSION := wip
 
-BASE_FRAMEWORK_DIR := ../..
+MDKROOT := ../../mdk
 
-CPUTYPE := 68000
 SRCDIR := src
-COMMONSRCDIR := $(BASE_FRAMEWORK_DIR)/common/src
 RESDIR := res
 OBJDIR := obj
-UTILDIR := $(BASE_FRAMEWORK_DIR)/util
-CFLAGS := -I$(SRCDIR) -I$(OBJDIR) -I$(COMMONSRCDIR) -Wall -Wextra -Wno-unused-function
-HOSTCFLAGS := -Os -std=c11
-LDSCRIPT := $(BASE_FRAMEWORK_DIR)/common/md.ld
 SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
 SOURCES_ASM := $(shell find $(SRCDIR)/ -type f -name '*.s')
-COMMONSOURCES_C := $(shell find $(COMMONSRCDIR)/ -type f -name '*.c')
-COMMONSOURCES_ASM := $(shell find $(COMMONSRCDIR)/ -type f -name '*.s')
 RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*.bin')
 LIBS :=
 
@@ -26,7 +16,7 @@ IMAGES_PNG := $(shell find $(RESDIR)/ -type f -name '*.png')
 RESOURCES_LIST += $(patsubst $(RESDIR)/%.png,$(OBJDIR)/%_gfx.bin,$(IMAGES_PNG))
 RESOURCES_LIST += $(patsubst $(RESDIR)/%.png,$(OBJDIR)/%_pal.bin,$(IMAGES_PNG))
 
-include $(BASE_FRAMEWORK_DIR)/common/md-rules.mk
+include $(MDKROOT)/md-rules.mk
 
 $(OBJDIR)/%_gfx.bin: $(PNGTO) $(RESDIR)/%.png
 	@mkdir -p $(dir $@)
