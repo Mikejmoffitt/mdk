@@ -1,5 +1,5 @@
-#ifndef PLANE_H
-#define PLANE_H
+#ifndef UTIL_PLANE_H
+#define UTIL_PLANE_H
 
 #include "md/megadrive.h"
 
@@ -21,4 +21,4 @@ static inline void plane_clear(VdpPlane plane)
 	sys_ei();
 }
 
-#endif
+#endif  // UTIL_PLANE_H

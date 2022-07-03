@@ -1,12 +1,12 @@
-// md-toolchain print utility functions
-// Michael Moffitt 2018
+// mdk print utility functions
+// Michael Moffitt 2018-2022
 //
 // These functions are meant to be more instructional than practical. They are
 // not particularly flexible, so depending on your game's needs, it may be
 // sensible to not use these.
 
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef UTIL_TEXT_H
+#define UTIL_TEXT_H
 
 #include "md/megadrive.h"
 
@@ -22,4 +22,4 @@ void text_init(const unsigned char *font_chr, uint16_t font_len,
 // Print a string s on a specified plane at coordinates x, y
 void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s);
 
-#endif // TEXT_H
+#endif // UTIL_TEXT_H
