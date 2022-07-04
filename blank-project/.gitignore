@@ -1,0 +1,6 @@
+*/*.swp
+res.h
+obj/
+*.map
+*.gen
+history/
