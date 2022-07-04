@@ -1,4 +1,4 @@
-/* md-toolchain sprite support
+/* mdk sprite support
 Michael Moffitt 2018-2020 */
 
 #ifndef MD_SPR_H

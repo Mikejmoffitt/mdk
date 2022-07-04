@@ -1,4 +1,4 @@
-/* md-toolchain sprite support
+/* mdk sprite support
 Michael Moffitt */
 #include "md/spr.h"
 

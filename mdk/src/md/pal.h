@@ -1,4 +1,4 @@
-/* md-toolchain palette support functions
+/* mdk palette support functions
 Michael Moffitt 2018-2020 */
 #ifndef MD_PAL_H
 #define MD_PAL_H

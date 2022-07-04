@@ -1,4 +1,4 @@
-/* md-toolchain VDP control functions
+/* mdk VDP control functions
 MIchael Moffitt 2018 */
 
 #include "md/vdp.h"

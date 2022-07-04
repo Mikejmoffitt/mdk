@@ -1,4 +1,4 @@
-/* md-toolchain top-level file
+/* mdk top-level file
 Michael Moffitt */
 #include "md/megadrive.h"
 #include "md/sys.h"

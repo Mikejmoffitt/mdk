@@ -1,4 +1,4 @@
-/* md-toolchain IRQ and exception handler registration
+/* mdk IRQ and exception handler registration
 Michael Moffitt 2018-2022
 
  */

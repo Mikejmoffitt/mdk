@@ -1,4 +1,4 @@
-// md-toolchain Top-level Sega System C/C2 support routines and structures
+// mdk Top-level Sega System C/C2 support routines and structures
 // 2018-2022 Michael Moffitt
 // ===========================================================================
 

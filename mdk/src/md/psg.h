@@ -1,4 +1,4 @@
-/* md-toolchain PSG audio support
+/* mdk PSG audio support
 Michael Moffitt 2018-2020 */
 #ifndef MD_PSG_H
 #define MD_PSG_H

@@ -1,4 +1,4 @@
-/* md-toolchain palette support functions
+/* mdk palette support functions
 Michael Moffitt 2018 */
 #include "md/pal.h"
 #include "md/dma.h"

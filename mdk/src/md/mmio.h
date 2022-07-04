@@ -1,4 +1,4 @@
-// md-toolchain memory map and MMIO definitions
+// mdk memory map and MMIO definitions
 // 2018-2022 Michael Moffitt
 // ===========================================================================
 #ifndef MD_MMIO_H

@@ -1,4 +1,4 @@
-/* md-toolchain DMA control functions
+/* mdk DMA control functions
 Michael Moffitt 2018 */
 
 #include "md/dma.h"

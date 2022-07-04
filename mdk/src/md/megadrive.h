@@ -1,4 +1,4 @@
-// md-toolchain Top-level Sega Megadrive support routines and structures
+// mdk Top-level Sega Megadrive support routines and structures
 // 2018-2022 Michael Moffitt
 // ===========================================================================
 

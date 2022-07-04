@@ -1,4 +1,4 @@
-/* md-toolchain DMA control functions
+/* mdk DMA control functions
 Michael Moffitt 2018-2021
 
 For large lengths of data, like character graphics, mappings, scroll tables,

@@ -1,4 +1,4 @@
-/* md-toolchain gamepad support
+/* mdk gamepad support
 Michael Moffitt 2018-2022 */
 #ifndef MD_IO_H
 #define MD_IO_H

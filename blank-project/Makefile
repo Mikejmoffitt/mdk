@@ -1,6 +1,6 @@
 # Project meta configuration
 PROJECT_NAME := blank-mdk-project
-MDKROOT := mdk
+MDKROOT := mdk/mdk
 
 # Project directories.
 SRCDIR := src

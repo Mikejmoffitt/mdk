@@ -1,4 +1,4 @@
-/* md-toolchain I/O peripheral support
+/* mdk I/O peripheral support
 Michael Moffitt 2018 */
 #include "md/io.h"
 #include "md/mmio.h"
