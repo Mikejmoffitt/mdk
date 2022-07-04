@@ -117,18 +117,18 @@ MIchael Moffitt 2018 */
 #define VDP_SET(regbase, mask, en) \
 do \
 { \
-	SYS_BARRIER();\
+	MD_SYS_BARRIER();\
 	if(en) \
 	{ \
-		vdp_set_reg(regbase, vdp_get_reg(regbase) | (mask)); \
+		md_vdp_set_reg(regbase, md_vdp_get_reg(regbase) | (mask)); \
 	} \
 	else \
 	{ \
-		vdp_set_reg(regbase, vdp_get_reg(regbase) & ~(mask)); \
+		md_vdp_set_reg(regbase, md_vdp_get_reg(regbase) & ~(mask)); \
 	} \
 } while(0)
 
-extern uint8_t g_vdp_regvalues[0x18];
+extern uint8_t g_md_vdp_regvalues[0x18];
 
 typedef enum VdpHscrollMode
 {
@@ -187,249 +187,249 @@ typedef enum VdpPlane
 	VDP_PLANE_WINDOW = 0x02
 } VdpPlane;
 
-void vdp_init(void);
+void md_vdp_init(void);
 
 // Accessors
-static inline void vdp_set_reg(uint8_t num, uint8_t val);
-static inline void vdp_set_reg_bit(uint8_t num, uint8_t bit);
-static inline void vdp_clear_reg_bit(uint8_t num, uint8_t bit);
-static inline uint8_t vdp_get_reg(uint8_t num);
-static inline uint16_t vdp_get_status(void);
+static inline void md_vdp_set_reg(uint8_t num, uint8_t val);
+static inline void md_vdp_set_reg_bit(uint8_t num, uint8_t bit);
+static inline void md_vdp_clear_reg_bit(uint8_t num, uint8_t bit);
+static inline uint8_t md_vdp_get_reg(uint8_t num);
+static inline uint16_t md_vdp_get_status(void);
 
 // Interrupt config
-static inline void vdp_set_hint_en(uint8_t enabled);
-static inline void vdp_set_vint_en(uint8_t enabled);
-static inline void vdp_set_thint_en(uint8_t enabled);
-static inline void vdp_set_extint_en(uint8_t enabled);
-static inline void vdp_set_hint_line(uint8_t line);
-void vdp_wait_vblank(void);
+static inline void md_vdp_set_hint_en(uint8_t enabled);
+static inline void md_vdp_set_vint_en(uint8_t enabled);
+static inline void md_vdp_set_thint_en(uint8_t enabled);
+static inline void md_vdp_set_extint_en(uint8_t enabled);
+static inline void md_vdp_set_hint_line(uint8_t line);
+void md_vdp_wait_vblank(void);
 
 // Address configuration
 
 // Plane A, B:   Multiples of $2000
 // Window plane: Multiples of $1000 in H40, $0800 in H32
-void vdp_set_plane_base(VdpPlane plane, uint16_t value);
+void md_vdp_set_plane_base(VdpPlane plane, uint16_t value);
 // Multiples of $0200
-void vdp_set_sprite_base(uint16_t value);
+void md_vdp_set_sprite_base(uint16_t value);
 // Multiples of $0400
-void vdp_set_hscroll_base(uint16_t value);
+void md_vdp_set_hscroll_base(uint16_t value);
 
-uint16_t vdp_get_plane_base(VdpPlane plane);
-uint16_t vdp_get_sprite_base(void);
-uint16_t vdp_get_hscroll_base(void);
+uint16_t md_vdp_get_plane_base(VdpPlane plane);
+uint16_t md_vdp_get_sprite_base(void);
+uint16_t md_vdp_get_hscroll_base(void);
 
 // Scroll plane config
-static inline void vdp_set_hscroll_mode(VdpHscrollMode mode);
-static inline void vdp_set_vscroll_mode(VdpVscrollMode mode);
-static inline void vdp_set_plane_size(VdpPlaneSize size);
-static inline VdpPlaneSize vdp_plane_size_from_cells(int16_t h_cells,
+static inline void md_vdp_set_hscroll_mode(VdpHscrollMode mode);
+static inline void md_vdp_set_vscroll_mode(VdpVscrollMode mode);
+static inline void md_vdp_set_plane_size(VdpPlaneSize size);
+static inline VdpPlaneSize md_vdp_plane_size_from_cells(int16_t h_cells,
                                                      int16_t v_cells);
-static inline void vdp_set_window_top(uint8_t height);
-static inline void vdp_set_window_bottom(uint8_t height);
-static inline void vdp_set_window_right(uint8_t width);
-static inline void vdp_set_window_left(uint8_t width); // Buggy with horizontal scrolling!
+static inline void md_vdp_set_window_top(uint8_t height);
+static inline void md_vdp_set_window_bottom(uint8_t height);
+static inline void md_vdp_set_window_right(uint8_t width);
+static inline void md_vdp_set_window_left(uint8_t width); // Buggy with horizontal scrolling!
 
 // Blanking
-static inline void vdp_set_display_en(uint8_t enabled);
+static inline void md_vdp_set_display_en(uint8_t enabled);
 
 // Raster config
-static inline void vdp_set_hmode(VdpHmode mode);
-static inline void vdp_set_vmode(VdpVmode mode);
-static inline void vdp_set_bgcol(uint8_t idx);
-static inline void vdp_set_shi(uint8_t enabled);
-void vdp_set_raster_height(uint8_t height); // 224 or 240
-void vdp_set_raster_width(uint16_t width); // 320 or 256
-uint8_t vdp_get_raster_height(void);
-uint16_t vdp_get_raster_width(void);
+static inline void md_vdp_set_hmode(VdpHmode mode);
+static inline void md_vdp_set_vmode(VdpVmode mode);
+static inline void md_vdp_set_bgcol(uint8_t idx);
+static inline void md_vdp_set_shi(uint8_t enabled);
+void md_vdp_set_raster_height(uint8_t height); // 224 or 240
+void md_vdp_set_raster_width(uint16_t width); // 320 or 256
+uint8_t md_vdp_get_raster_height(void);
+uint16_t md_vdp_get_raster_width(void);
 
 // Data transfer and DMA configuration
-static inline void vdp_set_autoinc(uint8_t inc);
-static inline void vdp_set_addr(uint16_t addr);
-static inline void vdp_write(uint16_t value);
-static inline uint16_t vdp_read(void);
+static inline void md_vdp_set_autoinc(uint8_t inc);
+static inline void md_vdp_set_addr(uint16_t addr);
+static inline void md_vdp_write(uint16_t value);
+static inline uint16_t md_vdp_read(void);
 
-static inline void vdp_poke(uint16_t addr, uint16_t value);
-static inline uint16_t vdp_peek(uint16_t addr);
+static inline void md_vdp_poke(uint16_t addr, uint16_t value);
+static inline uint16_t md_vdp_peek(uint16_t addr);
 
-static inline void vdp_wait_dma(void);
+static inline void md_vdp_wait_dma(void);
 
 // Accessors
-static inline void vdp_set_reg(uint8_t num, uint8_t val)
+static inline void md_vdp_set_reg(uint8_t num, uint8_t val)
 {
-	g_vdp_regvalues[num] = val;
+	g_md_vdp_regvalues[num] = val;
 	VDP_REG_WRITE(num, val);
 }
 
-static inline void vdp_set_reg_bit(uint8_t num, uint8_t bit)
+static inline void md_vdp_set_reg_bit(uint8_t num, uint8_t bit)
 {
-	g_vdp_regvalues[num] |= bit;
-	VDP_REG_WRITE(num, g_vdp_regvalues[num]);
+	g_md_vdp_regvalues[num] |= bit;
+	VDP_REG_WRITE(num, g_md_vdp_regvalues[num]);
 }
 
-static inline void vdp_clear_reg_bit(uint8_t num, uint8_t bit)
+static inline void md_vdp_clear_reg_bit(uint8_t num, uint8_t bit)
 {
-	g_vdp_regvalues[num] &= ~bit;
-	VDP_REG_WRITE(num, g_vdp_regvalues[num]);
+	g_md_vdp_regvalues[num] &= ~bit;
+	VDP_REG_WRITE(num, g_md_vdp_regvalues[num]);
 }
 
-static inline uint8_t vdp_get_reg(uint8_t num)
+static inline uint8_t md_vdp_get_reg(uint8_t num)
 {
-	return g_vdp_regvalues[num];
+	return g_md_vdp_regvalues[num];
 }
 
-static inline uint16_t vdp_get_status(void)
+static inline uint16_t md_vdp_get_status(void)
 {
 	return VDPPORT_CTRL;
 }
 
 // Interrupt config
-static inline void vdp_set_hint_en(uint8_t enabled)
+static inline void md_vdp_set_hint_en(uint8_t enabled)
 {
 	VDP_SET(VDP_MODESET1, VDP_MODESET1_HINT_EN, enabled);
 }
 
-static inline void vdp_set_vint_en(uint8_t enabled)
+static inline void md_vdp_set_vint_en(uint8_t enabled)
 {
 	VDP_SET(VDP_MODESET2, VDP_MODESET2_VINT_EN, enabled);
 }
 
-static inline void vdp_set_thint_en(uint8_t enabled)
+static inline void md_vdp_set_thint_en(uint8_t enabled)
 {
 	VDP_SET(VDP_MODESET2, VDP_MODESET3_THINT_EN, enabled);
 }
 
-static inline void vdp_set_extint_en(uint8_t enabled)
+static inline void md_vdp_set_extint_en(uint8_t enabled)
 {
 	VDP_SET(VDP_MODESET3, VDP_MODESET3_THINT_EN, enabled);
 }
 
-static inline void vdp_set_hint_line(uint8_t line)
+static inline void md_vdp_set_hint_line(uint8_t line)
 {
-	vdp_set_reg(VDP_HINTC, line);
+	md_vdp_set_reg(VDP_HINTC, line);
 }
 
 // Scroll plane config
-static inline void vdp_set_hscroll_mode(VdpHscrollMode mode)
+static inline void md_vdp_set_hscroll_mode(VdpHscrollMode mode)
 {
-	vdp_set_reg(VDP_MODESET3, (vdp_get_reg(VDP_MODESET3) & 0xFC) | mode);
+	md_vdp_set_reg(VDP_MODESET3, (md_vdp_get_reg(VDP_MODESET3) & 0xFC) | mode);
 }
 
-static inline void vdp_set_vscroll_mode(VdpVscrollMode mode)
+static inline void md_vdp_set_vscroll_mode(VdpVscrollMode mode)
 {
 	VDP_SET(VDP_MODESET3, VDP_MODESET3_VSCROLL_CELL, mode);
 }
 
-static inline void vdp_set_plane_size(VdpPlaneSize size)
+static inline void md_vdp_set_plane_size(VdpPlaneSize size)
 {
-	vdp_set_reg(VDP_PLANESIZE, size);
+	md_vdp_set_reg(VDP_PLANESIZE, size);
 }
 
-static inline VdpPlaneSize vdp_plane_size_from_cells(int16_t h_cells,
+static inline VdpPlaneSize md_vdp_plane_size_from_cells(int16_t h_cells,
                                                      int16_t v_cells)
 {
 	return ((h_cells / 32) - 1) | (((v_cells / 32) - 1) << 4);
 }
 
-static inline void vdp_set_window_top(uint8_t height)
+static inline void md_vdp_set_window_top(uint8_t height)
 {
-	vdp_set_reg(VDP_WINVERT, height & 0x1F);
+	md_vdp_set_reg(VDP_WINVERT, height & 0x1F);
 }
 
-static inline void vdp_set_window_bottom(uint8_t height)
+static inline void md_vdp_set_window_bottom(uint8_t height)
 {
-	vdp_set_reg(VDP_WINVERT, 0x80 | ((31-height) & 0x1F));
+	md_vdp_set_reg(VDP_WINVERT, 0x80 | ((31-height) & 0x1F));
 }
 
-static inline void vdp_set_window_right(uint8_t width)
+static inline void md_vdp_set_window_right(uint8_t width)
 {
-	vdp_set_reg(VDP_WINHORI, 0x80 | ((31-width) & 0x1F));
+	md_vdp_set_reg(VDP_WINHORI, 0x80 | ((31-width) & 0x1F));
 }
 
-static inline void vdp_set_window_left(uint8_t width)
+static inline void md_vdp_set_window_left(uint8_t width)
 {
-	vdp_set_reg(VDP_WINHORI, width & 0x1F);
+	md_vdp_set_reg(VDP_WINHORI, width & 0x1F);
 }
 
 // Blanking
-static inline void vdp_set_display_en(uint8_t enabled)
+static inline void md_vdp_set_display_en(uint8_t enabled)
 {
 	VDP_SET(VDP_MODESET2, VDP_MODESET2_DISP_EN, enabled);
 }
 
 // Raster config
-static inline void vdp_set_hmode(VdpHmode mode)
+static inline void md_vdp_set_hmode(VdpHmode mode)
 {
 	VDP_SET(VDP_MODESET4, VDP_MODESET4_HMODE_H40, mode);
 }
 
-static inline void vdp_set_vmode(VdpVmode mode)
+static inline void md_vdp_set_vmode(VdpVmode mode)
 {
 	VDP_SET(VDP_MODESET2, VDP_MODESET2_30H, mode);
 }
 
-static inline void vdp_set_bgcol(uint8_t idx)
+static inline void md_vdp_set_bgcol(uint8_t idx)
 {
-	vdp_set_reg(VDP_BGCOL, idx);
+	md_vdp_set_reg(VDP_BGCOL, idx);
 }
 
-static inline void vdp_set_shi(uint8_t enabled)
+static inline void md_vdp_set_shi(uint8_t enabled)
 {
 	VDP_SET(VDP_MODESET4, VDP_MODESET4_SHI_EN, enabled);
 }
 
 // Data transfer and DMA configuration
-static inline void vdp_set_autoinc(uint8_t inc)
+static inline void md_vdp_set_autoinc(uint8_t inc)
 {
-	vdp_set_reg(VDP_AUTOINC, inc);
+	md_vdp_set_reg(VDP_AUTOINC, inc);
 }
 
-static inline void vdp_set_addr(uint16_t addr)
+static inline void md_vdp_set_addr(uint16_t addr)
 {
 	VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(addr);
 }
 
-static inline void vdp_write(uint16_t value)
+static inline void md_vdp_write(uint16_t value)
 {
 	VDPPORT_DATA = value;
 }
 
-static inline uint16_t vdp_read(void)
+static inline uint16_t md_vdp_read(void)
 {
 	return VDPPORT_DATA;
 }
 
-static inline void vdp_wait_dma(void)
+static inline void md_vdp_wait_dma(void)
 {
-	while(vdp_get_status() & VDP_STATUS_DMA)
+	while(md_vdp_get_status() & VDP_STATUS_DMA)
 	{
 		__asm__ volatile ("\tnop\n");
 	}
 }
 
-static inline void vdp_poke(uint16_t addr, uint16_t value)
+static inline void md_vdp_poke(uint16_t addr, uint16_t value)
 {
-	vdp_set_addr(addr);
-	vdp_write(value);
+	md_vdp_set_addr(addr);
+	md_vdp_write(value);
 }
 
-static inline uint16_t vdp_peek(uint16_t addr)
+static inline uint16_t md_vdp_peek(uint16_t addr)
 {
-	vdp_set_addr(addr);
-	return vdp_read();
+	md_vdp_set_addr(addr);
+	return md_vdp_read();
 }
 
 // HV Counter
-static inline uint16_t vdp_get_hv_count(void)
+static inline uint16_t md_vdp_get_hv_count(void)
 {
 	return VDPPORT_HVCOUNT;
 }
 
-static inline uint8_t vdp_get_h_count(void)
+static inline uint8_t md_vdp_get_h_count(void)
 {
 	return VDPPORT_HVCOUNT & 0x00FF;
 }
 
-static inline uint8_t vdp_get_v_count(void)
+static inline uint8_t md_vdp_get_v_count(void)
 {
 	return (VDPPORT_HVCOUNT) >> 8;
 }

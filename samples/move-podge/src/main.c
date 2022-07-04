@@ -1,12 +1,9 @@
-// md-toolchain example "move-podge" main.c
+// mdk example "move-podge" main.c
 // Damian Yerrick 2018, 2019
-// Michael Moffitt 2018
+// Michael Moffitt 2018-2022
 //
 // This main shows a character's walk cycle.
 
-// megadrive.h is an umbrella for all headers in src/md. Specific modules like
-// md/vdp.h do not need to be individually included. However, utility funcitons
-// are not included, as they are not core support functions.
 #include "md/megadrive.h"
 
 #include "util/text.h"
@@ -35,18 +32,18 @@ In web color format, these are the usable grays:
 
 #define PLAYER_CEL_ADDR 0x8000
 
-static unsigned int player_x;
-static signed short player_dx;
-static unsigned short player_frame;
-static unsigned short player_facing;
+static unsigned int s_player_x;
+static signed short s_player_dx;
+static unsigned short s_player_frame;
+static unsigned short s_player_facing;
 
-static unsigned short scroll;
+static unsigned short s_scroll;
 
 static void load_player(void)
 {
-	player_x = 64 << 8;
-	player_dx = player_frame = player_facing = 0;
-	dma_q_transfer_vram(PLAYER_CEL_ADDR, (void *)obj_PodgeH24_gfx_bin, 32*6*8/2, 2);
+	s_player_x = 64 << 8;
+	s_player_dx = s_player_frame = s_player_facing = 0;
+	md_dma_transfer_vram(PLAYER_CEL_ADDR, (void *)obj_PodgeH24_gfx_bin, 32*6*8/2, 2);
 	md_pal_upload(32, (void *)obj_PodgeH24_pal_bin, 16);
 }
 
@@ -54,80 +51,80 @@ static void move_player(void)
 {
 	unsigned short cur_keys = md_io_pad_read(0);
 	// Acceleration and braking while moving right
-	if (player_dx >= 0)
+	if (s_player_dx >= 0)
 	{
 		if (cur_keys & BTN_RIGHT)
 		{
-			player_dx += WALK_ACCEL;
-			if (player_dx > WALK_SPD) player_dx = WALK_SPD;
-			player_facing = 0;	// 0: R
+			s_player_dx += WALK_ACCEL;
+			if (s_player_dx > WALK_SPD) s_player_dx = WALK_SPD;
+			s_player_facing = 0;	// 0: R
 		}
 		else
 		{
-			player_dx -= WALK_BRAKE;
-			if (player_dx < 0) player_dx = 0;
+			s_player_dx -= WALK_BRAKE;
+			if (s_player_dx < 0) s_player_dx = 0;
 		}
 	}
 	
 	// Acceleration and braking while moving left
-	if (player_dx <= 0)
+	if (s_player_dx <= 0)
 	{
 		if (cur_keys & BTN_LEFT)
 		{
-			player_dx -= WALK_ACCEL;
-			if (player_dx < -WALK_SPD) player_dx = -WALK_SPD;
-			player_facing = 1;	// 1: L
+			s_player_dx -= WALK_ACCEL;
+			if (s_player_dx < -WALK_SPD) s_player_dx = -WALK_SPD;
+			s_player_facing = 1;	// 1: L
 		}
 		else
 		{
-			player_dx += WALK_BRAKE;
-			if (player_dx > 0) player_dx = 0;
+			s_player_dx += WALK_BRAKE;
+			if (s_player_dx > 0) s_player_dx = 0;
 		}
 	}
 
 	// In a real game you'd respond to C, B, Up, Down, etc. here
-	player_x += player_dx;
+	s_player_x += s_player_dx;
 	
 	// Test for collision with side walls
-	if (player_x < (LEFT_WALL + 4) << 8)
+	if (s_player_x < (LEFT_WALL + 4) << 8)
 	{
-		player_x = (LEFT_WALL + 4) << 8;
-		player_dx = 0;
+		s_player_x = (LEFT_WALL + 4) << 8;
+		s_player_dx = 0;
 	}
-	else if (player_x >= (RIGHT_WALL - 4) << 8)
+	else if (s_player_x >= (RIGHT_WALL - 4) << 8)
 	{
-		player_x = (RIGHT_WALL - 5) << 8;
-		player_dx = 0;
+		s_player_x = (RIGHT_WALL - 5) << 8;
+		s_player_dx = 0;
 	}
 	
 	// Animate the player
-	if (player_dx == 0)
+	if (s_player_dx == 0)
 	{
-		player_frame = 0xC0;
+		s_player_frame = 0xC0;
 	}
 	else
 	{
-		unsigned int absspeed = (player_dx < 0) ? -player_dx : player_dx;
-		player_frame += absspeed * 5 / 16;
+		unsigned int absspeed = (s_player_dx < 0) ? -s_player_dx : s_player_dx;
+		s_player_frame += absspeed * 5 / 16;
 
 		// Wrap from end of walk cycle (7) to start of walk cycle (1)
-		if (player_frame >= 0x800) player_frame -= 0x700;
+		if (s_player_frame >= 0x800) s_player_frame -= 0x700;
 	}
 }
 
 void draw_player_sprite(void)
 {
-	unsigned short framenum = player_frame >> 8;
+	unsigned short framenum = s_player_frame >> 8;
 	unsigned short tilenum = framenum * 6 + (PLAYER_CEL_ADDR>>5);
-	unsigned short player_hotspot_x = (player_x >> 8) - 8;
+	unsigned short player_hotspot_x = (s_player_x >> 8) - 8;
 
 	if (framenum == 7)
 	{
 		// This frame needs to be drawn 1 pixel forward
-		player_hotspot_x += player_facing ? -1 : 1;
+		player_hotspot_x += s_player_facing ? -1 : 1;
 	}
 
-	spr_put(player_hotspot_x, 168, SPR_ATTR(tilenum, player_facing, 0, 2, 0), SPR_SIZE(2, 3));
+	md_spr_put(player_hotspot_x, 168, SPR_ATTR(tilenum, s_player_facing, 0, 2, 0), SPR_SIZE(2, 3));
 }
 
 void draw_bg(void)
@@ -141,24 +138,24 @@ void draw_bg(void)
 	text_puts(VDP_PLANE_A, 7, 11, "MOVE PODGE WITH THE D-PAD");
 
 	// Draw the cubes
-	vdp_set_autoinc(2);
+	md_vdp_set_autoinc(2);
 	for (unsigned short y = 20; y < 24; ++y)
 	{
 		unsigned int dest_base = VRAM_SCRA_BASE_DEFAULT + y * 128 + 6;
-		SYS_BARRIER();
+		MD_SYS_BARRIER();
 		VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base);
-		SYS_BARRIER();
+		MD_SYS_BARRIER();
 		VDPPORT_DATA = 0x62 | (y & 1);
 		VDPPORT_DATA = 0x64 | (y & 1);
-		SYS_BARRIER();
+		MD_SYS_BARRIER();
 		VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base + 64);
-		SYS_BARRIER();
+		MD_SYS_BARRIER();
 		VDPPORT_DATA = 0x62 | (y & 1);
 		VDPPORT_DATA = 0x64 | (y & 1);
 	}
 
 	// Draw the floor
-	SYS_BARRIER();
+	MD_SYS_BARRIER();
 	unsigned int dest_base = VRAM_SCRA_BASE_DEFAULT + 24 * 128;
 	VDPPORT_CTRL32 = VDP_CTRL_VRAM_WRITE | VDP_CTRL_ADDR(dest_base);
 	for (unsigned i = 64; i > 0; --i)
@@ -171,9 +168,9 @@ void draw_bg(void)
 	}
 
 	// Transfer our scroll coordinate of 0 to VRAM and VSRAM for H and V scroll
-	scroll = 0;
-	dma_q_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &scroll, 1, 2);
-	dma_q_transfer_vsram(0, &scroll, 1, 2);
+	s_scroll = 0;
+	md_dma_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &s_scroll, 1, 2);
+	md_dma_transfer_vsram(0, &s_scroll, 1, 2);
 }
 
 void main(void)

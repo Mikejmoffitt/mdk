@@ -13,7 +13,7 @@ void text_init(const unsigned char *font_chr, uint16_t font_len,
 	s_font_pal_line = pal_line & 0x3;
 	if (font_chr)
 	{
-		dma_q_transfer_vram(s_font_vram_pos, (void *)font_chr, font_len/2, 2);
+		md_dma_transfer_vram(s_font_vram_pos, (void *)font_chr, font_len/2, 2);
 	}
 	s_font_vram_pos /= 32;  // convert to tile number
 	if (font_pal)
@@ -28,11 +28,11 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s)
 	{
 		return;
 	}
-	uint16_t dest_base = vdp_get_plane_base(plane);
-	uint8_t plane_size = vdp_get_reg(VDP_PLANESIZE);
+	uint16_t dest_base = md_vdp_get_plane_base(plane);
+	uint8_t plane_size = md_vdp_get_reg(VDP_PLANESIZE);
 	uint16_t line_inc = 64;
-	vdp_wait_dma();
-	vdp_set_autoinc(2);
+	md_vdp_wait_dma();
+	md_vdp_set_autoinc(2);
 	switch (plane_size)
 	{
 		default:
@@ -61,7 +61,7 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s)
 		if (*s == '\n')
 		{
 			y++;
-			dest_base = vdp_get_plane_base(plane);
+			dest_base = md_vdp_get_plane_base(plane);
 			dest_base += x * 2;
 			dest_base += y * line_inc;
 

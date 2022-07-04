@@ -31,69 +31,69 @@ void md_pal_poll(void)
 			break;
 
 		case 0x1:
-			dma_q_transfer_cram(0, &s_palette[0], 16, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 16, 2);
 			break;
 
 		case 0x2:
-			dma_q_transfer_cram(32, &s_palette[16], 16, 2);
+			md_dma_transfer_cram(32, &s_palette[16], 16, 2);
 			break;
 
 		case 0x3:
-			dma_q_transfer_cram(0, &s_palette[0], 32, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 32, 2);
 			break;
 
 		case 0x4:
-			dma_q_transfer_cram(64, &s_palette[32], 16, 2);
+			md_dma_transfer_cram(64, &s_palette[32], 16, 2);
 			break;
 
 		case 0x5:
-			dma_q_transfer_cram(0, &s_palette[0], 16, 2);
-			dma_q_transfer_cram(64, &s_palette[32], 16, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 16, 2);
+			md_dma_transfer_cram(64, &s_palette[32], 16, 2);
 			break;
 
 		case 0x6:
-			dma_q_transfer_cram(32, &s_palette[16], 16, 2);
-			dma_q_transfer_cram(64, &s_palette[32], 16, 2);
+			md_dma_transfer_cram(32, &s_palette[16], 16, 2);
+			md_dma_transfer_cram(64, &s_palette[32], 16, 2);
 			break;
 
 		case 0x7:
-			dma_q_transfer_cram(0, &s_palette[0], 48, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 48, 2);
 			break;
 
 		case 0x8:
-			dma_q_transfer_cram(96, &s_palette[48], 16, 2);
+			md_dma_transfer_cram(96, &s_palette[48], 16, 2);
 			break;
 
 		case 0x9:
-			dma_q_transfer_cram(96, &s_palette[48], 16, 2);
-			dma_q_transfer_cram(0, &s_palette[0], 16, 2);
+			md_dma_transfer_cram(96, &s_palette[48], 16, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 16, 2);
 			break;
 
 		case 0xA:
-			dma_q_transfer_cram(96, &s_palette[48], 16, 2);
-			dma_q_transfer_cram(32, &s_palette[16], 16, 2);
+			md_dma_transfer_cram(96, &s_palette[48], 16, 2);
+			md_dma_transfer_cram(32, &s_palette[16], 16, 2);
 			break;
 
 		case 0xB:
-			dma_q_transfer_cram(96, &s_palette[48], 16, 2);
-			dma_q_transfer_cram(0, &s_palette[0], 32, 2);
+			md_dma_transfer_cram(96, &s_palette[48], 16, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 32, 2);
 			break;
 
 		case 0xC:
-			dma_q_transfer_cram(64, &s_palette[48], 32, 2);
+			md_dma_transfer_cram(64, &s_palette[48], 32, 2);
 			break;
 
 		case 0xD:
-			dma_q_transfer_cram(64, &s_palette[48], 32, 2);
-			dma_q_transfer_cram(0, &s_palette[0], 16, 2);
+			md_dma_transfer_cram(64, &s_palette[48], 32, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 16, 2);
 			break;
 
 		case 0xE:
-			dma_q_transfer_cram(32, &s_palette[48], 48, 2);
+			md_dma_transfer_cram(32, &s_palette[48], 48, 2);
 			break;
 
 		case 0xF:
-			dma_q_transfer_cram(0, &s_palette[0], 64, 2);
+			md_dma_transfer_cram(0, &s_palette[0], 64, 2);
 			break;
 	}
 	s_dirty = 0;

@@ -1,0 +1,21 @@
+This is a blank project. To use it, you'll want to do the following:
+
+1) Copy the contents of blank-project to your own repo or directory for your project.
+
+2) Clone `mdk` as a submodule in your new repo:
+
+    $ git submodule add git@github.com:mikejmoffitt/mdk
+    $ cd mdk && git checkout master
+
+(it's also acceptable but not recommended to simply copy the `mdk` directory)
+
+3) Try building.
+
+    $ make
+
+From then on, if you want to update `mdk`, you just need to do the following:
+
+    $ git submodule update --remote --merge
+    $ git add mdk && git commit -m "Updated MDK."
+
+It is also acceptable to just download the latest and drop the `mdk` directory in.

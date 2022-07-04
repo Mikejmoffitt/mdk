@@ -30,16 +30,16 @@ typedef struct DmaCmd
 } DmaCmd;
 
 // DMA queue ring buffer.
-static volatile uint16_t s_dma_q_write_pos;
-static volatile uint16_t s_dma_q_read_pos;
+static volatile uint16_t s_md_dma_write_pos;
+static volatile uint16_t s_md_dma_read_pos;
 static DmaCmd s_dma_q[DMA_QUEUE_DEPTH];
 static uint16_t s_dma_spr_pos;
 static DmaCmd s_dma_spr_cmd[2];
 
-void dma_q_init(void)
+void md_dma_init(void)
 {
-	s_dma_q_read_pos = 0;
-	s_dma_q_write_pos = 0;
+	s_md_dma_read_pos = 0;
+	s_md_dma_write_pos = 0;
 	s_dma_spr_pos = 0;
 	s_dma_spr_cmd[0].op = DMA_OP_NONE;
 	s_dma_spr_cmd[1].op = DMA_OP_NONE;
@@ -50,9 +50,9 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
                                uint32_t src, uint16_t n, uint16_t stride)
 {
 	// Disable interrupts for this critical section.
-	const uint16_t ints_enabled = sys_get_ints_enabled();
-	sys_di();
-	SYS_BARRIER();
+	const uint16_t ints_enabled = md_sys_get_ints_enabled();
+	md_sys_di();
+	MD_SYS_BARRIER();
 
 	DmaCmd *cmd;
 	if (op == DMA_OP_SPR_TRANSFER)
@@ -63,9 +63,9 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 	}
 	else
 	{
-		cmd = &s_dma_q[s_dma_q_write_pos];
-		s_dma_q_write_pos = (s_dma_q_write_pos + 1) % DMA_QUEUE_DEPTH;
-		if (s_dma_q_write_pos == s_dma_q_read_pos) goto finish;
+		cmd = &s_dma_q[s_md_dma_write_pos];
+		s_md_dma_write_pos = (s_md_dma_write_pos + 1) % DMA_QUEUE_DEPTH;
+		if (s_md_dma_write_pos == s_md_dma_read_pos) goto finish;
 	}
 
 	cmd->op = op;
@@ -104,11 +104,11 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 
 finish:
 	// Re-enable ints if they were enabled before.
-	SYS_BARRIER();
-	if (ints_enabled) sys_ei();
+	MD_SYS_BARRIER();
+	if (ints_enabled) md_sys_ei();
 }
 
-static inline void dma_q_enqueue(DmaOp op, uint32_t bus, uint16_t dest,
+static inline void md_dma_enqueue(DmaOp op, uint32_t bus, uint16_t dest,
                                  uint32_t src, uint16_t n, uint16_t stride)
 {
 	if (op != DMA_OP_TRANSFER && op != DMA_OP_SPR_TRANSFER)
@@ -135,56 +135,56 @@ static inline void dma_q_enqueue(DmaOp op, uint32_t bus, uint16_t dest,
 
 
 // Schedule a DMA for next vblank from 68K mem to VRAM
-void dma_q_transfer_vram(uint16_t dest, const void *src, uint16_t words,
+void md_dma_transfer_vram(uint16_t dest, const void *src, uint16_t words,
                          uint16_t stride)
 {
-	dma_q_enqueue(DMA_OP_TRANSFER, VDP_CTRL_VRAM_WRITE,
+	md_dma_enqueue(DMA_OP_TRANSFER, VDP_CTRL_VRAM_WRITE,
 	              dest, (uint32_t )src, words, stride);
 }
 
-void dma_q_transfer_cram(uint16_t dest, const void *src, uint16_t words,
+void md_dma_transfer_cram(uint16_t dest, const void *src, uint16_t words,
                          uint16_t stride)
 {
-	dma_q_enqueue(DMA_OP_TRANSFER, VDP_CTRL_CRAM_WRITE,
+	md_dma_enqueue(DMA_OP_TRANSFER, VDP_CTRL_CRAM_WRITE,
 	              dest, (uint32_t )src, words, stride);
 }
 
-void dma_q_transfer_vsram(uint16_t dest, const void *src, uint16_t words,
+void md_dma_transfer_vsram(uint16_t dest, const void *src, uint16_t words,
                           uint16_t stride)
 {
-	dma_q_enqueue(DMA_OP_TRANSFER, VDP_CTRL_VSRAM_WRITE,
+	md_dma_enqueue(DMA_OP_TRANSFER, VDP_CTRL_VSRAM_WRITE,
 	              dest, (uint32_t )src, words, stride);
 }
 
-void dma_q_transfer_spr_vram(uint16_t dest, const void *src, uint16_t words,
+void md_dma_transfer_spr_vram(uint16_t dest, const void *src, uint16_t words,
                              uint16_t stride)
 {
-	dma_q_enqueue(DMA_OP_SPR_TRANSFER, VDP_CTRL_VRAM_WRITE,
+	md_dma_enqueue(DMA_OP_SPR_TRANSFER, VDP_CTRL_VRAM_WRITE,
 	              dest, (uint32_t )src, words, stride);
 }
 
 // Schedule a DMA for next vblank to fill specified bytes at dest with val.
-void dma_q_fill_vram(uint16_t dest, uint16_t val, uint16_t bytes, uint16_t stride)
+void md_dma_fill_vram(uint16_t dest, uint16_t val, uint16_t bytes, uint16_t stride)
 {
-	dma_q_enqueue(DMA_OP_FILL, VDP_CTRL_VRAM_WRITE, dest, val, bytes, stride);
+	md_dma_enqueue(DMA_OP_FILL, VDP_CTRL_VRAM_WRITE, dest, val, bytes, stride);
 }
 
 // Schedule a DMA for next vblank to copy specified bytes from VRAM src to VRAM dest.
-void dma_q_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stride)
+void md_dma_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stride)
 {
-	dma_q_enqueue(DMA_OP_COPY, VDP_CTRL_VRAM_WRITE, dest, src, bytes, stride);
+	md_dma_enqueue(DMA_OP_COPY, VDP_CTRL_VRAM_WRITE, dest, src, bytes, stride);
 }
 
 static inline void process_cmd(DmaCmd *cmd)
 {
-	SYS_BARRIER();
+	MD_SYS_BARRIER();
 
-	vdp_set_autoinc(cmd->stride);
-	vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
+	md_vdp_set_autoinc(cmd->stride);
+	md_vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 
-	vdp_set_reg(VDP_DMALEN1, cmd->len_1);
-	vdp_set_reg(VDP_DMALEN2, cmd->len_2);
-	SYS_BARRIER();
+	md_vdp_set_reg(VDP_DMALEN1, cmd->len_1);
+	md_vdp_set_reg(VDP_DMALEN2, cmd->len_2);
+	MD_SYS_BARRIER();
 
 	switch (cmd->op)
 	{
@@ -192,7 +192,7 @@ static inline void process_cmd(DmaCmd *cmd)
 			break;
 	
 		case DMA_OP_FILL:
-			vdp_set_reg(VDP_DMASRC3, cmd->src_3);
+			md_vdp_set_reg(VDP_DMASRC3, cmd->src_3);
 			VDPPORT_CTRL32 = cmd->ctrl;
 			VDPPORT_DATA = (cmd->src_1 << 8) | (cmd->src_1);
 			break;
@@ -200,29 +200,29 @@ static inline void process_cmd(DmaCmd *cmd)
 		case DMA_OP_SPR_TRANSFER:
 		case DMA_OP_TRANSFER:
 		case DMA_OP_COPY:
-			vdp_set_reg(VDP_DMASRC1, cmd->src_1);
-			vdp_set_reg(VDP_DMASRC2, cmd->src_2);
-			SYS_BARRIER();
-			vdp_set_reg(VDP_DMASRC3, cmd->src_3);
+			md_vdp_set_reg(VDP_DMASRC1, cmd->src_1);
+			md_vdp_set_reg(VDP_DMASRC2, cmd->src_2);
+			MD_SYS_BARRIER();
+			md_vdp_set_reg(VDP_DMASRC3, cmd->src_3);
 			VDPPORT_CTRL32 = cmd->ctrl;
 			break;
 	}
 
-	SYS_BARRIER();
-	vdp_wait_dma();
-	SYS_BARRIER();
-	vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
+	MD_SYS_BARRIER();
+	md_vdp_wait_dma();
+	MD_SYS_BARRIER();
+	md_vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
 }
 
-void dma_q_process(void)
+void md_dma_process(void)
 {
-	vdp_wait_dma();
-	SYS_BARRIER();
+	md_vdp_wait_dma();
+	MD_SYS_BARRIER();
 
-	const uint16_t ints_enabled = sys_get_ints_enabled();
-	sys_di();
-	sys_z80_bus_req();
-	SYS_BARRIER();
+	const uint16_t ints_enabled = md_sys_get_ints_enabled();
+	md_sys_di();
+	md_sys_z80_bus_req();
+	MD_SYS_BARRIER();
 
 	// Process single high-priority slot first.
 	if (s_dma_spr_cmd[0].op == DMA_OP_SPR_TRANSFER)
@@ -240,14 +240,14 @@ void dma_q_process(void)
 
 
 	// Process all queued tranfers.
-	while (s_dma_q_read_pos != s_dma_q_write_pos)
+	while (s_md_dma_read_pos != s_md_dma_write_pos)
 	{
-		DmaCmd *cmd = &s_dma_q[s_dma_q_read_pos];
-		s_dma_q_read_pos = (s_dma_q_read_pos + 1) % DMA_QUEUE_DEPTH;
+		DmaCmd *cmd = &s_dma_q[s_md_dma_read_pos];
+		s_md_dma_read_pos = (s_md_dma_read_pos + 1) % DMA_QUEUE_DEPTH;
 		process_cmd(cmd);
 	}
 
-	SYS_BARRIER();
-	sys_z80_bus_release();
-	if (ints_enabled) sys_ei();
+	MD_SYS_BARRIER();
+	md_sys_z80_bus_release();
+	if (ints_enabled) md_sys_ei();
 }

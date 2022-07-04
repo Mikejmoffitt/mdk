@@ -26,33 +26,33 @@ extern SprSlot *g_sprite_next; // Points to the next open sprite slot.
 extern uint8_t g_sprite_count;
 
 // Clears sprites and initialize g_sprite_next.
-static inline void spr_init(void);
+static inline void md_spr_init(void);
 
 // Place a sprite using screen position coordinates.
-static inline void spr_put(int16_t x, int16_t y, uint16_t attr, uint8_t size);
+static inline void md_spr_put(int16_t x, int16_t y, uint16_t attr, uint8_t size);
 
 // Masks off any sprites on scanlines that span between y and the height.
-static inline void spr_mask_line_full(int16_t y, uint8_t size);
+static inline void md_spr_mask_line_full(int16_t y, uint8_t size);
 
 // Masks off any sprites on scanlines that intersect two sprite positions.
-static inline void spr_mask_line_comb(int16_t y1, uint8_t size1,
+static inline void md_spr_mask_line_comb(int16_t y1, uint8_t size1,
                                       int16_t y2, uint8_t size2);
 
 // Internal Use ---------------------------------------------------------------
 
 // Terminate the sprite list and schedule a DMA. Called by megadrive_finish().
-void spr_finish(void);
+void md_spr_finish(void);
 
 // Static implementations =====================================================
 
-static inline void spr_init(void)
+static inline void md_spr_init(void)
 {
 	g_sprite_table[0].ypos = 0;
 	g_sprite_count = 0;
-	spr_finish();
+	md_spr_finish();
 }
 
-static inline void spr_put(int16_t x, int16_t y, uint16_t attr, uint8_t size)
+static inline void md_spr_put(int16_t x, int16_t y, uint16_t attr, uint8_t size)
 {
 	if (g_sprite_count >= SPR_MAX) return;
 	if (x <= -32 || x >= 320) return;
@@ -65,7 +65,7 @@ static inline void spr_put(int16_t x, int16_t y, uint16_t attr, uint8_t size)
 }
 
 // Masks off any later sprites within a scanline.
-static inline void spr_mask_line_full(int16_t y, uint8_t size)
+static inline void md_spr_mask_line_full(int16_t y, uint8_t size)
 {
 	if (g_sprite_count >= SPR_MAX) return;
 	SprSlot *spr = &g_sprite_table[g_sprite_count];
@@ -75,7 +75,7 @@ static inline void spr_mask_line_full(int16_t y, uint8_t size)
 	spr->xpos = 0;
 }
 
-static inline void spr_mask_line_overlap(int16_t y1, uint8_t size1,
+static inline void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
                                          int16_t y2, uint8_t size2)
 {
 	if (g_sprite_count >= SPR_MAX - 1) return;

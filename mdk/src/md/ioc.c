@@ -1,40 +1,40 @@
-#include "md/io_systemc.h"
+#include "md/ioc.h"
 #include "md/mmio.h"
 
 static uint8_t s_io_reg_cache[8];
 
 // Read register data directly from Port A - Port H (0 - 7).
 // Reading from registers intended for output isn't recommended.
-uint8_t io_systemc_read_reg_raw(SysCIoPort port)
+uint8_t md_ioc_read_reg_raw(MdIoCIoPort port)
 {
 	volatile uint8_t *reg_porta = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTA);
 	return reg_porta[port << 1];
 }
 
-// Reading inputs. Data is copied at start of vblank with io_systemc_poll().
-SysCPlayerInput io_systemc_get_player_input(int16_t player)
+// Reading inputs. Data is copied at start of vblank with md_ioc_poll().
+MdIoCPlayerInput md_ioc_get_player_input(int16_t player)
 {
 	player &= 0x0001;
 	return s_io_reg_cache[SYSC_IO_PORT_A + player];
 }
 
-SysCMiscInput io_systemc_get_misc_input(void)
+MdIoCMiscInput md_ioc_get_misc_input(void)
 {
 	return s_io_reg_cache[SYSC_IO_PORT_C];
 }
 
-SysCSystemInput io_systemc_get_system_input(void)
+MdIoCSystemInput md_ioc_get_system_input(void)
 {
 	return s_io_reg_cache[SYSC_IO_PORT_E];
 }
 
-SysCDipInput io_systemc_get_dip_input(int16_t sw)
+MdIoCDipInput md_ioc_get_dip_input(int16_t sw)
 {
 	sw &= 0x0001;
 	return s_io_reg_cache[SYSC_IO_PORT_F + sw];
 }
 
-void io_systemc_set_watchdog_ctrl(int16_t jp15_pin3)
+void md_ioc_set_watchdog_ctrl(int16_t jp15_pin3)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x80;
@@ -42,7 +42,7 @@ void io_systemc_set_watchdog_ctrl(int16_t jp15_pin3)
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 }
 
-void io_systemc_set_tda1518bq_mute(int16_t mute)
+void md_ioc_set_tda1518bq_mute(int16_t mute)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x40;
@@ -50,7 +50,7 @@ void io_systemc_set_tda1518bq_mute(int16_t mute)
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 }
 
-void io_systemc_set_cn2_bits(int16_t pin10, int16_t pin11)
+void md_ioc_set_cn2_bits(int16_t pin10, int16_t pin11)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x30;
@@ -58,7 +58,7 @@ void io_systemc_set_cn2_bits(int16_t pin10, int16_t pin11)
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 }
 
-void io_systemc_set_coin_outputs(int16_t lockout1, int16_t lockout2,
+void md_ioc_set_coin_outputs(int16_t lockout1, int16_t lockout2,
                                  int16_t meter1, int16_t meter2)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
@@ -71,7 +71,7 @@ void io_systemc_set_coin_outputs(int16_t lockout1, int16_t lockout2,
 }
 
 // Set two bits corresponding to CN4 outputs A19 and B19.
-void io_systemc_set_cn4_bits(int16_t a19, int16_t b19)
+void md_ioc_set_cn4_bits(int16_t a19, int16_t b19)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0xC0;
@@ -83,7 +83,7 @@ void io_systemc_set_cn4_bits(int16_t a19, int16_t b19)
 // Set upper address pins for uPD7759 sample ROM A17-A18.
 // Upper bits theorized to exist via Charles McDonald's doc, unconfirmed.
 // Banks 0-3 valid; possibly up to 0xF.
-void io_systemc_set_udp7759_bank(uint16_t bank)
+void md_ioc_set_udp7759_bank(uint16_t bank)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x3C;
@@ -92,7 +92,7 @@ void io_systemc_set_udp7759_bank(uint16_t bank)
 }
 
 // Set palette bank 0-3 through bits A9 and A10 of CRAM.
-void io_systemc_set_pal_bank(uint16_t bank)
+void md_ioc_set_pal_bank(uint16_t bank)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x03;
@@ -102,7 +102,7 @@ void io_systemc_set_pal_bank(uint16_t bank)
 
 // Internal Use ---------------------------------------------------------------
 
-void io_systemc_init(void)
+void md_ioc_init(void)
 {
 	for (int16_t i = 0; i < 8; i++)
 	{
@@ -115,7 +115,7 @@ void io_systemc_init(void)
 }
 
 // Poll controller inputs.
-void io_systemc_poll(void)
+void md_ioc_poll(void)
 {	// Read inputs.
 	volatile uint8_t *reg_porta = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTA);
 	volatile uint8_t *reg_portb = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTB);

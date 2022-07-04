@@ -26,7 +26,7 @@ struct Chord
 // period_value = 111860.8/frequency
 // frequency = 111860.8/period_value
 
-static const struct Chord saygah[] =
+static const struct Chord s_sega_chords[] =
 {
 	// E flat, B flat, G, half a second
 	{{(111860.8/155.5635), (111860.8/233.0819), (111860.8/391.9954)}, 50},
@@ -47,30 +47,30 @@ void main(void)
 	text_puts(VDP_PLANE_A, 15, 11, "PSG Chords");
 
 	// Play a sequence of chords
-	for (const struct Chord *playpos = saygah;
+	for (const struct Chord *playpos = s_sega_chords;
 	     playpos->duration > 0;
-	     ++playpos)
+	     playpos++)
 	{
 		// Set pitch
-		for (unsigned int ch = 0; ch < 3; ++ch)
+		for (unsigned int ch = 0; ch < 3; ch++)
 		{
-			psg_pitch(ch, playpos->period[ch]);
+			md_psg_pitch(ch, playpos->period[ch]);
 		}
 		
 		// Fade volume
-		for (unsigned int t = 0; t < playpos->duration; ++t)
+		for (unsigned int t = 0; t < playpos->duration; t++)
 		{
-			for (unsigned int ch = 0; ch < 3; ++ch)
+			for (unsigned int ch = 0; ch < 3; ch++)
 			{
-				psg_vol(ch, t >> 2);
+				md_psg_vol(ch, t >> 2);
 			}
 			megadrive_finish();  // Wait for next frame
 		}
 	}
 
-	for (unsigned int ch = 0; ch < 3; ++ch)
+	for (unsigned int ch = 0; ch < 3; ch++)
 	{
-		psg_vol(ch, 15);
+		md_psg_vol(ch, 15);
 	}
 
 	while (1)

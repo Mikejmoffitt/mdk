@@ -13,7 +13,7 @@ static inline void rand_step(void)
 
 void srand(uint16_t seed)
 {
-	if (seed == 0) seed = vdp_get_hv_count();
+	if (seed == 0) seed = md_vdp_get_hv_count();
 	s_rand_value = seed;
 }
 

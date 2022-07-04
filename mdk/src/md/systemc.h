@@ -7,10 +7,10 @@
 
 #include "md/vdp.h"   // VDP control: all things graphics and some more
 #include "md/sys.h"   // System control: interrupts, sub-CPU control
-#include "md/io_systemc.h"    // Controller port I/O
+#include "md/ioc.h"   // Controller port I/O (System C)
 #include "md/spr.h"   // Sprite support
 #include "md/dma.h"   // DMA control and scheduling
-#include "md/pal_systemc.h"   // Palette read/write via ports or DMA
+#include "md/palc.h"  // Palette read/write via ports or DMA
 #include "md/opn.h"   // YM2610 FM sound chip
 #include "md/psg.h"   // SN76489-compatible PSG sound chip
 #include "md/sram.h"  // Support for battery-backed SRAM
@@ -18,11 +18,11 @@
 // Run after completing the logic in one game tick loop.
 static inline void systemc_finish(void)
 {
-	spr_finish();
-	pal_systemc_poll();
-	vdp_wait_vblank();
-	io_systemc_poll();
-	dma_q_process();
+	md_spr_finish();
+	md_palc_poll();
+	md_vdp_wait_vblank();
+	md_ioc_poll();
+	md_dma_process();
 }
 
 // Internal use ---------------------------------------------------------------

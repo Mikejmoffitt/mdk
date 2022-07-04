@@ -1,5 +1,5 @@
-/* md-toolchain header, interrupts, and C runtime startup
-Michael Moffitt 2021 */
+/* mdk header, interrupts, and C runtime startup
+Michael Moffitt 2018-2022 */
 
 	.section	.text.keepboot
 

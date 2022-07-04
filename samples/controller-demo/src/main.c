@@ -17,8 +17,8 @@ void scroll_movement(void)
 	if (md_io_pad_read(0) & BTN_DOWN) ys--;
 	else if (md_io_pad_read(0) & BTN_UP) ys++;
 
-	dma_q_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &xs, 1, 2);
-	dma_q_transfer_vsram(0, &ys, 1, 2);
+	md_dma_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &xs, 1, 2);
+	md_dma_transfer_vsram(0, &ys, 1, 2);
 }
 
 void btn_draw(void)
@@ -51,14 +51,14 @@ void btn_draw(void)
 
 		uint16_t plot_x = 8;
 		const uint16_t plot_y = 32 + (j * 8);
-		spr_put(plot_x, plot_y, SPR_ATTR(j == 0 ? '1' : '2', 0, 0, 0, 0), SPR_SIZE(1, 1));
+		md_spr_put(plot_x, plot_y, SPR_ATTR(j == 0 ? '1' : '2', 0, 0, 0, 0), SPR_SIZE(1, 1));
 		plot_x += 16;
 		if (buttons & MD_PAD_UNPLUGGED)
 		{
 			const char msg[] = "No Controller";
 			for (uint16_t i = 0; i < sizeof(msg); i++)
 			{
-				spr_put(plot_x, plot_y, SPR_ATTR(msg[i], 0, 0, 0, 0), SPR_SIZE(1, 1));
+				md_spr_put(plot_x, plot_y, SPR_ATTR(msg[i], 0, 0, 0, 0), SPR_SIZE(1, 1));
 				plot_x += 8;
 			}
 			continue;
@@ -67,7 +67,7 @@ void btn_draw(void)
 		{
 			const char chara = (buttons & button_meta[i].mask) ?
 			                   button_meta[i].chara : '.';
-			spr_put(plot_x, plot_y, SPR_ATTR(chara, 0, 0, 0, 0), SPR_SIZE(1, 1));
+			md_spr_put(plot_x, plot_y, SPR_ATTR(chara, 0, 0, 0, 0), SPR_SIZE(1, 1));
 			plot_x += 8;
 		}
 	}

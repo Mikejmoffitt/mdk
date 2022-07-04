@@ -1,5 +1,5 @@
-/* md-toolchain YM2612 support functions
-Michael Moffitt 2018-2020 */
+/* mdk YM2612 support functions
+Michael Moffitt 2018-2022 */
 #ifndef MD_OPN_H
 #define MD_OPN_H
 
@@ -10,7 +10,7 @@ Michael Moffitt 2018-2020 */
 
 #define OPN_WAIT while (OPN_PORT_ADDR0 & 0x80) { continue; }
 
-static inline void opn_write(uint8_t part, uint8_t addr, uint8_t data)
+static inline void md_opn_write(uint8_t part, uint8_t addr, uint8_t data)
 {
 	if (part)
 	{

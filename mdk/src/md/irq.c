@@ -14,8 +14,8 @@ void *g_irq_v_func = NULL;
 // pre-existing handler.
 void md_irq_register(MdIrqType type, void *function_ptr)
 {
-	const uint16_t ints_were_enabled = sys_get_ints_enabled();
-	sys_di();
+	const uint16_t ints_were_enabled = md_sys_get_ints_enabled();
+	md_sys_di();
 	switch (type)
 	{
 		default:
@@ -31,7 +31,7 @@ void md_irq_register(MdIrqType type, void *function_ptr)
 			break;
 	}
 
-	if (ints_were_enabled) sys_ei();
+	if (ints_were_enabled) md_sys_ei();
 }
 
 void md_irq_register_unsafe(MdIrqType type, void *function_ptr)

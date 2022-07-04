@@ -164,10 +164,10 @@ DMA is the only efficient way to do this. However, timing a DMA can
 be complicated, as it not only ties up the CPU bus, but faces VRAM
 contention during the active display region.
 
-DMA transfers are registered with calls to the DMA queue functions, and that list is processed during vertical blank (from `dma_q_process()`).
+DMA transfers are registered with calls to the DMA queue functions, and that list is processed during vertical blank (from `md_dma_process()`).
 A single high-priority slot exists for the sake of the sprite table, which will be checked and transferred before any others.
 
-If you really want a DMA to occur immediately, you may call `dma_q_process()` right after queueing a transfer.
+If you really want a DMA to occur immediately, you may call `md_dma_process()` right after queueing a transfer.
 
 Palettes
 --------
@@ -190,14 +190,14 @@ Sprites
 -------
 `spr.h` houses sprite placement functions. The sprite table is
 exposed under a global symbol `g_sprite_table`, but sprite placement
-is easy using the `spr_put()` inline function.  Sprites are placed into
+is easy using the `md_spr_put()` inline function.  Sprites are placed into
 a buffer in main memory with this function.  Once a frame's
-calculation is finished, `spr_finish()` will terminate the sprite list
+calculation is finished, `md_spr_finish()` will terminate the sprite list
 properly, and schedule a DMA transfer of the sprite table to VRAM.
 
-`spr_mask_line_full` will insert a "magic sprite" that masks off any other sprites appearing on the specified scanline.
+`md_spr_mask_line_full` will insert a "magic sprite" that masks off any other sprites appearing on the specified scanline.
 
-`spr_finish()` is called by `megadrive_finish()`, so if you are using that, you do not need to worry about it.
+`md_spr_finish()` is called by `megadrive_finish()`, so if you are using that, you do not need to worry about it.
 
 System
 ------
@@ -220,7 +220,7 @@ Interrupts and Exceptions
 
 They are called safely from an interrupt context, with register clobber protection.
 
-If you are a geek and wrote an interrupt handler in assembly, and know how to safely treat registers, you may call `m_irq_register_unsafe()` instead.
+If you are a geek and wrote an interrupt handler in assembly, and know how to safely treat registers, you may call `md_irq_register_unsafe()` instead.
 
 The vertical blank ISR clears a flag related to frame timing, and then calls the callback if it is there. Registering a callback will not interfere with normal operation.
 
@@ -261,6 +261,8 @@ The following sizes will also be defined:
 extern const uint32_t res_foo_bin_size;
 extern const uint32_t res_bar_baz_bin_size;
 ```
+
+If you wish to generate files using other tools that will then be placed in `res/`, you can declare them as external dependencies.
 
 Hardware Testing
 ================

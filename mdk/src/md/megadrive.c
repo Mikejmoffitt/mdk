@@ -8,15 +8,15 @@ Michael Moffitt */
 
 void megadrive_init(void)
 {
-	sys_di();
-	sys_init();
-	vdp_init();
-	dma_q_init();
+	md_sys_di();
+	md_sys_init();
+	md_vdp_init();
+	md_dma_init();
 	md_io_init();
-	spr_init();
-	dma_q_fill_vram(0, 0, 32768, 2);
-	dma_q_fill_vram(1, 0, 32768, 2);
-	dma_q_process();
-	vdp_set_display_en(1);
-	sys_ei();
+	md_spr_init();
+	md_dma_fill_vram(0, 0, 32768, 2);
+	md_dma_fill_vram(1, 0, 32768, 2);
+	md_dma_process();
+	md_vdp_set_display_en(1);
+	md_sys_ei();
 }

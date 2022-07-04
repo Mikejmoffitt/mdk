@@ -35,27 +35,27 @@ Michael Moffitt 2018-2020 */
 #define PSG_PORT *(volatile uint8_t *)0xC00011
 
 // Megadrive PSG functions
-static inline void psg_vol(uint8_t chan, uint8_t vol);
-static inline void psg_pitch(uint8_t chan, uint16_t pitch);
-static inline void psg_tone(uint8_t chan, uint8_t vol, uint16_t pitch);
-static inline void psg_note(uint8_t chan, uint8_t note, uint8_t octave);
+static inline void md_psg_vol(uint8_t chan, uint8_t vol);
+static inline void md_psg_pitch(uint8_t chan, uint16_t pitch);
+static inline void md_psg_tone(uint8_t chan, uint8_t vol, uint16_t pitch);
+static inline void md_psg_note(uint8_t chan, uint8_t note, uint8_t octave);
 
 
-static inline void psg_vol(uint8_t chan, uint8_t vol)
+static inline void md_psg_vol(uint8_t chan, uint8_t vol)
 {
 	PSG_PORT = 0x90 | ((chan & 0x03) << 5) | (vol & 0x0F);
 }
 
-static inline void psg_pitch(uint8_t chan, uint16_t pitch)
+static inline void md_psg_pitch(uint8_t chan, uint16_t pitch)
 {
 	PSG_PORT = 0x80 | ((chan & 0x03) << 5) | (pitch & 0x0F);
 	PSG_PORT = (pitch >> 4) & 0x3F;
 }
 
-static inline void psg_tone(uint8_t chan, uint8_t vol, uint16_t pitch)
+static inline void md_psg_tone(uint8_t chan, uint8_t vol, uint16_t pitch)
 {	
-	psg_pitch(chan,pitch);
-	psg_vol(chan,vol);
+	md_psg_pitch(chan,pitch);
+	md_psg_vol(chan,vol);
 }
 
 static inline uint32_t note_lookup(uint8_t note)
@@ -90,12 +90,12 @@ static inline uint32_t note_lookup(uint8_t note)
 	return PSG_BASE_C;
 }
 
-static inline void psg_note(uint8_t chan, uint8_t note, uint8_t octave)
+static inline void md_psg_note(uint8_t chan, uint8_t note, uint8_t octave)
 {
 	uint32_t base = note_lookup(note);
 	base = base << 1;
 	base = base >> octave;
-	psg_pitch(chan,base);
+	md_psg_pitch(chan,base);
 }
 
 #endif  // MD_PAL_H

@@ -6,7 +6,7 @@ SprSlot g_sprite_table[SPR_MAX];
 SprSlot *g_sprite_next; // Points to the next open sprite slot.
 uint8_t g_sprite_count;
 
-void spr_finish(void)
+void md_spr_finish(void)
 {
 	if (g_sprite_count > 0)
 	{
@@ -24,6 +24,6 @@ void spr_finish(void)
 	g_sprite_count = 0;
 	g_sprite_next = &g_sprite_table[0];
 
-	dma_q_transfer_spr_vram(vdp_get_sprite_base(), (void *)g_sprite_table,
-	                        sizeof(SprSlot) * sprite_count_for_dma / 2, 2);
+	md_dma_transfer_spr_vram(md_vdp_get_sprite_base(), (void *)g_sprite_table,
+	                         sizeof(SprSlot) * sprite_count_for_dma / 2, 2);
 }

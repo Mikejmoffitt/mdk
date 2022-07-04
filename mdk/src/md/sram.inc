@@ -1,4 +1,4 @@
-/* md-toolchain SRAM routiness
+/* mdk SRAM routiness
 Michael Moffitt 2020
 
 Thanks to Chilly Willy and Steophane Dallongeville for extant reference code.
@@ -8,8 +8,8 @@ Thanks to Chilly Willy and Steophane Dallongeville for extant reference code.
 	.equ	SRAM_BASE, 0x200001
 	.equ	SRAM_CTRL, 0xA130F1
 
-	.globl	sram_write
-sram_write:
+	.globl	md_sram_write
+md_sram_write:
 	/* Enable SRAM for writing. */
 	move.b	#0x01, (SRAM_CTRL).l
 
@@ -37,8 +37,8 @@ sram_write:
 /* Copies n bytes from 68000 memory space src_addr to dest_offset within SRAM. */
 
 /* Copies n bytes from src_offset in SRAM to dest_addr in 68000 memory space. */
-	.globl	sram_read
-sram_read:
+	.globl	md_sram_read
+md_sram_read:
 	/* Enable SRAM (read-only). */
 	move.b	#0x03, (SRAM_CTRL).l
 
@@ -63,8 +63,8 @@ sram_read:
 	move.b	#0x00, (SRAM_CTRL).l
 	rts
 
-	.globl	sram_set
-sram_set:
+	.globl	md_sram_set
+md_sram_set:
 	/* Enable SRAM. */
 	move.b	#0x01, (SRAM_CTRL).l
 

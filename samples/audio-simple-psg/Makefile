@@ -12,9 +12,6 @@ SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
 SOURCES_ASM := $(shell find $(SRCDIR)/ -type f -name '*.s')
 RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*')
 
-# Compiler flags.
-CFLAGS := -I$(SRCDIR) -I$(OBJDIR) -I$(MDKSRCDIR)
-
 include $(MDKROOT)/md-rules.mk
 
 # Any additional build targets may go here.

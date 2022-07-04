@@ -19,11 +19,11 @@
 // Run after completing the logic in one game tick loop.
 static inline void megadrive_finish(void)
 {
-	spr_finish();
+	md_spr_finish();
 	md_pal_poll();
-	vdp_wait_vblank();
+	md_vdp_wait_vblank();
 	md_io_poll();
-	dma_q_process();
+	md_dma_process();
 }
 
 // Internal use ---------------------------------------------------------------
