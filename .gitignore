@@ -13,4 +13,4 @@ mdk/util/bin2s
 mdk/util/bin2h
 mdk/util/binpad
 mdk/util/pngto
-mdk/util/blastem64-0.5.1/*
+mdk/util/blastem64-0.6.2/*
