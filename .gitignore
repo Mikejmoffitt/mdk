@@ -8,7 +8,9 @@
 */obj/*.o
 */obj/*.o.s
 *.swp
-util/megaloader
-util/bin2s
-util/pngto
-util/blastem64-0.5.1/*
+mdk/util/megaloader
+mdk/util/bin2s
+mdk/util/bin2h
+mdk/util/binpad
+mdk/util/pngto
+mdk/util/blastem64-0.5.1/*
