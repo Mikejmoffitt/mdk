@@ -5,7 +5,6 @@ This is a blank project. To use it, you'll want to do the following:
 2) Clone `mdk` as a submodule in your new repo:
 
     $ git submodule add git@github.com:mikejmoffitt/mdk
-    $ cd mdk && git checkout master
 
 (it's also acceptable but not recommended to simply copy the `mdk` directory)
 

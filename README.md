@@ -47,7 +47,14 @@ If you are starting a fresh project, I'd suggest cloning this repro as a submodu
 
 ```
     $ git submodule add git@github.com:mikejmoffitt/mdk mdk
-    $ git commit -m "Added MDK submodule."
+    $ git add mdk && git commit -m "Added MDK submodule."
+```
+
+You can periodically update MDK with the following command:
+
+```
+    $ git submodule update --remote --merge
+    $ git add mdk && git commit -m "Updated MDK submodule."
 ```
 
 Makefile
