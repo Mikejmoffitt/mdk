@@ -38,7 +38,6 @@ void md_vdp_init(void)
 #else
 	md_vdp_set_reg(VDP_MODESET4, VDP_MODESET4_SYSC_DISP_EN |
                                  VDP_MODESET4_EXT_CBUS_EN |
-                                 VDP_MODESET4_SHI_EN |
                                  VDP_MODESET4_HMODE_RS0);
 #endif
 
