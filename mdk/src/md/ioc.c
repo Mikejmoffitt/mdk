@@ -104,6 +104,8 @@ void md_ioc_set_pal_bank(uint16_t bank)
 
 void md_ioc_init(void)
 {
+	volatile uint8_t *reg_ctrl3 = (volatile uint8_t *)(SYSC_IO_LOC_CTRL3);
+	*reg_ctrl3 = 0x88;  // Configure ports D and H as outputs.
 	for (int16_t i = 0; i < 8; i++)
 	{
 		s_io_reg_cache[i] = 0x00;
