@@ -1,30 +1,88 @@
-/* mdk palette support functions
-Michael Moffitt 2018 */
+/* mdk palette support functions for MD
+Michael Moffitt 2018-2022 */
+
 #include "md/pal.h"
 #include "md/dma.h"
+#include "md/macro.h"
 
+#ifndef MDK_TARGET_C2
 static uint16_t s_palette[64];
-static uint16_t s_dirty = 0xF;
+static uint16_t s_dirty = 0x000F;
+#else
+static uint16_t s_palette[256];
+static uint16_t s_dirty = 0xFFFF;
+static uint16_t s_initialized = 0;
+#endif  // MDK_TARGET_C2
 
 void md_pal_set(uint8_t idx, uint16_t val)
 {
-	s_palette[idx % 64] = val;
+	s_palette[idx % ARRAYSIZE(s_palette)] = val;
 }
 
-void md_pal_upload(uint8_t dest, const void *source, uint8_t len)
+void md_pal_upload(uint16_t dest, const void *source, uint16_t count)
 {
-	if (dest >= 64) return;
-	const uint16_t pal_line = (dest >> 4) % 4;
+	const uint16_t pal_line = (dest >> 4) % (ARRAYSIZE(s_palette) / 16);
 	s_dirty |= (1 << pal_line);
+
 	const uint16_t *source_16 = (const uint16_t *)source;
-	for (int16_t i = 0; i < len; i++)
+#ifdef MD_PAL_STANDARD_COPY_LOOP
+	for (uint16_t i = 0; i < len; i++)
 	{
 		s_palette[dest++] = *source_16++;
 	}
+#else
+	// TODO: Profile this duff's device against a standard copy loop.
+	// Let's make sure it's not just a code boondoggle! It is 2022
+	uint16_t n = (count + 15) / 16;
+	switch (count % 16)
+	{
+		case 0:
+			do
+			{
+				s_palette[dest++] = *source_16++;
+		case 15:
+				s_palette[dest++] = *source_16++;
+		case 14:
+				s_palette[dest++] = *source_16++;
+		case 13:
+				s_palette[dest++] = *source_16++;
+		case 12:
+				s_palette[dest++] = *source_16++;
+		case 11:
+				s_palette[dest++] = *source_16++;
+		case 10:
+				s_palette[dest++] = *source_16++;
+		case 9:
+				s_palette[dest++] = *source_16++;
+		case 8:
+				s_palette[dest++] = *source_16++;
+		case 7:
+				s_palette[dest++] = *source_16++;
+		case 6:
+				s_palette[dest++] = *source_16++;
+		case 5:
+				s_palette[dest++] = *source_16++;
+		case 4:
+				s_palette[dest++] = *source_16++;
+		case 3:
+				s_palette[dest++] = *source_16++;
+		case 2:
+				s_palette[dest++] = *source_16++;
+		case 1:
+				s_palette[dest++] = *source_16++;
+			} while (--n > 0);
+	}
+#endif  // MD_PAL_STANDARD_COPY_LOOP
 }
+#ifndef MDK_TARGET_C2
 
+// =============================================================================
+// Megadrive implementation, using DMA
+// =============================================================================
 void md_pal_poll(void)
 {
+	// The s_dirty bitfield is broken down case by case here because
+	// consecutive palette lines can be uploaded in one DMA transfer.
 	switch (s_dirty)
 	{
 		case 0x0:
@@ -99,7 +157,47 @@ void md_pal_poll(void)
 	s_dirty = 0;
 }
 
-#undef PAL_DIRTY_0
-#undef PAL_DIRTY_1
-#undef PAL_DIRTY_2
-#undef PAL_DIRTY_3
+#else
+
+// =============================================================================
+// System C/C2 implementation, as a memory copy into color RAM
+// =============================================================================
+
+void md_pal_poll(void)
+{
+	uint16_t test_bit = 0x0001;
+	uint16_t source_idx_l = 0;
+	volatile uint16_t *cram = (volatile uint16_t *)CRAM_SYSTEMC_LOC_BASE;
+	for (uint16_t i = 0; i < ARRAYSIZE(s_palette / 16); i++)
+	{
+		// TODO: Consider asm here - wouldn't this be so much nicer if we just
+		// cleared the relevant bit and checked the Z flag?
+		if (s_dirty & test_bit)
+		{
+			// Copy a whole palette line as 32-bit ints because
+			// 1) It is guaranteed on 68000 that the palette, made of 16-bit
+			//    words, is word-aligned (otherwise a uint16_t * would not work)
+			// 2) 32-bit accesses on 16-bit alignment is absolutely okay
+			// 3) It is a wee bit faster (skip every other instruction fetch)
+			volatile uint32_t *cram32 = (volatile uint32_t *)CRAM_SYSTEMC_LOC_BASE;
+			volatile uint32_t *src32 = (uint32_t *)s_palette;
+			cram32 += source_idx_l;
+			src32 += source_idx_l;
+			*cram32++ = *src32++;
+			*cram32++ = *src32++;
+			*cram32++ = *src32++;
+			*cram32++ = *src32++;
+			*cram32++ = *src32++;
+			*cram32++ = *src32++;
+			*cram32++ = *src32++;
+			*cram32++ = *src32++;
+		}
+		test_bit = test_bit << 1;
+		source_idx_l += 128;
+	}
+	s_dirty = 0;
+}
+
+
+
+#endif  // MD_TARGET_C2

@@ -5,6 +5,7 @@
 #ifndef MD_MEGADRIVE_H
 #define MD_MEGADRIVE_H
 
+#include "md/macro.h" // Helpful macros.
 #include "md/vdp.h"   // VDP control: all things graphics and some more
 #include "md/sys.h"   // System control: interrupts, sub-CPU control
 #include "md/io.h"    // Controller port I/O
@@ -22,7 +23,11 @@ static inline void megadrive_finish(void)
 	md_spr_finish();
 	md_pal_poll();
 	md_vdp_wait_vblank();
+#ifndef MD_TARGET_C2
 	md_io_poll();
+#else
+	md_io_poll_c2();
+#endif
 	md_dma_process();
 }
 

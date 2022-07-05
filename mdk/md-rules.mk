@@ -1,11 +1,19 @@
 # md-framework common build rules.
 
+# Determine the target platform.
+# Valid platforms:
+#   md
+#   c2
+ifeq ($(PLATFORM),)
+PLATFORM := md
+endif
+
 # Environment
 MD_ENV := /opt/toolchains/gen/m68k-elf
 GBIN := $(MD_ENV)/bin
 
 MDKSRCDIR := $(MDKROOT)/src
-LDSCRIPT := $(MDKROOT)/md.ld
+LDSCRIPT := $(MDKROOT)/$(PLATFORM).ld
 UTILDIR := $(MDKROOT)/util
 MDKSOURCES_C := $(shell find $(MDKSRCDIR)/ -type f -name '*.c')
 MDKSOURCES_ASM := $(shell find $(MDKSRCDIR)/ -type f -name '*.s')
@@ -23,6 +31,10 @@ BINPAD := $(UTILDIR)/binpad
 MEGALOADER := $(UTILDIR)/megaloader
 PNGTO := $(UTILDIR)/pngto
 BLASTEM := $(UTILDIR)/blastem64-*/blastem
+
+ifeq ($(TARGET_SYSTEM),)
+TARGET_SYSTEM = MDK_TARGET_MD
+endif
 
 # If the user isn't overriding the emulator
 ifeq ($(MDEMU),)
@@ -53,7 +65,7 @@ LDFLAGS += -T$(LDSCRIPT)
 LDFLAGS += -Map $(PROJECT_NAME).map
 LIBS += -lgcc
 
-CFLAGS += -DTARGET_SYSTEM=$(TARGET_SYSTEM)
+CFLAGS += -DTARGET_SYSTEM
 
 # Naming intermediates
 OUTPUT_ELF := $(OBJDIR)/$(PROJECT_NAME).elf
