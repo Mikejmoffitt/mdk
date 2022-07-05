@@ -121,13 +121,32 @@ Samples
 
 Check out the samples/ directory for some small example projects that show usage of the SDK.
 
+Platforms and Unused Code
+-------------------------
+
+MDK presently supports the following platforms:
+* Mega Drive / Sega Genesis
+* Sega System C2
+
+The default platform is Mega Drive, and the symbol MDK_TARGET_MD is defined.
+You may specify another platform by setting the following in the Makefile:
+
+```
+    TARGET_PLATFORM := MDK_TARGET_C2
+```
+
+Multiple platforms means that some SDK code may not be relevant to your platform.
+If the code is not relevant, it is not called, or the branch to determine whether to call it is extremly cheap (i.e. a single `tst.w`)
+As for code size, GCC does a good job deleting unused functions and variables, so code size will not suffer.
+As for memory usage, unnecessary variables are gated by #ifdef guards, and will not waste RAM.
+
 Components
 ==========
 For each component, I recommend reading the notes in the header
 files. I will summarize the components here.
 
-Mega Drive
-----------
+Platform
+--------
 
 `megadrive_finish()` should be called at the end of one frame of execution\*, and will do the following things:
   * Terminate the sprite list

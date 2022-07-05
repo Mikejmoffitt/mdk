@@ -46,6 +46,12 @@ void md_pal_upload_rgb333(uint16_t dest, const void *source, uint16_t count);
 // If used on Mega Drive, the palette data is converted to native RGB333.
 void md_pal_upload_rgb555(uint16_t dest, const void *source, uint16_t count);
 
+// System C/C2 only: Set upper bits of CRAM indices for sprites and backgrounds.
+// For usage resembling the MD (with BG and sprites shared) set both to zero.
+// For typical System C usage, set bg_pos to 0, and spr_pos to 3.
+// The default is 0/0.
+void md_pal_set_sysc_map(uint16_t bg_pos, uint16_t spr_pos);
+
 // Internal Use ---------------------------------------------------------------
 
 // Schedules DMA transfers. Called by megadrive_finish().

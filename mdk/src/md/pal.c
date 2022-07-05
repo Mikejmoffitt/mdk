@@ -243,16 +243,19 @@ void md_pal_poll(void)
 // System C/C2 implementation, as a memory copy into color RAM
 // =============================================================================
 
+void md_pal_set_sysc_map(uint16_t bg_pos, uint16_t spr_pos)
+{
+	volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
+	*prot = (bg_pos & 0x03) | ((spr_pos | 0x03) << 2);
+}
+
 void md_pal_poll(void)
 {
 	if (!s_initialized)
 	{
-		// Set up the C/C2 palette banking, with the common low/high split
-		// between background and sprites that most games use.
-		volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
-		*prot = 0x0C;
 		md_ioc_set_pal_bank(0);
 		md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_EXT_CBUS_EN);
+		md_pal_set_sysc_map(0, 0);  // Default to an MD-compatible mode.
 		s_initialized = 1;
 	}
 
