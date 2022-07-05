@@ -110,11 +110,14 @@ MIchael Moffitt 2018 */
 #define VDP_MODESET3_CBUS_VDP_CTRL 0x80
 
 #define VDP_MODESET4_BASE 0x00
-#define VDP_MODESET4_HMODE_H32			(0x00)
-#define VDP_MODESET4_HMODE_H40			(0x81)
-#define VDP_MODESET4_SHI_EN				(1 << 3)
-#define VDP_MODESET4_INTERLACE_NONE		(0 << 1)
-#define VDP_MODESET4_EXT_CBUS_EN 0x10
+#define VDP_MODESET4_HMODE_H40          0x81
+#define VDP_MODESET4_SYSC_DISP_EN       0x40
+#define VDP_MODESET4_SYSC_DOTCLK_OUT    0x20
+#define VDP_MODESET4_EXT_CBUS_EN        0x10
+#define VDP_MODESET4_SHI_EN             0x08
+
+#define VDP_MODESET4_INTERLACE_EN       0x01
+#define VDP_MODESET4_INTERLACE_DBL      0x02
 
 #define VDP_SET(regbase, mask, en) \
 do \
@@ -202,7 +205,6 @@ static inline uint16_t md_vdp_get_status(void);
 static inline void md_vdp_set_hint_en(uint8_t enabled);
 static inline void md_vdp_set_vint_en(uint8_t enabled);
 static inline void md_vdp_set_thint_en(uint8_t enabled);
-static inline void md_vdp_set_extint_en(uint8_t enabled);
 static inline void md_vdp_set_hint_line(uint8_t line);
 void md_vdp_wait_vblank(void);
 
@@ -296,11 +298,6 @@ static inline void md_vdp_set_vint_en(uint8_t enabled)
 }
 
 static inline void md_vdp_set_thint_en(uint8_t enabled)
-{
-	VDP_SET(VDP_MODESET2, VDP_MODESET3_THINT_EN, enabled);
-}
-
-static inline void md_vdp_set_extint_en(uint8_t enabled)
 {
 	VDP_SET(VDP_MODESET3, VDP_MODESET3_THINT_EN, enabled);
 }

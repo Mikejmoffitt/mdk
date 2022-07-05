@@ -22,22 +22,30 @@
 // Run after completing the logic in one game tick loop.
 static inline void megadrive_finish(void)
 {
+
 	md_spr_finish();
 	md_pal_poll();
 	md_vdp_wait_vblank();
-#ifndef MDK_TARGET_C2
-	md_io_poll();
-#else
+
+	// C2-specific screen blanking.
+#ifdef MDK_TARGET_C2
 	md_sysc_vctrl_set(MD_CVREG_SCREEN_BLANK |
 	                  MD_CVREG_PROTECTION_RESET |
 	                  MD_CVREG_STANDARD_PAL_MODE);
+#endif  // MDK_TARGET_C2
+
+#ifndef MDK_TARGET_C2
+	md_io_poll();
+#else
 	md_ioc_poll();
-#endif
+#endif  // MDK_TARGET_C2
 	md_dma_process();
+
+	// C2-specific screen blanking.
 #ifdef MDK_TARGET_C2
 	md_sysc_vctrl_set(MD_CVREG_PROTECTION_RESET |
-		              MD_CVREG_STANDARD_PAL_MODE);
-#endif
+	                  MD_CVREG_STANDARD_PAL_MODE);
+#endif  // MDK_TARGET_C2
 }
 
 // Internal use ---------------------------------------------------------------

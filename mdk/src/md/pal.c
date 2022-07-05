@@ -26,7 +26,7 @@ static inline uint16_t rgb555_from_rgb333(uint16_t in_rgb333)
 	const uint16_t cblue = (in_rgb333 & 0xE00) << 2;
 	uint16_t value = cred | cgreen | cblue;
 	static const uint16_t upper_two_bit_mask = 0x6318;  // 0b0110001100011000.
-;	value |= (value & upper_two_bit_mask) >> 3;  // Upper 2 bits into LSBs.
+	value |= (value & upper_two_bit_mask) >> 3;  // Upper 2 bits into LSBs.
 	return value;
 }
 
@@ -277,6 +277,7 @@ void md_pal_poll(void)
 			volatile uint32_t *src32 = (uint32_t *)s_palette;
 			cram32 += source_idx_l;
 			src32 += source_idx_l;
+			*cram32++ = *src32++;
 			*cram32++ = *src32++;
 			*cram32++ = *src32++;
 			*cram32++ = *src32++;

@@ -120,13 +120,6 @@ start:
 	/* set up SP */
 	move.l	0x00000000, %sp
 
-	/* poke TMSS */
-	move.b	0xa10001, %d0
-	andi.b	#0x0F, %d0
-	beq	.tmss_version_0
-	move.l	#0x53454741, 0xa14000
-.tmss_version_0:
-
 	/* clear WRAM */
 	move.l	#0x00FF0000, %a4
 	move.w	#0x3FFF, %d7

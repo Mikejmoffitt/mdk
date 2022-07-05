@@ -7,10 +7,10 @@ Michael Moffitt 2018-2022 */
 
 typedef enum MdIoCPlayerInput
 {
-	SYSC_PL_UP    = 0x80,
-	SYSC_PL_DOWN  = 0x40,
-	SYSC_PL_LEFT  = 0x20,
-	SYSC_PL_RIGHT = 0x10,
+	SYSC_PL_LEFT  = 0x80,
+	SYSC_PL_RIGHT = 0x40,
+	SYSC_PL_UP    = 0x20,
+	SYSC_PL_DOWN  = 0x10,
 	SYSC_PL_D     = 0x08,
 	SYSC_PL_C     = 0x04,
 	SYSC_PL_B     = 0x02,

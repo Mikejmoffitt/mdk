@@ -20,8 +20,8 @@ void md_vdp_init(void)
 
 	// V-int enabled, display disabled, DMA enabled, 224-line mode, Mode 5
 	md_vdp_set_reg(VDP_MODESET2, VDP_MODESET2_BASE |
-	                          VDP_MODESET2_DMA_EN |
-	                          VDP_MODESET2_VINT_EN);
+	                             VDP_MODESET2_DMA_EN |
+	                             VDP_MODESET2_VINT_EN);
 
 	md_vdp_set_reg(VDP_MODESET3, VDP_MODESET3_BASE);
 
