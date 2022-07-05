@@ -13,12 +13,12 @@ void text_init(const unsigned char *font_chr, uint16_t font_len,
 	s_font_pal_line = pal_line & 0x3;
 	if (font_chr)
 	{
-		md_dma_transfer_vram(s_font_vram_pos, (void *)font_chr, font_len/2, 2);
+		md_dma_transfer_vram(s_font_vram_pos, font_chr, font_len/2, 2);
 	}
 	s_font_vram_pos /= 32;  // convert to tile number
 	if (font_pal)
 	{
-		md_pal_upload_rgb333(s_font_pal_line * 16, (void *)font_pal, 16);
+		md_pal_upload(s_font_pal_line * 16, font_pal, 16);
 	}
 }
 

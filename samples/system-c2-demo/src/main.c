@@ -10,6 +10,7 @@
 
 #include "util/text.h"
 #include "util/plane.h"
+#include "md/psg.h"
 
 #include "res.h"
 
@@ -17,6 +18,8 @@ static uint16_t x_scroll, y_scroll;
 
 void main(void)
 {
+	md_psg_vol(0, 0);
+	md_psg_pitch(0, 2);
 	// Get the megadrive ready to go! (See md/megadrive.h)
 	megadrive_init();
 
@@ -24,10 +27,12 @@ void main(void)
 	// This lines it up nicely with the actual ASCII values, which
 	// a later demo will take advantage of.
 	text_init(res_font_gfx_bin, sizeof(res_font_gfx_bin), 0x400, res_font_pal_bin, 0);
-	md_pal_upload_rgb333(0, res_font_pal_bin, 16);
 
 	// Print a simple message in the center of plane A
 	text_puts(VDP_PLANE_A, 14, 11, "Hello System C2");
+
+	md_psg_vol(0, 0);
+	md_psg_pitch(0, 200);
 
 	// Center the screen at 0, 0.
 	x_scroll = 0;

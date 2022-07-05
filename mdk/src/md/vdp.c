@@ -1,5 +1,5 @@
 /* mdk VDP control functions
-MIchael Moffitt 2018 */
+MIchael Moffitt 2018-2022 */
 
 #include "md/vdp.h"
 #include "md/dma.h"
@@ -11,28 +11,42 @@ static uint16_t plane_base[3];
 static uint16_t sprite_base;
 static uint16_t hscroll_base;
 
+// Puyo 2 VDP regs:
+// 14 44 87 59
+// Mine:
+// 04 64 80 91
+
 void md_vdp_init(void)
 {
 	md_vdp_set_hint_line(255);
 
 	// H-int disabled
-	md_vdp_set_reg(VDP_MODESET1, VDP_MODESET1_BASE);
+	md_vdp_set_reg(VDP_MODESET1, VDP_MODESET1_FULL_COLOR);
 
 	// V-int enabled, display disabled, DMA enabled, 224-line mode, Mode 5
-	md_vdp_set_reg(VDP_MODESET2, VDP_MODESET2_BASE |
+	md_vdp_set_reg(VDP_MODESET2, VDP_MODESET2_M5_EN |
 	                             VDP_MODESET2_DMA_EN |
 	                             VDP_MODESET2_VINT_EN);
 
-	md_vdp_set_reg(VDP_MODESET3, VDP_MODESET3_BASE);
+	// Plane scroll, TH ints disabled
+	md_vdp_set_reg(VDP_MODESET3, 0);
 
 	// H40 mode by default
-	md_vdp_set_reg(VDP_MODESET4, VDP_MODESET4_BASE | VDP_MODESET4_HMODE_H40);
+#ifndef MDK_TARGET_C2
+	md_vdp_set_reg(VDP_MODESET4, VDP_MODESET4_HMODE_RS0 |
+	                             VDP_MODESET4_HMODE_RS1);
+#else
+	md_vdp_set_reg(VDP_MODESET4, VDP_MODESET4_SYSC_DISP_EN |
+                                 VDP_MODESET4_EXT_CBUS_EN |
+                                 VDP_MODESET4_SHI_EN |
+                                 VDP_MODESET4_HMODE_RS0);
+#endif
 
 	md_vdp_set_vscroll_mode(VDP_VSCROLL_PLANE);
 	md_vdp_set_hscroll_mode(VDP_HSCROLL_PLANE);
 
-	// BG color always 0/0
-	md_vdp_set_bgcol(0 << 4);
+	// BG color 0
+	md_vdp_set_bgcol(0);
 
 	// Standard 1-word auto inc
 	md_vdp_set_autoinc(2);
@@ -168,17 +182,25 @@ uint8_t md_vdp_get_raster_height(void)
 
 void md_vdp_set_raster_width(uint16_t width)
 {
+#ifndef MDK_TARGET_C2
 	if (width == 320)
 	{
-		md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_HMODE_H40);
+		md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_HMODE_RS0 |
+		                                 VDP_MODESET4_HMODE_RS1);
 	}
 	else
 	{
-		md_vdp_clear_reg_bit(VDP_MODESET4, VDP_MODESET4_HMODE_H40);
+		md_vdp_clear_reg_bit(VDP_MODESET4, VDP_MODESET4_HMODE_RS0 |
+		                                   VDP_MODESET4_HMODE_RS1);
 	}
+#else
+	(void)width;
+	md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_HMODE_RS0);
+	md_vdp_clear_reg_bit(VDP_MODESET4, VDP_MODESET4_HMODE_RS1);
+#endif
 }
 
 uint16_t md_vdp_get_raster_width(void)
 {
-	return (md_vdp_get_reg(VDP_MODESET4) & VDP_MODESET4_HMODE_H40) ? 320 : 256;
+	return (md_vdp_get_reg(VDP_MODESET4) & VDP_MODESET4_HMODE_RS0) ? 320 : 256;
 }

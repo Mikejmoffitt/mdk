@@ -84,40 +84,35 @@ MIchael Moffitt 2018 */
 
 #define VDP_REG_WRITE(reg, val) do { VDPPORT_CTRL = 0x8000 | (reg << 8) | (val); } while(0)
 
-#define VDP_MODESET1_BASE 0x04
-#define VDP_MODESET1_LBLANK 0x20
-#define VDP_MODESET1_HINT_EN 0x10
-#define VDP_MODESET1_VC_ON_HS = 0x08
-#define VDP_MODESET1_COLOR_LSB 0x04
-#define VDP_MODESET1_HVCOUNT_STOP 0x02
-#define VDP_MODESET1_OVERLAY 0x01
+#define VDP_MODESET1_LBLANK             0x20
+#define VDP_MODESET1_HINT_EN            0x10
+#define VDP_MODESET1_VC_ON_HS           0x08
+#define VDP_MODESET1_FULL_COLOR         0x04
+#define VDP_MODESET1_HVCOUNT_STOP       0x02
+#define VDP_MODESET1_OVERLAY            0x01
 
-// Only mode 5 is valid on MD
-#define VDP_MODESET2_BASE 0x04
-// V30 is broken in NTSC mode
-#define VDP_MODESET2_30H 0x08
-#define VDP_MODESET2_DMA_EN 0x10
-#define VDP_MODESET2_VINT_EN 0x20
-#define VDP_MODESET2_DISP_EN 0x40
-#define VDP_MODESET2_VRAM128 0x80
+#define VDP_MODESET2_VRAM128            0x80
+#define VDP_MODESET2_DISP_EN            0x40
+#define VDP_MODESET2_VINT_EN            0x20
+#define VDP_MODESET2_DMA_EN             0x10
+#define VDP_MODESET2_30H                0x08
+#define VDP_MODESET2_M5_EN              0x04
 
+#define VDP_MODESET3_CBUS_VDP_CTRL      0x80
+#define VDP_MODESET3_THINT_EN           0x10
+#define VDP_MODESET3_VSCROLL_CELL       0x04
+#define VDP_MODESET3_HS1                0x02
+#define VDP_MODESET3_HS0                0x01
 
-#define VDP_MODESET3_BASE 0x00
-#define VDP_MODESET3_THINT_EN 0x10
-
-#define VDP_MODESET3_VSCROLL_PLANE 0x00
-#define VDP_MODESET3_VSCROLL_CELL  0x04
-#define VDP_MODESET3_CBUS_VDP_CTRL 0x80
-
-#define VDP_MODESET4_BASE 0x00
-#define VDP_MODESET4_HMODE_H40          0x81
+#define VDP_MODESET4_HMODE_RS1          0x80
 #define VDP_MODESET4_SYSC_DISP_EN       0x40
 #define VDP_MODESET4_SYSC_DOTCLK_OUT    0x20
 #define VDP_MODESET4_EXT_CBUS_EN        0x10
 #define VDP_MODESET4_SHI_EN             0x08
+#define VDP_MODESET4_INTERLACE_DBL      0x04
+#define VDP_MODESET4_INTERLACE_EN       0x02
+#define VDP_MODESET4_HMODE_RS0          0x01
 
-#define VDP_MODESET4_INTERLACE_EN       0x01
-#define VDP_MODESET4_INTERLACE_DBL      0x02
 
 #define VDP_SET(regbase, mask, en) \
 do \
@@ -358,7 +353,12 @@ static inline void md_vdp_set_display_en(uint8_t enabled)
 // Raster config
 static inline void md_vdp_set_hmode(VdpHmode mode)
 {
-	VDP_SET(VDP_MODESET4, VDP_MODESET4_HMODE_H40, mode);
+#ifndef MDK_TARGET_C2
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_HMODE_RS0, mode);
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_HMODE_RS1, !mode);
+#else
+	(void)mode;
+#endif
 }
 
 static inline void md_vdp_set_vmode(VdpVmode mode)
