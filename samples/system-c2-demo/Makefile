@@ -1,6 +1,6 @@
 # Project meta configuration
-PROJECT_NAME := blank-mdk-project
-MDKROOT := mdk/mdk
+PROJECT_NAME := system-c2-demo
+MDKROOT := ../../mdk
 
 # Project directories.
 SRCDIR := src
@@ -19,9 +19,9 @@ RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*')
 #   * MDK_TARGET_C2
 # Use this to target the Sega System C arcade PCB.
 # In addition, you may define MDK_C2_ADPCM with the filename of the ADPCM ROM.
-TARGET_SYSTEM := MDK_TARGET_MD
+TARGET_SYSTEM := MDK_TARGET_C2
 
 include $(MDKROOT)/md-rules.mk
 
-# Any additional CFLAGS/ASFLAGS ammendments and build targets may go here.
+# Any additional build targets may go here.
 # Please read about EXTERNAL_DEPS and EXTERNAL_ARTIFACTS in readme.md.

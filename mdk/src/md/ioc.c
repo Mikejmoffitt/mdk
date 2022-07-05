@@ -7,7 +7,7 @@ static uint8_t s_io_reg_cache[8];
 // Reading from registers intended for output isn't recommended.
 uint8_t md_ioc_read_reg_raw(MdIoCIoPort port)
 {
-	volatile uint8_t *reg_porta = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTA);
+	volatile uint8_t *reg_porta = (volatile uint8_t *)(SYSC_IO_LOC_PORTA);
 	return reg_porta[port << 1];
 }
 
@@ -36,7 +36,7 @@ MdIoCDipInput md_ioc_get_dip_input(int16_t sw)
 
 void md_ioc_set_watchdog_ctrl(int16_t jp15_pin3)
 {
-	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
+	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x80;
 	s_io_reg_cache[SYSC_IO_PORT_D] |= (jp15_pin3 ? 0x80 : 0x00);
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
@@ -44,7 +44,7 @@ void md_ioc_set_watchdog_ctrl(int16_t jp15_pin3)
 
 void md_ioc_set_tda1518bq_mute(int16_t mute)
 {
-	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
+	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x40;
 	s_io_reg_cache[SYSC_IO_PORT_D] |= (mute ? 0x40 : 0x00);
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
@@ -52,7 +52,7 @@ void md_ioc_set_tda1518bq_mute(int16_t mute)
 
 void md_ioc_set_cn2_bits(int16_t pin10, int16_t pin11)
 {
-	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
+	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x30;
 	s_io_reg_cache[SYSC_IO_PORT_D] |= (pin10 ? 0x20 : 0x00) | (pin11 ? 0x10 : 0x00);
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
@@ -61,7 +61,7 @@ void md_ioc_set_cn2_bits(int16_t pin10, int16_t pin11)
 void md_ioc_set_coin_outputs(int16_t lockout1, int16_t lockout2,
                                  int16_t meter1, int16_t meter2)
 {
-	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
+	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x0F;
 	s_io_reg_cache[SYSC_IO_PORT_D] |= (lockout2 ? 0x08 : 0x00);
 	s_io_reg_cache[SYSC_IO_PORT_D] |= (lockout1 ? 0x04 : 0x00);
@@ -73,7 +73,7 @@ void md_ioc_set_coin_outputs(int16_t lockout1, int16_t lockout2,
 // Set two bits corresponding to CN4 outputs A19 and B19.
 void md_ioc_set_cn4_bits(int16_t a19, int16_t b19)
 {
-	volatile uint8_t *reg_porth = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTH);
+	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0xC0;
 	s_io_reg_cache[SYSC_IO_PORT_H] |= (a19 ? 0x80 : 0x00);
 	s_io_reg_cache[SYSC_IO_PORT_H] |= (b19 ? 0x40 : 0x00);
@@ -85,7 +85,7 @@ void md_ioc_set_cn4_bits(int16_t a19, int16_t b19)
 // Banks 0-3 valid; possibly up to 0xF.
 void md_ioc_set_udp7759_bank(uint16_t bank)
 {
-	volatile uint8_t *reg_porth = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTH);
+	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x3C;
 	s_io_reg_cache[SYSC_IO_PORT_H] |= (bank & 0x000F) << 2;
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
@@ -94,7 +94,7 @@ void md_ioc_set_udp7759_bank(uint16_t bank)
 // Set palette bank 0-3 through bits A9 and A10 of CRAM.
 void md_ioc_set_pal_bank(uint16_t bank)
 {
-	volatile uint8_t *reg_porth = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTH);
+	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x03;
 	s_io_reg_cache[SYSC_IO_PORT_H] |= (bank & 0x0003);
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
@@ -108,21 +108,22 @@ void md_ioc_init(void)
 	{
 		s_io_reg_cache[i] = 0x00;
 	}
-	volatile uint8_t *reg_portd = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTD);
-	volatile uint8_t *reg_porth = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTH);
+	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
+	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
 }
 
 // Poll controller inputs.
 void md_ioc_poll(void)
-{	// Read inputs.
-	volatile uint8_t *reg_porta = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTA);
-	volatile uint8_t *reg_portb = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTB);
-	volatile uint8_t *reg_portc = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTC);
-	volatile uint8_t *reg_porte = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTE);
-	volatile uint8_t *reg_portf = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTF);
-	volatile uint8_t *reg_portg = (volatile uint8_t *)(IO_SYSTEMC_LOC_PORTG);
+{
+	// Read inputs.
+	volatile uint8_t *reg_porta = (volatile uint8_t *)(SYSC_IO_LOC_PORTA);
+	volatile uint8_t *reg_portb = (volatile uint8_t *)(SYSC_IO_LOC_PORTB);
+	volatile uint8_t *reg_portc = (volatile uint8_t *)(SYSC_IO_LOC_PORTC);
+	volatile uint8_t *reg_porte = (volatile uint8_t *)(SYSC_IO_LOC_PORTE);
+	volatile uint8_t *reg_portf = (volatile uint8_t *)(SYSC_IO_LOC_PORTF);
+	volatile uint8_t *reg_portg = (volatile uint8_t *)(SYSC_IO_LOC_PORTG);
 	s_io_reg_cache[SYSC_IO_PORT_A] = ~(*reg_porta);
 	s_io_reg_cache[SYSC_IO_PORT_B] = ~(*reg_portb);
 	s_io_reg_cache[SYSC_IO_PORT_C] = ~(*reg_portc);

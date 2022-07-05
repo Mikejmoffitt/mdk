@@ -5,17 +5,19 @@
 #ifndef MD_MEGADRIVE_H
 #define MD_MEGADRIVE_H
 
-#include "md/macro.h" // Helpful macros.
-#include "md/vdp.h"   // VDP control: all things graphics and some more
-#include "md/sys.h"   // System control: interrupts, sub-CPU control
-#include "md/io.h"    // Controller port I/O
-#include "md/spr.h"   // Sprite support
-#include "md/dma.h"   // DMA control and scheduling
-#include "md/pal.h"   // Palette read/write via ports or DMA
-#include "md/opn.h"   // YM2610 FM sound chip
-#include "md/psg.h"   // SN76489-compatible PSG sound chip
-#include "md/sram.h"  // Support for battery-backed SRAM
-#include "md/irq.h"   // Interrupt handler registration
+#include "md/macro.h"       // Helpful macros.
+#include "md/vdp.h"         // VDP control: all things graphics and some more
+#include "md/sys.h"         // System control: interrupts, sub-CPU control
+#include "md/io.h"          // Controller port I/O
+#include "md/ioc.h"         // System C/C2 I/O
+#include "md/spr.h"         // Sprite support
+#include "md/dma.h"         // DMA control and scheduling
+#include "md/pal.h"         // Palette read/write via ports or DMA
+#include "md/opn.h"         // YM2610 FM sound chip
+#include "md/psg.h"         // SN76489-compatible PSG sound chip
+#include "md/sram.h"        // Support for battery-backed SRAM
+#include "md/irq.h"         // Interrupt handler registration
+#include "md/sysc_vctrl.h"  // System C/C2 Video Control
 
 // Run after completing the logic in one game tick loop.
 static inline void megadrive_finish(void)
@@ -23,12 +25,19 @@ static inline void megadrive_finish(void)
 	md_spr_finish();
 	md_pal_poll();
 	md_vdp_wait_vblank();
-#ifndef MD_TARGET_C2
+#ifndef MDK_TARGET_C2
 	md_io_poll();
 #else
-	md_io_poll_c2();
+	md_sysc_vctrl_set(MD_CVREG_SCREEN_BLANK |
+	                  MD_CVREG_PROTECTION_RESET |
+	                  MD_CVREG_STANDARD_PAL_MODE);
+	md_ioc_poll();
 #endif
 	md_dma_process();
+#ifdef MDK_TARGET_C2
+	md_sysc_vctrl_set(MD_CVREG_PROTECTION_RESET |
+		              MD_CVREG_STANDARD_PAL_MODE);
+#endif
 }
 
 // Internal use ---------------------------------------------------------------

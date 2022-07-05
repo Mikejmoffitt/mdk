@@ -4,6 +4,8 @@ Michael Moffitt 2018-2022 */
 #include "md/pal.h"
 #include "md/dma.h"
 #include "md/macro.h"
+#include "md/vdp.h"
+#include "md/ioc.h"
 
 #ifndef MDK_TARGET_C2
 static uint16_t s_palette[64];
@@ -14,11 +16,89 @@ static uint16_t s_dirty = 0xFFFF;
 static uint16_t s_initialized = 0;
 #endif  // MDK_TARGET_C2
 
+// Functions to translate between color formats
+// -----------------------------------------------------------------------------
+
+static inline uint16_t rgb555_from_rgb333(uint16_t in_rgb333)
+{
+	const uint16_t cred = (in_rgb333 & 0x00E);
+	const uint16_t cgreen = (in_rgb333 & 0x0E0) << 1;
+	const uint16_t cblue = (in_rgb333 & 0xE00) << 2;
+	uint16_t value = cred | cgreen | cblue;
+	static const uint16_t upper_two_bit_mask = 0x6318;  // 0b0110001100011000.
+;	value |= (value & upper_two_bit_mask) >> 3;  // Upper 2 bits into LSBs.
+	return value;
+}
+
+static inline uint16_t rgb333_from_rgb555(uint16_t in_rgb555)
+{
+	const uint16_t cred = (in_rgb555 & 0x1C) >> 1;
+	const uint16_t cgreen = (in_rgb555 & (0x1C << 5)) >> 2;
+	const uint16_t cblue = (in_rgb555 & (0x1C << 10)) >> 3;
+	uint16_t value = cred | cgreen | cblue;
+	return value;
+}
+
+// Individual color set functions
+// -----------------------------------------------------------------------------
+
 void md_pal_set(uint8_t idx, uint16_t val)
 {
 	s_palette[idx % ARRAYSIZE(s_palette)] = val;
 }
 
+// MD-native RGB333 format
+void md_pal_set_rgb333(uint8_t idx, uint16_t val)
+{
+#ifndef MDK_TARGET_C2
+	s_palette[idx % ARRAYSIZE(s_palette)] = val;
+#else
+	s_palette[idx % ARRAYSIZE(s_palette)] = rgb555_from_rgb333(val);
+#endif
+}
+
+// C2-native RGB555 format
+void md_pal_set_rgb555(uint8_t idx, uint16_t val)
+{
+#ifdef MDK_TARGET_C2
+	s_palette[idx % ARRAYSIZE(s_palette)] = val;
+#else
+	s_palette[idx % ARRAYSIZE(s_palette)] = rgb333_from_rgb555(val);
+#endif
+}
+
+// Color upload functions
+// -----------------------------------------------------------------------------
+
+// MD-native RGB333 format
+void md_pal_upload_rgb333(uint16_t dest, const void *source, uint16_t count)
+{
+#ifndef MDK_TARGET_C2
+	md_pal_upload(dest, source, count);
+#else
+	const uint16_t *source_16 = (const uint16_t *)source;
+	for (uint16_t i = 0; i < count; i++)
+	{
+		s_palette[dest++] = rgb555_from_rgb333(*source_16++);
+	}
+#endif
+}
+
+// C2-native RGB555 format
+void md_pal_upload_rgb555(uint16_t dest, const void *source, uint16_t count)
+{
+#ifdef MDK_TARGET_C2
+	md_pal_upload(dest, source, count);
+#else
+	const uint16_t *source_16 = (const uint16_t *)source;
+	for (uint16_t i = 0; i < count; i++)
+	{
+		s_palette[dest++] = rgb333_from_rgb555(*source_16++);
+	}
+#endif
+}
+
+// Upload as-is.
 void md_pal_upload(uint16_t dest, const void *source, uint16_t count)
 {
 	const uint16_t pal_line = (dest >> 4) % (ARRAYSIZE(s_palette) / 16);
@@ -26,7 +106,7 @@ void md_pal_upload(uint16_t dest, const void *source, uint16_t count)
 
 	const uint16_t *source_16 = (const uint16_t *)source;
 #ifdef MD_PAL_STANDARD_COPY_LOOP
-	for (uint16_t i = 0; i < len; i++)
+	for (uint16_t i = 0; i < count; i++)
 	{
 		s_palette[dest++] = *source_16++;
 	}
@@ -165,10 +245,21 @@ void md_pal_poll(void)
 
 void md_pal_poll(void)
 {
+	if (!s_initialized)
+	{
+		// Set up the C/C2 palette banking, with the common low/high split
+		// between background and sprites that most games use.
+		volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
+		*prot = 0x0C;
+		md_ioc_set_pal_bank(0);
+		md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_EXT_CBUS_EN);
+		s_initialized = 1;
+	}
+
+	md_vdp_clear_reg_bit(VDP_MODESET3, VDP_MODESET3_CBUS_VDP_CTRL);
 	uint16_t test_bit = 0x0001;
 	uint16_t source_idx_l = 0;
-	volatile uint16_t *cram = (volatile uint16_t *)CRAM_SYSTEMC_LOC_BASE;
-	for (uint16_t i = 0; i < ARRAYSIZE(s_palette / 16); i++)
+	for (uint16_t i = 0; i < ARRAYSIZE(s_palette) / 16; i++)
 	{
 		// TODO: Consider asm here - wouldn't this be so much nicer if we just
 		// cleared the relevant bit and checked the Z flag?
@@ -193,8 +284,9 @@ void md_pal_poll(void)
 			*cram32++ = *src32++;
 		}
 		test_bit = test_bit << 1;
-		source_idx_l += 128;
+		source_idx_l += 8;
 	}
+	md_vdp_set_reg_bit(VDP_MODESET3, VDP_MODESET3_CBUS_VDP_CTRL);
 	s_dirty = 0;
 }
 

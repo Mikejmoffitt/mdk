@@ -10,3 +10,4 @@ uint16_t md_io_pad_read(uint8_t port)
 {
 	return g_pad_cache[port];
 }
+
