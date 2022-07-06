@@ -7,6 +7,15 @@ MIchael Moffitt 2018 */
 #include "md/sys.h"
 #include <stdint.h>
 
+// Default VRAM layout, assuming 64x32-cell planes
+// 0000-BFFF (1536 tiles) free
+#define VRAM_SCRA_BASE_DEFAULT	0xC000
+#define VRAM_SCRW_BASE_DEFAULT	0xD000
+#define VRAM_SCRB_BASE_DEFAULT	0xE000
+// F000-F7FF (64 tiles) free
+#define VRAM_HSCR_BASE_DEFAULT	0xF800
+#define VRAM_SPR_BASE_DEFAULT	0xFC00
+
 // Tile / sprite attribute definition
 #define VDP_ATTR(_tile, _hflip, _vflip, _pal, _prio) (((_tile) & 0x7FF) | \
                  ((_hflip) ? 0x800 : 0) | ((_vflip) ? 0x1000 : 0) | \
@@ -38,31 +47,59 @@ MIchael Moffitt 2018 */
 #define VDP_DMASRC2   0x16
 #define VDP_DMASRC3   0x17
 
+// Register values
+
+// Register $00 - Mode 1
+#define VDP_MODESET1_RIGHT_COL_LOCK     0x80
+#define VDP_MODESET1_UNK_EFFECT         0x40
+#define VDP_MODESET1_LBLANK             0x20
+#define VDP_MODESET1_HINT_EN            0x10
+#define VDP_MODESET1_VC_ON_HS           0x08
+#define VDP_MODESET1_FULL_COLOR         0x04
+#define VDP_MODESET1_HVCOUNT_STOP       0x02
+#define VDP_MODESET1_OVERLAY            0x01
+
+// Register $01 - Mode 2
+#define VDP_MODESET2_VRAM128            0x80
+#define VDP_MODESET2_DISP_EN            0x40
+#define VDP_MODESET2_VINT_EN            0x20
+#define VDP_MODESET2_DMA_EN             0x10
+#define VDP_MODESET2_30H                0x08
+#define VDP_MODESET2_M5_EN              0x04
+#define VDP_MODESET2_UNK1               0x02
+#define VDP_MODESET2_UNK0               0x01
+
+// Register $0B - Mode 3
+#define VDP_MODESET3_CBUS_VDP_CTRL      0x80
+#define VDP_MODESET3_THINT_EN           0x10
+#define VDP_MODESET3_VSCROLL_CELL       0x04
+#define VDP_MODESET3_HS1                0x02
+#define VDP_MODESET3_HS0                0x01
+
+// Register $0C - Mode 4
+#define VDP_MODESET4_HMODE_RS1          0x80
+#define VDP_MODESET4_SYSC_DISP_EN       0x40
+#define VDP_MODESET4_SYSC_DOTCLK_OUT    0x20
+#define VDP_MODESET4_EXT_CBUS_EN        0x10
+#define VDP_MODESET4_SHI_EN             0x08
+#define VDP_MODESET4_INTERLACE_DBL      0x04
+#define VDP_MODESET4_INTERLACE_EN       0x02
+#define VDP_MODESET4_HMODE_RS0          0x01
+
 // Status flags
-#define VDP_STATUS_PAL 0x0001
-#define VDP_STATUS_DMA 0x0002
+#define VDP_STATUS_PAL    0x0001
+#define VDP_STATUS_DMA    0x0002
 #define VDP_STATUS_HBLANK 0x0004
 #define VDP_STATUS_VBLANK 0x0008
-#define VDP_STATUS_ODD 0x0010
-#define VDP_STATUS_SCOL 0x0020
-#define VDP_STATUS_SOVR 0x0040
-#define VDP_STATUS_VIP 0x0080
-#define VDP_STATUS_FULL 0x0100
-#define VDP_STATUS_EMPTY 0x0200
-
-// Default VRAM layout, assuming 64x32-cell planes
-// 0000-BFFF (1536 tiles) free
-#define VRAM_SCRA_BASE_DEFAULT	0xC000
-#define VRAM_SCRW_BASE_DEFAULT	0xD000
-#define VRAM_SCRB_BASE_DEFAULT	0xE000
-// F000-F7FF (64 tiles) free
-#define VRAM_HSCR_BASE_DEFAULT	0xF800
-#define VRAM_SPR_BASE_DEFAULT	0xFC00
+#define VDP_STATUS_ODD    0x0010
+#define VDP_STATUS_SCOL   0x0020
+#define VDP_STATUS_SOVR   0x0040
+#define VDP_STATUS_VIP    0x0080
+#define VDP_STATUS_FULL   0x0100
+#define VDP_STATUS_EMPTY  0x0200
 
 // VRAM control words
-
 #define VDP_CTRL_DMA_BIT     0x00000080
-
 #define VDP_CTRL_VRAM_READ   0x00000000
 #define VDP_CTRL_VRAM_WRITE  0x40000000
 #define VDP_CTRL_VSRAM_READ  0x00000010
@@ -75,45 +112,17 @@ MIchael Moffitt 2018 */
 
 #define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | (((uint32_t)(_addr) & 0xC000) >> 14))
 
+// Macros for calculating VRAM, VSRAM, and CRAM destination address components.
+#define VDP_VRAMDEST(DEST)      (0x00004000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
+#define VDP_VRAM32DEST(DEST)    (0x40000000 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
+#define VDP_VSRAMDEST(DEST)     (0x00104000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
+#define VDP_VSRAM32DEST(DEST)   (0x40000010 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
+#define VDP_CRAMDEST(DEST)      (0x0000C000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
 
-#define VDP_VRAMDEST(DEST)		(0x00004000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-#define VDP_VRAM32DEST(DEST)	(0x40000000 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
-#define VDP_VSRAMDEST(DEST)		(0x00104000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-#define VDP_VSRAM32DEST(DEST)	(0x40000010 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
-#define VDP_CRAMDEST(DEST)		(0x0000C000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-
+// Macro to write a value to a register directly.
 #define VDP_REG_WRITE(reg, val) do { VDPPORT_CTRL = 0x8000 | (reg << 8) | (val); } while(0)
 
-#define VDP_MODESET1_LBLANK             0x20
-#define VDP_MODESET1_HINT_EN            0x10
-#define VDP_MODESET1_VC_ON_HS           0x08
-#define VDP_MODESET1_FULL_COLOR         0x04
-#define VDP_MODESET1_HVCOUNT_STOP       0x02
-#define VDP_MODESET1_OVERLAY            0x01
-
-#define VDP_MODESET2_VRAM128            0x80
-#define VDP_MODESET2_DISP_EN            0x40
-#define VDP_MODESET2_VINT_EN            0x20
-#define VDP_MODESET2_DMA_EN             0x10
-#define VDP_MODESET2_30H                0x08
-#define VDP_MODESET2_M5_EN              0x04
-
-#define VDP_MODESET3_CBUS_VDP_CTRL      0x80
-#define VDP_MODESET3_THINT_EN           0x10
-#define VDP_MODESET3_VSCROLL_CELL       0x04
-#define VDP_MODESET3_HS1                0x02
-#define VDP_MODESET3_HS0                0x01
-
-#define VDP_MODESET4_HMODE_RS1          0x80
-#define VDP_MODESET4_SYSC_DISP_EN       0x40
-#define VDP_MODESET4_SYSC_DOTCLK_OUT    0x20
-#define VDP_MODESET4_EXT_CBUS_EN        0x10
-#define VDP_MODESET4_SHI_EN             0x08
-#define VDP_MODESET4_INTERLACE_DBL      0x04
-#define VDP_MODESET4_INTERLACE_EN       0x02
-#define VDP_MODESET4_HMODE_RS0          0x01
-
-
+// Macro to set a register, and update its cached value.
 #define VDP_SET(regbase, mask, en) \
 do \
 { \
@@ -128,8 +137,10 @@ do \
 	} \
 } while(0)
 
+// The register cache.
 extern uint8_t g_md_vdp_regvalues[0x18];
 
+// Enums for register access functions.
 typedef enum VdpHscrollMode
 {
 	VDP_HSCROLL_PLANE = 0x00,
@@ -187,6 +198,9 @@ typedef enum VdpPlane
 	VDP_PLANE_WINDOW = 0x02
 } VdpPlane;
 
+// =============================================================================
+// Functions and accessors
+// =============================================================================
 void md_vdp_init(void);
 
 // Accessors

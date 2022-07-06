@@ -93,7 +93,7 @@ void md_ioc_set_cn4_bits(int16_t a19, int16_t b19);
 void md_ioc_set_udp7759_bank(uint16_t bank);
 
 // Set palette bank 0-3 through bits A9 and A10 of CRAM.
-void md_ioc_set_pal_bank(uint16_t bank);
+void md_ioc_set_global_pal_bank(uint16_t bank);
 
 // Internal Use ---------------------------------------------------------------
 

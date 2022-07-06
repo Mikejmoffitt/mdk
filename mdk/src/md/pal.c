@@ -182,7 +182,7 @@ void md_pal_poll(void)
 {
 	if (!s_initialized)
 	{
-		md_ioc_set_pal_bank(0);
+		md_ioc_set_global_pal_bank(0);
 		md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_EXT_CBUS_EN);
 		md_pal_set_sysc_map(0, 0);  // Default to an MD-compatible mode.
 		s_initialized = 1;
