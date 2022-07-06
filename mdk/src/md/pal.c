@@ -248,7 +248,6 @@ void md_pal_init(void)
 	volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
 	*prot = 0x00;
 	MD_SYS_BARRIER();
-	md_ioc_set_pal_bank(0);
 	md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_EXT_CBUS_EN);
 	md_pal_set_spr_bank(0);
 	md_pal_set_bg_bank(0);
