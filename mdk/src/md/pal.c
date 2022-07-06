@@ -27,7 +27,7 @@ static uint8_t s_prot_reg_cache;
 void md_pal_mark_dirty(uint16_t first_index, uint16_t count)
 {
 	const uint16_t pal_line = (first_index >> 4) % (ARRAYSIZE(g_palette) / 16);
-	uint16_t dirty_mask = (1 << pal_line);
+	uint32_t dirty_mask = (1 << pal_line);
 	uint16_t line_span = 1 + ((count - 1) / 16);
 	while (line_span-- > 0)
 	{
