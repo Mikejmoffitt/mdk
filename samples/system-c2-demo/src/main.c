@@ -13,13 +13,11 @@
 #include "md/psg.h"
 
 #include "res.h"
+#include "mps/mps_play.h"
 
-static uint16_t x_scroll, y_scroll;
 
 void main(void)
 {
-	md_psg_vol(0, 0);
-	md_psg_pitch(0, 2);
 	// Get the megadrive ready to go! (See md/megadrive.h)
 	megadrive_init();
 
@@ -31,10 +29,8 @@ void main(void)
 	// Print a simple message in the center of plane A
 	text_puts(VDP_PLANE_A, 14, 11, "Hello System C2");
 
-	md_psg_vol(0, 0);
-	md_psg_pitch(0, 200);
-
 	// Center the screen at 0, 0.
+	static uint16_t x_scroll, y_scroll;
 	x_scroll = 0;
 	y_scroll = 0;
 
@@ -42,8 +38,12 @@ void main(void)
 	md_dma_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &x_scroll, 1, 2);
 	md_dma_transfer_vsram(0, &y_scroll, 1, 2);
 
+	mps_init(res_t1_mps);
+	mps_play();
+
 	while (1)
 	{
+		mps_tick();
 		megadrive_finish(); // Terminate the sprite list and wait for vblank
 		// Controller polling and DMA queue process is handled in VBL ISR
 	}
