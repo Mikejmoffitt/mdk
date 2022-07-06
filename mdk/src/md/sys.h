@@ -45,7 +45,7 @@ static inline void md_sys_ei(void)
 
 static inline void md_sys_di(void)
 {
-	__asm__ volatile("\tori.w	#0x700, %sr\n");
+	__asm__ volatile("\tori.w	#0x0700, %sr\n");
 	g_md_sys_ints_enabled = 0;
 }
 

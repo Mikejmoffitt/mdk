@@ -1,13 +1,10 @@
 #ifndef MD_SYSC_VCTRL
 #define MD_SYSC_VCTRL
 
-typedef enum MdCVReg
-{
-	MD_CVREG_SCREEN_BLANK      = 0x01,  // Set this bit to blank the video.
-	MD_CVREG_PROTECTION_RESET  = 0x02,
-	MD_CVREG_STANDARD_PAL_MODE = 0x04,
-} MdCVReg;
+#include <stdint.h>
 
-void md_sysc_vctrl_set(MdCVReg reg_data);
+void md_sysc_vctrl_set_blank(uint16_t blank);
+void md_sysc_vctrl_set_protection_reset(uint16_t reset);
+void md_sysc_vctrl_set_md_color_compat(uint16_t compat);
 
 #endif  // MD_SYSC_VCTRL

@@ -11,17 +11,25 @@ Michael Moffitt 2018-2022 */
 static uint16_t s_palette[64];
 static uint16_t s_dirty = 0x000F;
 #else
-static uint16_t s_palette[256];
-static uint16_t s_dirty = 0xFFFF;
-static uint16_t s_initialized = 0;
+// Two sets, between BG and Sprites of:
+//   Four banks of:
+//     Four palette lines, each with:
+//       Sixteen colors.
+// Four global banks exist, but I do not feel they are particularly useful when
+// four banks already exist within each color section.
+static uint16_t s_palette[16 * 4 * 4 * 2];
+static uint32_t s_dirty = 0x0001FFFF;
+static uint8_t s_prot_reg_cache;
 #endif  // MDK_TARGET_C2
 
 // Individual color set functions
 // -----------------------------------------------------------------------------
 
-void md_pal_set(uint8_t idx, uint16_t val)
+void md_pal_set(uint16_t idx, uint16_t val)
 {
-	s_palette[idx % ARRAYSIZE(s_palette)] = val;
+	idx = idx % ARRAYSIZE(s_palette);
+	s_palette[idx] = val;
+	s_dirty |= (1 << (idx >> 4));
 }
 
 // Color upload functions
@@ -166,31 +174,44 @@ void md_pal_poll(void)
 	s_dirty = 0;
 }
 
+void md_pal_init(void)
+{
+	for (uint16_t i = 0; i < ARRAYSIZE(s_palette); i++)
+	{
+		s_palette[i] = 0;
+	}
+	s_dirty = 0x000F;
+}
+
 #else
 
 // =============================================================================
 // System C/C2 implementation, as a memory copy into color RAM
 // =============================================================================
 
-void md_pal_set_sysc_map(uint16_t bg_pos, uint16_t spr_pos)
+// Select between banks 0 - 3 for sprites and backgrounds.
+void md_pal_set_spr_bank(uint16_t bank)
 {
+	s_prot_reg_cache &= ~(0x03 << 2);
+	s_prot_reg_cache |= (bank & 0x03) << 2;
 	volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
-	*prot = (bg_pos & 0x03) | ((spr_pos | 0x03) << 2);
+	*prot = s_prot_reg_cache;
+}
+
+void md_pal_set_bg_bank(uint16_t bank)
+{
+	s_prot_reg_cache &= ~(0x03);
+	s_prot_reg_cache |= (bank & 0x03);
+	volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
+	*prot = s_prot_reg_cache;
 }
 
 void md_pal_poll(void)
 {
-	if (!s_initialized)
-	{
-		md_ioc_set_pal_bank(0);
-		md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_EXT_CBUS_EN);
-		md_pal_set_sysc_map(0, 0);  // Default to an MD-compatible mode.
-		s_initialized = 1;
-	}
-
 	md_vdp_clear_reg_bit(VDP_MODESET3, VDP_MODESET3_CBUS_VDP_CTRL);
-	uint16_t test_bit = 0x0001;
-	uint16_t source_idx_l = 0;
+	uint32_t test_bit = 0x00000001;
+	volatile uint32_t *cram32 = (volatile uint32_t *)CRAM_SYSTEMC_LOC_BASE;
+	volatile uint32_t *src32 = (uint32_t *)s_palette;
 	for (uint16_t i = 0; i < ARRAYSIZE(s_palette) / 16; i++)
 	{
 		// TODO: Consider asm here - wouldn't this be so much nicer if we just
@@ -202,27 +223,40 @@ void md_pal_poll(void)
 			//    words, is word-aligned (otherwise a uint16_t * would not work)
 			// 2) 32-bit accesses on 16-bit alignment is absolutely okay
 			// 3) It is a wee bit faster (skip every other instruction fetch)
-			volatile uint32_t *cram32 = (volatile uint32_t *)CRAM_SYSTEMC_LOC_BASE;
-			volatile uint32_t *src32 = (uint32_t *)s_palette;
-			cram32 += source_idx_l;
-			src32 += source_idx_l;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
-			*cram32++ = *src32++;
+			volatile uint32_t *dest = cram32;
+			volatile uint32_t *src = src32;
+			*dest++ = *src++;
+			*dest++ = *src++;
+			*dest++ = *src++;
+			*dest++ = *src++;
+			*dest++ = *src++;
+			*dest++ = *src++;
+			*dest++ = *src++;
+			*dest++ = *src++;
+			*dest++ = *src++;
 		}
 		test_bit = test_bit << 1;
-		source_idx_l += 8;
+		cram32 += 8;
+		src32 += 8;
 	}
 	md_vdp_set_reg_bit(VDP_MODESET3, VDP_MODESET3_CBUS_VDP_CTRL);
 	s_dirty = 0;
 }
 
-
+void md_pal_init(void)
+{
+	volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
+	*prot = 0x00;
+	MD_SYS_BARRIER();
+	md_ioc_set_pal_bank(0);
+	md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_EXT_CBUS_EN);
+	md_pal_set_spr_bank(0);
+	md_pal_set_bg_bank(0);
+	for (uint16_t i = 0; i < ARRAYSIZE(s_palette); i++)
+	{
+		s_palette[i] = 0;
+	}
+	s_dirty = 0x0001FFFF;
+}
 
 #endif  // MD_TARGET_C2

@@ -3,8 +3,31 @@
 
 #include <stdint.h>
 
-void md_sysc_vctrl_set(MdCVReg reg_data)
+static uint8_t s_vctrl_cache = 0x07;
+
+static inline void md_sysc_vctrl_write(uint8_t data)
 {
 	volatile uint8_t *vctrl = (volatile uint8_t *)SYSC_PROTECTION_LOC_VCTRL;
-	*vctrl = reg_data;
+	*vctrl = data;
+}
+
+void md_sysc_vctrl_set_blank(uint16_t blank)
+{
+	s_vctrl_cache &= ~0x01;
+	s_vctrl_cache |= blank ? 0x01 : 0x00;
+	md_sysc_vctrl_write(s_vctrl_cache);
+}
+
+void md_sysc_vctrl_set_protection_reset(uint16_t reset)
+{
+	s_vctrl_cache &= ~0x02;
+	s_vctrl_cache |= reset ? 0x02 : 0x00;
+	md_sysc_vctrl_write(s_vctrl_cache);
+}
+
+void md_sysc_vctrl_set_md_color_compat(uint16_t compat)
+{
+	s_vctrl_cache &= ~0x04;
+	s_vctrl_cache |= compat ? 0x04 : 0x00;
+	md_sysc_vctrl_write(s_vctrl_cache);
 }

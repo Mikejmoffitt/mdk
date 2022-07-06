@@ -29,9 +29,7 @@ static inline void megadrive_finish(void)
 
 	// C2-specific screen blanking.
 #ifdef MDK_TARGET_C2
-	md_sysc_vctrl_set(MD_CVREG_SCREEN_BLANK |
-	                  MD_CVREG_PROTECTION_RESET |
-	                  MD_CVREG_STANDARD_PAL_MODE);
+	md_sysc_vctrl_set_blank(1);
 #endif  // MDK_TARGET_C2
 
 #ifndef MDK_TARGET_C2
@@ -43,8 +41,7 @@ static inline void megadrive_finish(void)
 
 	// C2-specific screen blanking.
 #ifdef MDK_TARGET_C2
-	md_sysc_vctrl_set(MD_CVREG_PROTECTION_RESET |
-	                  MD_CVREG_STANDARD_PAL_MODE);
+	md_sysc_vctrl_set_blank(0);
 #endif  // MDK_TARGET_C2
 }
 

@@ -226,6 +226,8 @@ static inline void md_vdp_set_vscroll_mode(VdpVscrollMode mode);
 static inline void md_vdp_set_plane_size(VdpPlaneSize size);
 static inline VdpPlaneSize md_vdp_plane_size_from_cells(int16_t h_cells,
                                                      int16_t v_cells);
+static inline uint16_t md_vdp_get_plane_width(void);  // In cells.
+static inline uint16_t md_vdp_get_plane_height(void);
 static inline void md_vdp_set_window_top(uint8_t height);
 static inline void md_vdp_set_window_bottom(uint8_t height);
 static inline void md_vdp_set_window_right(uint8_t width);
@@ -325,6 +327,48 @@ static inline VdpPlaneSize md_vdp_plane_size_from_cells(int16_t h_cells,
                                                      int16_t v_cells)
 {
 	return ((h_cells / 32) - 1) | (((v_cells / 32) - 1) << 4);
+}
+
+static inline uint16_t md_vdp_get_plane_width(void)
+{
+	switch (md_vdp_get_reg(VDP_PLANESIZE))
+	{
+		default:
+			return 0;
+		case VDP_PLANESIZE_32x32:
+		case VDP_PLANESIZE_32x64:
+		case VDP_PLANESIZE_32x128:
+			return 32;
+		case VDP_PLANESIZE_64x32:
+		case VDP_PLANESIZE_64x64:
+		case VDP_PLANESIZE_64x128:
+			return 64;
+		case VDP_PLANESIZE_128x32:
+		case VDP_PLANESIZE_128x64:
+		case VDP_PLANESIZE_128x128:
+			return 128;
+	}
+}
+
+static inline uint16_t md_vdp_get_plane_height(void)
+{
+	switch (md_vdp_get_reg(VDP_PLANESIZE))
+	{
+		default:
+			return 0;
+		case VDP_PLANESIZE_32x32:
+		case VDP_PLANESIZE_64x32:
+		case VDP_PLANESIZE_128x32:
+			return 32;
+		case VDP_PLANESIZE_32x64:
+		case VDP_PLANESIZE_64x64:
+		case VDP_PLANESIZE_128x64:
+			return 64;
+		case VDP_PLANESIZE_32x128:
+		case VDP_PLANESIZE_64x128:
+		case VDP_PLANESIZE_128x128:
+			return 128;
+	}
 }
 
 static inline void md_vdp_set_window_top(uint8_t height)
