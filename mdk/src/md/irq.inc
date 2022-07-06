@@ -47,23 +47,11 @@ _v_irq7:
 
 /* /TH pin change, from controller port */
 _v_irq2:
-	move.b	#0, %d0
-	move.b	#0, %d1
-	ror.b	#3, %d0
-	or.b	%d1, %d0
-	or.b	#0x90, %d0
-	move.b	%d0, 0xC00011
 	irq_func_handle g_irq_io_func
 	rte
 
 /* H-blank Interrupt */
 _v_irq4:
-	move.b	#1, %d0
-	move.b	#0, %d1
-	ror.b	#3, %d0
-	or.b	%d1, %d0
-	or.b	#0x90, %d0
-	move.b	%d0, 0xC00011
 	irq_func_handle g_irq_h_func
 	rte
 
