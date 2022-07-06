@@ -99,6 +99,9 @@ MIchael Moffitt 2018 */
 #define VDP_MODESET2_M5_EN              0x04
 
 #define VDP_MODESET3_CBUS_VDP_CTRL      0x80
+// Changes the CAS0 signal to a column address strobe instead of a $00000-$DFFFFF read strobe (Jorge)
+#define VDP_MODESET3_VRAM128_CAS0_EN    0x40
+#define VDP_MODESET3_
 #define VDP_MODESET3_THINT_EN           0x10
 #define VDP_MODESET3_VSCROLL_CELL       0x04
 #define VDP_MODESET3_HS1                0x02

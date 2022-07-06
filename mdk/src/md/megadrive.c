@@ -20,6 +20,8 @@ void megadrive_init(void)
 	md_dma_process();
 #ifdef MDK_TARGET_C2
 	md_sysc_vctrl_set(MD_CVREG_PROTECTION_RESET | MD_CVREG_STANDARD_PAL_MODE);
+	md_ioc_set_tda1518bq_mute(0);
+	md_ioc_set_coin_outputs(0, 0, 0, 0);
 #else
 	md_io_init();
 #endif

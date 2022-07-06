@@ -219,10 +219,10 @@ debug: $(OUTPUT_GEN) $(BLASTEM)
 test: $(OUTPUT_GEN) $(BLASTEM)
 	bash -c 'PULSE_LATENCY_MSEC=80 $(BLASTEM) -m gen $<'
 
-endif
-
-mame: $(OUTUPT_GEN)
+mame: $(OUTPUT_GEN)
 	exec mame megadrij -cart $< -debug -r 640x480
+
+endif
 
 clean:
 	-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
