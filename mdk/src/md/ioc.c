@@ -93,7 +93,7 @@ void md_ioc_set_udp7759_bank(uint16_t bank)
 }
 
 // Set palette bank 0-3 through bits A9 and A10 of CRAM.
-void md_ioc_set_pal_bank(uint16_t bank)
+void md_ioc_set_global_pal_bank(uint16_t bank)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x03;
