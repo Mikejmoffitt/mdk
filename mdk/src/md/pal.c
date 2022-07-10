@@ -222,7 +222,7 @@ void md_pal_set_bg_bank(uint16_t bank)
 
 void md_pal_poll(void)
 {
-	md_vdp_clear_reg_bit(VDP_MODESET3, VDP_MODESET3_CBUS_VDP_CTRL);
+	md_vdp_set_cbus_cpu_mux(0);
 	uint32_t test_bit = 0x00000001;
 	volatile uint32_t *cram32 = (volatile uint32_t *)CRAM_SYSTEMC_LOC_BASE;
 	volatile uint32_t *src32 = (uint32_t *)g_palette;
@@ -253,7 +253,7 @@ void md_pal_poll(void)
 		cram32 += 8;
 		src32 += 8;
 	}
-	md_vdp_set_reg_bit(VDP_MODESET3, VDP_MODESET3_CBUS_VDP_CTRL);
+	md_vdp_set_cbus_cpu_mux(1);
 	s_dirty = 0;
 }
 
@@ -262,7 +262,6 @@ void md_pal_init(void)
 	volatile uint8_t *prot = (volatile uint8_t *)SYSC_PROTECTION_LOC_SECURITY;
 	*prot = 0x00;
 	MD_SYS_BARRIER();
-	md_vdp_set_reg_bit(VDP_MODESET4, VDP_MODESET4_EXT_CBUS_EN);
 	md_pal_set_spr_bank(0);
 	md_pal_set_bg_bank(0);
 	for (uint16_t i = 0; i < ARRAYSIZE(g_palette); i++)

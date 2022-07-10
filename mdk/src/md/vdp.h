@@ -7,21 +7,152 @@ MIchael Moffitt 2018 */
 #include "md/sys.h"
 #include <stdint.h>
 
-// Default VRAM layout, assuming 64x32-cell planes
-// 0000-BFFF (1536 tiles) free
-#define VRAM_SCRA_BASE_DEFAULT	0xC000
-#define VRAM_SCRW_BASE_DEFAULT	0xD000
-#define VRAM_SCRB_BASE_DEFAULT	0xE000
-// F000-F7FF (64 tiles) free
-#define VRAM_HSCR_BASE_DEFAULT	0xF800
-#define VRAM_SPR_BASE_DEFAULT	0xFC00
+// -----------------------------------------------------------------------------
+// Macros
+// -----------------------------------------------------------------------------
 
-// Tile / sprite attribute definition
+// Tile / sprite attribute definition macro.
 #define VDP_ATTR(_tile, _hflip, _vflip, _pal, _prio) (((_tile) & 0x7FF) | \
                  ((_hflip) ? 0x800 : 0) | ((_vflip) ? 0x1000 : 0) | \
                  (((_pal) & 0x3) << 13) | ((_prio) ? 0x8000 : 0))
 
+// Macro to form command to set an address via the control port.
+#define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | (((uint32_t)(_addr) & 0xC000) >> 14))
+
+// Macros for calculating VRAM, VSRAM, and CRAM destination address components.
+#define VDP_VRAMDEST(DEST)      (0x00004000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
+#define VDP_VRAM32DEST(DEST)    (0x40000000 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
+#define VDP_VSRAMDEST(DEST)     (0x00104000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
+#define VDP_VSRAM32DEST(DEST)   (0x40000010 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
+#define VDP_CRAMDEST(DEST)      (0x0000C000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
+
+// -----------------------------------------------------------------------------
+// Default VRAM layout - Optimized for 64x32 cell planes.
+// These are used during init, but you are not obligated to stick to them.
+// -----------------------------------------------------------------------------
+
+// 0000-BFFF (1536 tiles) free
+#define VRAM_SCRA_BASE_DEFAULT  0xC000
+#define VRAM_SCRW_BASE_DEFAULT  0xD000
+#define VRAM_SCRB_BASE_DEFAULT  0xE000
+// F000-F7FF (64 tiles) free
+#define VRAM_HSCR_BASE_DEFAULT  0xF800
+#define VRAM_SPR_BASE_DEFAULT   0xFC00
+
+// =============================================================================
+// Enums and defines
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Mode Set Register bit values
+// -----------------------------------------------------------------------------
+// Thanks to Jorge Nuno, Charles MacDonald, Nemesis, Tiido Priimagi, and others
+// for clarification on the functionality of a lot of these.
+
+// Register $00 - Mode Set Register 1
+// v... .... SMSVL - Columns 24-31 (but not 32-39) forced to a scroll of 0.
+// .h.. .... SMSHL - SMS Legacy, unused or unknown effect.
+// ..l. .... LCB   - Leftmost column blank. Covers leftmost 8-pixel column.
+// ...I .... IE1   - Horizontal interrupt enable. Will trigger when set.
+// .... e... VC0   - Outputs bit 0 of V. counter on HSync pin. Set to 0!
+// .... .f.. FCE   - Full color enable. Enables full palette bit depth.
+// .... ..s. M3    - HV counter latch enable. When set, HV counter is stopped.
+// .... ...o OVER  - Overlay mode. Enables locking to ext. sync via csync pin.
+
+#define VDP_MODESET1_SMSVL 0x80
+#define VDP_MODESET1_SMSHL 0x40
+#define VDP_MODESET1_LCB   0x20
+#define VDP_MODESET1_IE1   0x10
+#define VDP_MODESET1_VC0   0x08
+#define VDP_MODESET1_FCE   0x04
+#define VDP_MODESET1_M3    0x02
+#define VDP_MODESET1_OVER  0x01
+
+#define VDP_MODESET1_DEFAULT (VDP_MODESET1_FCE)
+
+// Register $01 - Mode Set Register 2
+// v... .... VR128 - VRAM 128K mode. Enables bus for second set of VRAM.
+// .d.. .... DISP  - Enables display. Shows the background color when set to 0.
+// ..I. .... IE0   - Vertical interrupt enable.
+// ...d .... M1    - Enables DMA functionality.
+// .... h... M2    - Sets vertical size to 30 cells (PAL only).
+// .... .m.. M5    - Enables MD display mode. When cleared, VDP is in SMS mode.
+// .... ..s. SMSSZ - Obsolete SMS sprite size selection.
+// .... ...M SMSMG - Obsolete SMS sprite mag. Makes scroll offset sync pulse.
+
+#define VDP_MODESET2_VR128 0x80
+#define VDP_MODESET2_DISP  0x40
+#define VDP_MODESET2_IE0   0x20
+#define VDP_MODESET2_M1    0x10
+#define VDP_MODESET2_M2    0x08
+#define VDP_MODESET2_M5    0x04
+#define VDP_MODESET2_SMSSZ 0x02
+#define VDP_MODESET2_SMSMG 0x01
+
+#define VDP_MODESET2_DEFAULT (VDP_MODESET2_M5 | \
+                              VDP_MODESET2_M1 | \
+                              VDP_MODESET2_IE0)
+
+// Register $0B - Mode Set Register 3
+// a... .... ADMUX - On CBUS, outputs color code when set, else CPU address.
+// .c.. .... DRAMS - Enables work DRAM signals when set. Set to 0.
+// .... I... IE2   - Enables external interrupts (e.g. controller TH pin).
+// .... .v.. VCELL - Vertical scroll mode. See VdpVmode enum.
+// .... ..h. HS1   - Horizontal scroll mode (bit 1). See VdpHmode enum.
+// .... ...l HS0   - Horizontal scroll mode (bit 0).
+#define VDP_MODESET3_ADMUX 0x80
+#define VDP_MODESET3_DRAMS 0x40
+#define VDP_MODESET3_IE2   0x08
+#define VDP_MODESET3_VCELL 0x04
+#define VDP_MODESET3_HS1   0x02
+#define VDP_MODESET3_HS0   0x01
+
+#define VDP_MODESET3_DEFAULT 0
+
+// Register $0C - Mode Set Register 4
+// r... .... RS0   - Select external dot clock (EDCLK). Used for H40 on MD.
+// .s.. .... VSCLK - Outputs pixel clock on VSync pin. Used by 32x and C/C2.
+// ..h. .... HSCIN - Hsync pin becomes an input. Used by 32x.
+// ...c .... SPAEN - Enable sprite/plane indicator pin as output. Used by C/C2.
+// .... S... SHI   - Enable shadow/highlight mode.
+// .... .L.. LSM1  - Interlace mode (bit 1). See VdpInterlaceMode enum.
+// .... ..l. LSM0  - Interlace mode (bit 0).
+// .... ...R RS1   - Selects horizontal cell mode and dot clock divisor.
+#define VDP_MODESET4_RS1   0x80
+#define VDP_MODESET4_VSCLK 0x40
+#define VDP_MODESET4_HSCIN 0x20
+#define VDP_MODESET4_SPAEN 0x10
+#define VDP_MODESET4_SHI   0x08
+#define VDP_MODESET4_LSM1  0x04
+#define VDP_MODESET4_LSM0  0x02
+#define VDP_MODESET4_RS0   0x01
+
+#ifndef MDK_TARGET_C2
+#define VDP_MODESET4_DEFAULT (VDP_MODESET4_RS0 | \
+                              VDP_MODESET4_RS1)
+#else
+#define VDP_MODESET4_DEFAULT (VDP_MODESET4_RS0 | \
+                              VDP_MODESET4_SPAEN | \
+                              VDP_MODESET4_VSCLK)
+#endif
+
+
+
+// Status flags
+#define VDP_STATUS_PAL    0x0001
+#define VDP_STATUS_DMA    0x0002
+#define VDP_STATUS_HBLANK 0x0004
+#define VDP_STATUS_VBLANK 0x0008
+#define VDP_STATUS_ODD    0x0010
+#define VDP_STATUS_SCOL   0x0020
+#define VDP_STATUS_SOVR   0x0040
+#define VDP_STATUS_VIP    0x0080
+#define VDP_STATUS_FULL   0x0100
+#define VDP_STATUS_EMPTY  0x0200
+
+// -----------------------------------------------------------------------------
 // Register names
+// -----------------------------------------------------------------------------
 #define VDP_MODESET1  0x00
 #define VDP_MODESET2  0x01
 #define VDP_SCRABASE  0x02
@@ -47,58 +178,9 @@ MIchael Moffitt 2018 */
 #define VDP_DMASRC2   0x16
 #define VDP_DMASRC3   0x17
 
-// Register values
-
-// Register $00 - Mode 1
-#define VDP_MODESET1_RIGHT_COL_LOCK     0x80
-#define VDP_MODESET1_UNK_EFFECT         0x40
-#define VDP_MODESET1_LBLANK             0x20
-#define VDP_MODESET1_HINT_EN            0x10
-#define VDP_MODESET1_VC_ON_HS           0x08
-#define VDP_MODESET1_FULL_COLOR         0x04
-#define VDP_MODESET1_HVCOUNT_STOP       0x02
-#define VDP_MODESET1_OVERLAY            0x01
-
-// Register $01 - Mode 2
-#define VDP_MODESET2_VRAM128            0x80
-#define VDP_MODESET2_DISP_EN            0x40
-#define VDP_MODESET2_VINT_EN            0x20
-#define VDP_MODESET2_DMA_EN             0x10
-#define VDP_MODESET2_30H                0x08
-#define VDP_MODESET2_M5_EN              0x04
-#define VDP_MODESET2_UNK1               0x02
-#define VDP_MODESET2_UNK0               0x01
-
-// Register $0B - Mode 3
-#define VDP_MODESET3_CBUS_VDP_CTRL      0x80
-#define VDP_MODESET3_THINT_EN           0x10
-#define VDP_MODESET3_VSCROLL_CELL       0x04
-#define VDP_MODESET3_HS1                0x02
-#define VDP_MODESET3_HS0                0x01
-
-// Register $0C - Mode 4
-#define VDP_MODESET4_HMODE_RS1          0x80
-#define VDP_MODESET4_SYSC_DISP_EN       0x40
-#define VDP_MODESET4_SYSC_DOTCLK_OUT    0x20
-#define VDP_MODESET4_EXT_CBUS_EN        0x10
-#define VDP_MODESET4_SHI_EN             0x08
-#define VDP_MODESET4_INTERLACE_DBL      0x04
-#define VDP_MODESET4_INTERLACE_EN       0x02
-#define VDP_MODESET4_HMODE_RS0          0x01
-
-// Status flags
-#define VDP_STATUS_PAL    0x0001
-#define VDP_STATUS_DMA    0x0002
-#define VDP_STATUS_HBLANK 0x0004
-#define VDP_STATUS_VBLANK 0x0008
-#define VDP_STATUS_ODD    0x0010
-#define VDP_STATUS_SCOL   0x0020
-#define VDP_STATUS_SOVR   0x0040
-#define VDP_STATUS_VIP    0x0080
-#define VDP_STATUS_FULL   0x0100
-#define VDP_STATUS_EMPTY  0x0200
-
+// -----------------------------------------------------------------------------
 // VRAM control words
+// -----------------------------------------------------------------------------
 #define VDP_CTRL_DMA_BIT     0x00000080
 #define VDP_CTRL_VRAM_READ   0x00000000
 #define VDP_CTRL_VRAM_WRITE  0x40000000
@@ -107,67 +189,9 @@ MIchael Moffitt 2018 */
 #define VDP_CTRL_CRAM_READ   0x00000020
 #define VDP_CTRL_CRAM_WRITE  0xC0000000
 
+// DMA operations
 #define VDP_DMA_SRC_FILL 0x80
 #define VDP_DMA_SRC_COPY 0xC0
-
-#define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | (((uint32_t)(_addr) & 0xC000) >> 14))
-
-// Macros for calculating VRAM, VSRAM, and CRAM destination address components.
-#define VDP_VRAMDEST(DEST)      (0x00004000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-#define VDP_VRAM32DEST(DEST)    (0x40000000 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
-#define VDP_VSRAMDEST(DEST)     (0x00104000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-#define VDP_VSRAM32DEST(DEST)   (0x40000010 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
-#define VDP_CRAMDEST(DEST)      (0x0000C000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-
-// Macro to write a value to a register directly.
-#define VDP_REG_WRITE(reg, val) do { VDPPORT_CTRL = 0x8000 | (reg << 8) | (val); } while(0)
-
-#define VDP_MODESET1_LBLANK             0x20
-#define VDP_MODESET1_HINT_EN            0x10
-#define VDP_MODESET1_VC_ON_HS           0x08
-#define VDP_MODESET1_FULL_COLOR         0x04
-#define VDP_MODESET1_HVCOUNT_STOP       0x02
-#define VDP_MODESET1_OVERLAY            0x01
-
-#define VDP_MODESET2_VRAM128            0x80
-#define VDP_MODESET2_DISP_EN            0x40
-#define VDP_MODESET2_VINT_EN            0x20
-#define VDP_MODESET2_DMA_EN             0x10
-#define VDP_MODESET2_30H                0x08
-#define VDP_MODESET2_M5_EN              0x04
-
-#define VDP_MODESET3_CBUS_VDP_CTRL      0x80
-// Changes the CAS0 signal to a column address strobe instead of a $00000-$DFFFFF read strobe (Jorge)
-#define VDP_MODESET3_VRAM128_CAS0_EN    0x40
-#define VDP_MODESET3_
-#define VDP_MODESET3_THINT_EN           0x10
-#define VDP_MODESET3_VSCROLL_CELL       0x04
-#define VDP_MODESET3_HS1                0x02
-#define VDP_MODESET3_HS0                0x01
-
-#define VDP_MODESET4_HMODE_RS1          0x80
-#define VDP_MODESET4_SYSC_DISP_EN       0x40
-#define VDP_MODESET4_SYSC_DOTCLK_OUT    0x20
-#define VDP_MODESET4_EXT_CBUS_EN        0x10
-#define VDP_MODESET4_SHI_EN             0x08
-#define VDP_MODESET4_INTERLACE_DBL      0x04
-#define VDP_MODESET4_INTERLACE_EN       0x02
-#define VDP_MODESET4_HMODE_RS0          0x01
-
-// Macro to set a register, and update its cached value.
-#define VDP_SET(regbase, mask, en) \
-do \
-{ \
-	MD_SYS_BARRIER();\
-	if(en) \
-	{ \
-		md_vdp_set_reg(regbase, md_vdp_get_reg(regbase) | (mask)); \
-	} \
-	else \
-	{ \
-		md_vdp_set_reg(regbase, md_vdp_get_reg(regbase) & ~(mask)); \
-	} \
-} while(0)
 
 // The register cache.
 extern uint8_t g_md_vdp_regvalues[0x18];
@@ -184,13 +208,13 @@ typedef enum VdpHscrollMode
 typedef enum VdpVscrollMode
 {
 	VDP_VSCROLL_PLANE = 0,
-	VDP_VSCROLL_CELL = 0x04
+	VDP_VCELL = 0x04
 } VdpVscrollMode;
 
 typedef enum VdpHmode
 {
-	VDP_HMODE_H32 = 0x00,
-	VDP_HMODE_H40 = 0x81
+	VDP_HMODE_H32,
+	VDP_HMODE_H40
 } VdpHmode;
 
 typedef enum VdpVmode
@@ -220,7 +244,6 @@ typedef enum VdpPlaneSize
 	VDP_PLANESIZE_64x128  = 0x31,
 	VDP_PLANESIZE_UNDx128 = 0x32,
 	VDP_PLANESIZE_128x128 = 0x33,
-
 } VdpPlaneSize;
 
 typedef enum VdpPlane
@@ -230,64 +253,94 @@ typedef enum VdpPlane
 	VDP_PLANE_WINDOW = 0x02
 } VdpPlane;
 
+typedef enum VdpInterlaceMode
+{
+	VDP_INTERLACE_NONE,
+	VDP_INTERLACE_NORMAL,
+	VDP_INTERLACE_DOUBLE
+} VdpInterlaceMode;
+
 // =============================================================================
 // Functions and accessors
 // =============================================================================
 void md_vdp_init(void);
 
-// Accessors
+// -----------------------------------------------------------------------------
+// Generic Accessors
+// -----------------------------------------------------------------------------
 static inline void md_vdp_set_reg(uint8_t num, uint8_t val);
 static inline void md_vdp_set_reg_bit(uint8_t num, uint8_t bit);
 static inline void md_vdp_clear_reg_bit(uint8_t num, uint8_t bit);
 static inline uint8_t md_vdp_get_reg(uint8_t num);
 static inline uint16_t md_vdp_get_status(void);
 
+// -----------------------------------------------------------------------------
 // Interrupt config
+// -----------------------------------------------------------------------------
 static inline void md_vdp_set_hint_en(uint8_t enabled);
 static inline void md_vdp_set_vint_en(uint8_t enabled);
 static inline void md_vdp_set_thint_en(uint8_t enabled);
 static inline void md_vdp_set_hint_line(uint8_t line);
 void md_vdp_wait_vblank(void);
 
-// Address configuration
+// -----------------------------------------------------------------------------
+// Base Address configuration
+// -----------------------------------------------------------------------------
 
 // Plane A, B:   Multiples of $2000
 // Window plane: Multiples of $1000 in H40, $0800 in H32
 void md_vdp_set_plane_base(VdpPlane plane, uint16_t value);
-// Multiples of $0200
+// Sprite base: Multiples of $0200
 void md_vdp_set_sprite_base(uint16_t value);
-// Multiples of $0400
+// H scroll table base: Multiples of $0400
 void md_vdp_set_hscroll_base(uint16_t value);
 
 uint16_t md_vdp_get_plane_base(VdpPlane plane);
 uint16_t md_vdp_get_sprite_base(void);
 uint16_t md_vdp_get_hscroll_base(void);
 
-// Scroll plane config
+// -----------------------------------------------------------------------------
+// Scroll planes
+// -----------------------------------------------------------------------------
+static inline void md_vdp_set_plane_size(VdpPlaneSize size);
 static inline void md_vdp_set_hscroll_mode(VdpHscrollMode mode);
 static inline void md_vdp_set_vscroll_mode(VdpVscrollMode mode);
-static inline void md_vdp_set_plane_size(VdpPlaneSize size);
 static inline VdpPlaneSize md_vdp_plane_size_from_cells(int16_t h_cells,
-                                                     int16_t v_cells);
+                                                        int16_t v_cells);
 static inline uint16_t md_vdp_get_plane_width(void);  // In cells.
 static inline uint16_t md_vdp_get_plane_height(void);
 static inline void md_vdp_set_window_top(uint8_t height);
 static inline void md_vdp_set_window_bottom(uint8_t height);
 static inline void md_vdp_set_window_right(uint8_t width);
-static inline void md_vdp_set_window_left(uint8_t width); // Buggy with horizontal scrolling!
+static inline void md_vdp_set_window_left(uint8_t width); // Buggy with H scroll
 
-// Blanking
+// -----------------------------------------------------------------------------
+// Raster config
+// -----------------------------------------------------------------------------
 static inline void md_vdp_set_display_en(uint8_t enabled);
 
-// Raster config
 static inline void md_vdp_set_hmode(VdpHmode mode);
 static inline void md_vdp_set_vmode(VdpVmode mode);
-static inline void md_vdp_set_bgcol(uint8_t idx);
-static inline void md_vdp_set_shi(uint8_t enabled);
-void md_vdp_set_raster_height(uint8_t height); // 224 or 240
-void md_vdp_set_raster_width(uint16_t width); // 320 or 256
-uint8_t md_vdp_get_raster_height(void);
-uint16_t md_vdp_get_raster_width(void);
+static inline void md_vdp_set_bg_color(uint8_t idx);
+static inline void md_vdp_set_shadow_highlight(uint8_t enabled);
+static inline void md_vdp_set_left_column_blank(uint8_t enabled);
+static uint16_t md_vdp_get_raster_height(void);
+static uint16_t md_vdp_get_raster_width(void);
+
+static inline void md_vdp_set_sms_vl(uint8_t enabled);
+static inline void md_vdp_set_sms_hl(uint8_t enabled);
+
+static inline void md_vdp_set_interlace_mode(VdpInterlaceMode mode);
+static inline void md_vdp_set_vs_clk_output(uint8_t enabled);
+static inline void md_vdp_set_hs_input(uint8_t enabled);
+static inline void md_vdp_set_spa_output(uint8_t enabled);
+static inline void md_vdp_set_cbus_cpu_mux(uint8_t enabled);
+
+// HV counter
+static inline uint16_t md_vdp_get_hv_count(void);
+static inline uint8_t md_vdp_get_h_count(void);
+static inline uint8_t md_vdp_get_v_count(void);
+static inline void md_vd_set_hv_count_latch(uint8_t latch);
 
 // Data transfer and DMA configuration
 static inline void md_vdp_set_autoinc(uint8_t inc);
@@ -298,7 +351,36 @@ static inline uint16_t md_vdp_read(void);
 static inline void md_vdp_poke(uint16_t addr, uint16_t value);
 static inline uint16_t md_vdp_peek(uint16_t addr);
 
+static inline void md_vdp_set_dma_en(uint8_t enabled);
 static inline void md_vdp_wait_dma(void);
+
+// =============================================================================
+// Implementations
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Internal use macros, for interacting with VDP registers.
+// -----------------------------------------------------------------------------
+// Macro to set a register and update the cached value.
+#define VDP_SET(regbase, mask, en) \
+do \
+{ \
+	MD_SYS_BARRIER();\
+	if(en) \
+	{ \
+		md_vdp_set_reg(regbase, md_vdp_get_reg(regbase) | (mask)); \
+	} \
+	else \
+	{ \
+		md_vdp_set_reg(regbase, md_vdp_get_reg(regbase) & ~(mask)); \
+	} \
+} while(0)
+
+// Macro to write a value to a register directly.
+// Unless you have a good reason to do otherwise, use the md_vdp_set functions.
+// This bypasses the register cache that is used elsewhere, so this is not
+// recommended for regular use.
+#define VDP_REG_WRITE(reg, val) do { VDPPORT_CTRL = 0x8000 | (reg << 8) | (val); } while(0)
 
 // Accessors
 static inline void md_vdp_set_reg(uint8_t num, uint8_t val)
@@ -332,17 +414,17 @@ static inline uint16_t md_vdp_get_status(void)
 // Interrupt config
 static inline void md_vdp_set_hint_en(uint8_t enabled)
 {
-	VDP_SET(VDP_MODESET1, VDP_MODESET1_HINT_EN, enabled);
+	VDP_SET(VDP_MODESET1, VDP_MODESET1_IE1, enabled);
 }
 
 static inline void md_vdp_set_vint_en(uint8_t enabled)
 {
-	VDP_SET(VDP_MODESET2, VDP_MODESET2_VINT_EN, enabled);
+	VDP_SET(VDP_MODESET2, VDP_MODESET2_IE0, enabled);
 }
 
 static inline void md_vdp_set_thint_en(uint8_t enabled)
 {
-	VDP_SET(VDP_MODESET3, VDP_MODESET3_THINT_EN, enabled);
+	VDP_SET(VDP_MODESET3, VDP_MODESET3_IE2, enabled);
 }
 
 static inline void md_vdp_set_hint_line(uint8_t line)
@@ -358,7 +440,7 @@ static inline void md_vdp_set_hscroll_mode(VdpHscrollMode mode)
 
 static inline void md_vdp_set_vscroll_mode(VdpVscrollMode mode)
 {
-	VDP_SET(VDP_MODESET3, VDP_MODESET3_VSCROLL_CELL, mode);
+	VDP_SET(VDP_MODESET3, VDP_MODESET3_VCELL, mode);
 }
 
 static inline void md_vdp_set_plane_size(VdpPlaneSize size)
@@ -437,33 +519,38 @@ static inline void md_vdp_set_window_left(uint8_t width)
 // Blanking
 static inline void md_vdp_set_display_en(uint8_t enabled)
 {
-	VDP_SET(VDP_MODESET2, VDP_MODESET2_DISP_EN, enabled);
+	VDP_SET(VDP_MODESET2, VDP_MODESET2_DISP, enabled);
 }
 
 // Raster config
 static inline void md_vdp_set_hmode(VdpHmode mode)
 {
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_RS1, mode == VDP_HMODE_H40);
 #ifndef MDK_TARGET_C2
-	VDP_SET(VDP_MODESET4, VDP_MODESET4_HMODE_RS0, mode);
-	VDP_SET(VDP_MODESET4, VDP_MODESET4_HMODE_RS1, !mode);
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_RS0, mode == VDP_HMODE_H40);
 #else
-	(void)mode;
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_RS0, 0);
 #endif
 }
 
 static inline void md_vdp_set_vmode(VdpVmode mode)
 {
-	VDP_SET(VDP_MODESET2, VDP_MODESET2_30H, mode);
+	VDP_SET(VDP_MODESET2, VDP_MODESET2_M2, mode);
 }
 
-static inline void md_vdp_set_bgcol(uint8_t idx)
+static inline void md_vdp_set_bg_color(uint8_t idx)
 {
 	md_vdp_set_reg(VDP_BGCOL, idx);
 }
 
-static inline void md_vdp_set_shi(uint8_t enabled)
+static inline void md_vdp_set_shadow_highlight(uint8_t enabled)
 {
-	VDP_SET(VDP_MODESET4, VDP_MODESET4_SHI_EN, enabled);
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_SHI, enabled);
+}
+
+static inline void md_vdp_set_left_column_blank(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET4, VDP_MODESET1_LCB, enabled);
 }
 
 // Data transfer and DMA configuration
@@ -485,6 +572,11 @@ static inline void md_vdp_write(uint16_t value)
 static inline uint16_t md_vdp_read(void)
 {
 	return VDPPORT_DATA;
+}
+
+static inline void md_vdp_set_dma_en(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET2, VDP_MODESET2_M1, enabled);
 }
 
 static inline void md_vdp_wait_dma(void)
@@ -523,5 +615,54 @@ static inline uint8_t md_vdp_get_v_count(void)
 	return (VDPPORT_HVCOUNT) >> 8;
 }
 
+static inline void md_vd_set_hv_count_latch(uint8_t latch)
+{
+	VDP_SET(VDP_MODESET1, VDP_MODESET1_M3, latch);
+}
 
+static uint16_t md_vdp_get_raster_height(void)
+{
+	return (md_vdp_get_reg(VDP_MODESET2) & VDP_MODESET2_M2) ? 240 : 224;
+}
+
+static uint16_t md_vdp_get_raster_width(void)
+{
+	return (md_vdp_get_reg(VDP_MODESET4) & VDP_MODESET4_RS0) ? 320 : 256;
+}
+
+static inline void md_vdp_set_sms_vl(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET1, VDP_MODESET1_SMSVL, enabled);
+}
+
+static inline void md_vdp_set_sms_hl(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET1, VDP_MODESET1_SMSHL, enabled);
+}
+
+static inline void md_vdp_set_cbus_cpu_mux(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET3, VDP_MODESET3_ADMUX, enabled);
+}
+
+static inline void md_vdp_set_interlace_mode(VdpInterlaceMode mode)
+{
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_LSM0, mode != VDP_INTERLACE_NONE);
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_LSM1, mode == VDP_INTERLACE_DOUBLE);
+}
+
+static inline void md_vdp_set_vs_clk_output(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_VSCLK, enabled);
+}
+
+static inline void md_vdp_set_hs_input(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_HSCIN, enabled);
+}
+
+static inline void md_vdp_set_spa_output(uint8_t enabled)
+{
+	VDP_SET(VDP_MODESET4, VDP_MODESET4_SPAEN, enabled);
+}
 #endif // VDP_H

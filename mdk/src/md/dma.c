@@ -180,7 +180,7 @@ static inline void process_cmd(DmaCmd *cmd)
 	MD_SYS_BARRIER();
 
 	md_vdp_set_autoinc(cmd->stride);
-	md_vdp_set_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
+	md_vdp_set_dma_en(1);
 
 	md_vdp_set_reg(VDP_DMALEN1, cmd->len_1);
 	md_vdp_set_reg(VDP_DMALEN2, cmd->len_2);
@@ -211,7 +211,7 @@ static inline void process_cmd(DmaCmd *cmd)
 	MD_SYS_BARRIER();
 	md_vdp_wait_dma();
 	MD_SYS_BARRIER();
-	md_vdp_clear_reg_bit(VDP_MODESET2, VDP_MODESET2_DMA_EN);
+	md_vdp_set_dma_en(0);
 }
 
 void md_dma_process(void)
