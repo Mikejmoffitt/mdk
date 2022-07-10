@@ -6,16 +6,16 @@ Michael Moffitt 2018-2022 */
 
 uint16_t g_md_sys_ints_enabled;
 
-static const uint8_t s_z80_stub_program[] =
-{
-	0xF3,       // di
-	0x18, 0xFE  // jr $
-};
-
 void md_sys_init(void)
 {
 #ifndef MDK_TARGET_C2
 	md_tmss_init();
+
+	static const uint8_t s_z80_stub_program[] =
+	{
+		0xF3,       // di
+		0x18, 0xFE  // jr $
+	};
 	md_sys_z80_init(s_z80_stub_program, sizeof(s_z80_stub_program));
 #endif
 }
