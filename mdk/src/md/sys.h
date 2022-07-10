@@ -44,8 +44,10 @@ void md_sys_z80_init(const uint8_t *src, uint16_t size);
 // Requests access to the Z80 bus, halting it. Can block until granted.
 static inline void md_sys_z80_bus_req(uint8_t wait);
 static inline void md_sys_z80_bus_release(void);
-static inline void md_sys_z80_reset_on(void);
-static inline void md_sys_z80_reset_off(void);
+// Set the Z80 reset line high or low. Low (asserted) holds it and the YM2612
+// in a reset state.
+static inline void md_sys_z80_reset_deassert(void);
+static inline void md_sys_z80_reset_assert(void);
 
 // -----------------------------------------------------------------------------
 // System information
@@ -105,30 +107,29 @@ static inline uint8_t md_sys_get_hw_rev(void)
 
 static inline void md_sys_z80_bus_req(uint8_t wait)
 {
-	volatile uint8_t *z80_bus_b = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
-	volatile uint16_t *z80_bus_w = (volatile uint16_t *)SYS_Z80_PORT_BUS_LOC;
+	volatile uint8_t *z80_bus = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
 
-	*z80_bus_w = 0x0100;
+	*z80_bus = 0x01;
 	if (!wait) return;
-	while (*z80_bus_b & 0x01) __asm__("nop");
+	while (*z80_bus & 0x01) __asm__("nop");
 }
 
 static inline void md_sys_z80_bus_release(void)
 {
-	volatile uint16_t *z80_bus_w = (volatile uint16_t *)SYS_Z80_PORT_BUS_LOC;
-	*z80_bus_w = 0x0000;
+	volatile uint8_t *z80_bus = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
+	*z80_bus = 0x00;
 }
 
-static inline void md_sys_z80_reset_on(void)
+static inline void md_sys_z80_reset_deassert(void)
 {
-	volatile uint16_t *z80_reset_w = (volatile uint16_t *)SYS_Z80_PORT_RESET_LOC;
-	*z80_reset_w = 0x0100;
+	volatile uint8_t *z80_reset = (volatile uint8_t *)SYS_Z80_PORT_RESET_LOC;
+	*z80_reset = 0x01;
 }
 
-static inline void md_sys_z80_reset_off(void)
+static inline void md_sys_z80_reset_assert(void)
 {
-	volatile uint16_t *z80_reset_w = (volatile uint16_t *)SYS_Z80_PORT_RESET_LOC;
-	*z80_reset_w = 0x0000;
+	volatile uint8_t *z80_reset = (volatile uint8_t *)SYS_Z80_PORT_RESET_LOC;
+	*z80_reset = 0x00;
 }
 
 // -----------------------------------------------------------------------------
@@ -177,11 +178,11 @@ static inline void md_sys_z80_bus_release(void)
 {
 }
 
-static inline void md_sys_z80_reset_on(void)
+static inline void md_sys_z80_reset_deassert(void)
 {
 }
 
-static inline void md_sys_z80_reset_off(void)
+static inline void md_sys_z80_reset_assert(void)
 {
 }
 

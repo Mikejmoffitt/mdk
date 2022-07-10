@@ -186,6 +186,9 @@ static inline void process_cmd(DmaCmd *cmd)
 	md_vdp_set_reg(VDP_DMALEN2, cmd->len_2);
 	MD_SYS_BARRIER();
 
+	md_sys_z80_bus_req(0);
+	MD_SYS_BARRIER();
+
 	switch (cmd->op)
 	{
 		default:
@@ -212,6 +215,8 @@ static inline void process_cmd(DmaCmd *cmd)
 	md_vdp_wait_dma();
 	MD_SYS_BARRIER();
 	md_vdp_set_dma_en(0);
+	MD_SYS_BARRIER();
+	md_sys_z80_bus_release();
 }
 
 void md_dma_process(void)
@@ -221,8 +226,6 @@ void md_dma_process(void)
 
 	const uint16_t ints_enabled = md_sys_get_ints_enabled();
 	md_sys_di();
-	md_sys_z80_bus_req(1);
-	MD_SYS_BARRIER();
 
 	// Process single high-priority slot first.
 	if (s_dma_spr_cmd[0].op == DMA_OP_SPR_TRANSFER)
@@ -238,8 +241,7 @@ void md_dma_process(void)
 
 	s_dma_spr_pos = 0;
 
-
-	// Process all queued tranfers.
+	// Process all queued transfers.
 	while (s_md_dma_read_pos != s_md_dma_write_pos)
 	{
 		DmaCmd *cmd = &s_dma_q[s_md_dma_read_pos];
@@ -247,7 +249,5 @@ void md_dma_process(void)
 		process_cmd(cmd);
 	}
 
-	MD_SYS_BARRIER();
-	md_sys_z80_bus_release();
 	if (ints_enabled) md_sys_ei();
 }
