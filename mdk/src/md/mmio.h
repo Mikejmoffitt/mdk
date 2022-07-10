@@ -39,11 +39,13 @@
 // VDP
 // -----------------------------------------------------------------------------
 
-#define VDP_LOC_BASE    (0xC00000)
-#define VDPPORT_DATA    (*(volatile uint16_t*)(VDP_LOC_BASE))
-#define VDPPORT_CTRL    (*(volatile uint16_t*)(VDP_LOC_BASE + 4))
-#define VDPPORT_CTRL32  (*(volatile uint32_t*)(VDP_LOC_BASE + 4))
-#define VDPPORT_HVCOUNT (*(volatile uint16_t*)(VDP_LOC_BASE + 8))
+#define VDP_LOC_BASE      (0xC00000)
+#define VDPPORT_DATA      (*(volatile uint16_t*)(VDP_LOC_BASE))
+#define VDPPORT_CTRL      (*(volatile uint16_t*)(VDP_LOC_BASE + 4))
+#define VDPPORT_CTRL32    (*(volatile uint32_t*)(VDP_LOC_BASE + 4))
+#define VDPPORT_HVCOUNT   (*(volatile uint16_t*)(VDP_LOC_BASE + 8))
+#define VDPPORT_DBG_SEL   (*(volatile uint16_t *)(VDP_LOC_BASE + 0x18))
+#define VDPPORT_DBG_DATA  (*(volatile uint16_t *)(VDP_LOC_BASE + 0x1C))
 
 // -----------------------------------------------------------------------------
 // System C/C2 additions:

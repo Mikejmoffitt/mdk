@@ -151,6 +151,30 @@
 #define VDP_MODESET4_LSM0  0x02
 #define VDP_MODESET4_RS0   0x01
 
+// -----------------------------------------------------------------------------
+// Debug registers. Selected with VDPPORT_DBG_SEL, written with VDPPORT_DBG_DATA
+// Unlike regular VDP registers, these are word-sized (16-bit).
+// -----------------------------------------------------------------------------
+
+// Register $00 - PSG debug and layer mixing
+// .sss .... .... .... SPRST - Sprite render state bits. Function unknown.
+// .... cc.. .... .... PSOCN - PSG Override volume source channel.
+// .... ..p. .... .... PSOVR - PSG Override - has all PSG channels share volume.
+// .... ...l l... .... LYSEL - Select layer to display with SOLO.
+// .... .... .S.. .... SOLO  - Hide all but one layer, selected by LYSEL.
+
+// LYSEL should be 00 in normal circumstances, but if it is used without setting
+// SOLO, the VDP will still try to display the selected layer, which cases the
+// layer data to have a bus conflict with the output from the normal rendering
+// pipeline. The end result is usually a logical AND between the color indices,
+// but as this relies on analog behavior of a bus conflict, it's not stable, and
+// is not recommended. It may even be bad for the VDP!
+
+// Register $01 - Clock functions
+// .... .... .... ..e. EDCKO - Makes EDCLK output DCLK. Not useful on MD.
+// .... .... .... ...z Z80CK - Doubles the Z80 and PSG clock to about 7.67Mhz!
+#define VDP_DBG_CLKST_HS
+
 #ifndef MDK_TARGET_C2
 // Megadrive requires RS1 to be set to accept EDCLK so that the horizontal scan
 // rate is the correct ~15.7KHz.
@@ -206,6 +230,9 @@
 #define VDP_DMASRC2   0x16
 #define VDP_DMASRC3   0x17
 
+#define VDP_DBG_LAYER 0x0000
+#define VDP_DBG_CLKST 0x0100
+
 // -----------------------------------------------------------------------------
 // VRAM control words
 // -----------------------------------------------------------------------------
@@ -223,6 +250,7 @@
 
 // The register cache.
 extern uint8_t g_md_vdp_regvalues[0x18];
+extern uint16_t g_mdp_vdp_dbg_regvalues[0x02];
 
 // Enums for register access functions.
 typedef enum VdpHscrollMode
@@ -305,6 +333,9 @@ static inline uint8_t md_vdp_get_reg(uint8_t num);
 
 // Returns the VDP status register contents.
 static inline uint16_t md_vdp_get_status(void);
+
+// Write to the debug register.
+static inline void md_vdp_set_debug_reg(uint16_t num, uint16_t val);
 
 // -----------------------------------------------------------------------------
 // Interrupt config
@@ -521,6 +552,12 @@ static inline uint8_t md_vdp_get_reg(uint8_t num)
 static inline uint16_t md_vdp_get_status(void)
 {
 	return VDPPORT_CTRL;
+}
+
+static inline void md_vdp_set_debug_reg(uint16_t num, uint16_t val)
+{
+	VDPPORT_DBG_SEL = num;
+	VDPPORT_DBG_DATA = val;
 }
 
 // Interrupt config
