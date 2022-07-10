@@ -1,5 +1,5 @@
 # Configuration
-OUTPUT_FILE := move-podge
+PROJECT_NAME := move_podge
 
 MDKROOT := ../../mdk
 
