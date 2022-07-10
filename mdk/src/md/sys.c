@@ -21,7 +21,7 @@ void md_sys_z80_init(const uint8_t *src, uint16_t size)
 	md_sys_z80_reset_off();
 
 	volatile uint8_t *z80_ram = (volatile uint8_t *)SYS_Z80_PRG_LOC;
-	while (size-- >= 0) *z80_ram++ = *src++;
+	for (uint16_t i = 0; i < size; i++) *z80_ram++ = *src++;
 
 	md_sys_z80_reset_on();
 	md_sys_z80_bus_release();
