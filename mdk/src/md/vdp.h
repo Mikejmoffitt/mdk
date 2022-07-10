@@ -40,13 +40,6 @@
 // Macro to form command to set an address via the control port.
 #define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | (((uint32_t)(_addr) & 0xC000) >> 14))
 
-// Macros for calculating VRAM, VSRAM, and CRAM destination address components.
-#define VDP_VRAMDEST(DEST)      (0x00004000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-#define VDP_VRAM32DEST(DEST)    (0x40000000 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
-#define VDP_VSRAMDEST(DEST)     (0x00104000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-#define VDP_VSRAM32DEST(DEST)   (0x40000010 | (((uint32_t)(DEST) & 0x3FFF) << 16) | (((uint32_t)(DEST) & 0xC000) >> 14))
-#define VDP_CRAMDEST(DEST)      (0x0000C000 | ((uint32_t)(DEST) & 0x3FFF) | (((uint32_t)(DEST) & 0xC000) << 2))
-
 // -----------------------------------------------------------------------------
 // Default VRAM layout - Optimized for 64x32 cell planes.
 // These are used during init, but you are not obligated to stick to them.
