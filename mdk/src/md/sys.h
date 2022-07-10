@@ -105,25 +105,30 @@ static inline uint8_t md_sys_get_hw_rev(void)
 
 static inline void md_sys_z80_bus_req(uint8_t wait)
 {
-	SYS_Z80_PORT_BUS = 0x0100;
+	volatile uint8_t *z80_bus_b = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
+	volatile uint16_t *z80_bus_w = (volatile uint16_t *)SYS_Z80_PORT_BUS_LOC;
+
+	*z80_bus_w = 0x0100;
 	if (!wait) return;
-	MD_SYS_BARRIER();
-	while ((SYS_Z80_PORT_BUS & 0x0100)) { __asm__("nop"); }
+	while (*z80_bus_b & 0x01) __asm__("nop");
 }
 
 static inline void md_sys_z80_bus_release(void)
 {
-	SYS_Z80_PORT_BUS = 0x0000;
+	volatile uint16_t *z80_bus_w = (volatile uint16_t *)SYS_Z80_PORT_BUS_LOC;
+	*z80_bus_w = 0x0000;
 }
 
 static inline void md_sys_z80_reset_on(void)
 {
-	SYS_Z80_PORT_RESET = 0x0100;
+	volatile uint16_t *z80_reset_w = (volatile uint16_t *)SYS_Z80_PORT_RESET_LOC;
+	*z80_reset_w = 0x0100;
 }
 
 static inline void md_sys_z80_reset_off(void)
 {
-	SYS_Z80_PORT_RESET = 0x0000;
+	volatile uint16_t *z80_reset_w = (volatile uint16_t *)SYS_Z80_PORT_RESET_LOC;
+	*z80_reset_w = 0x0000;
 }
 
 // -----------------------------------------------------------------------------

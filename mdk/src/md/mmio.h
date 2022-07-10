@@ -31,10 +31,10 @@
 // I/O (Sys)
 // -----------------------------------------------------------------------------
 
-#define SYS_PORT_VERSION   (*(volatile uint8_t *)(IO_LOC_BASE + 1))
-#define SYS_Z80_PRG_LOC    (0xA00000)
-#define SYS_Z80_PORT_BUS   (*(volatile uint16_t *)0xA11100)
-#define SYS_Z80_PORT_RESET (*(volatile uint16_t *)0xA11200)
+#define SYS_PORT_VERSION       (*(volatile uint8_t *)(IO_LOC_BASE + 1))
+#define SYS_Z80_PRG_LOC        (0xA00000)
+#define SYS_Z80_PORT_BUS_LOC   (0xA11100)
+#define SYS_Z80_PORT_RESET_LOC (0xA11200)
 // -----------------------------------------------------------------------------
 // VDP
 // -----------------------------------------------------------------------------
