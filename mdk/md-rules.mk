@@ -148,7 +148,9 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[  C  ]\e[0m $< --> $@\n"'
 	$(CC) $(CFLAGS) -c $< -o $@
+ifneq ($(MDK_WANT_ASM_OUT),)
 	$(CC) $(CFLAGS) -S $< -o $@.asm
+endif
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
@@ -159,7 +161,9 @@ $(OBJDIR)/%.o: $(MDKSRCDIR)/%.c $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[ C:C ]\e[0m $< --> $@\n"'
 	$(CC) $(CFLAGS) -c $< -o $@
+ifneq ($(MDK_WANT_ASM_OUT),)
 	$(CC) $(CFLAGS) -S $< -o $@.asm
+endif
 
 $(OBJDIR)/%.o: $(MDKSRCDIR)/%.s $(OBJECTS_RES) ext_deps
 	@mkdir -p $(dir $@	)
