@@ -81,17 +81,6 @@ void md_ioc_set_cn4_bits(int16_t a19, int16_t b19)
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
 }
 
-// Set upper address pins for uPD7759 sample ROM A17-A18.
-// Upper bits theorized to exist via Charles McDonald's doc, unconfirmed.
-// Banks 0-3 valid; possibly up to 0xF.
-void md_ioc_set_udp7759_bank(uint16_t bank)
-{
-	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
-	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x3C;
-	s_io_reg_cache[SYSC_IO_PORT_H] |= (bank & 0x000F) << 2;
-	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
-}
-
 // Set palette bank 0-3 through bits A9 and A10 of CRAM.
 void md_ioc_set_global_pal_bank(uint16_t bank)
 {
@@ -104,6 +93,31 @@ void md_ioc_set_global_pal_bank(uint16_t bank)
 uint16_t md_ioc_get_pal_bank(void)
 {
 	return s_io_reg_cache[SYSC_IO_PORT_H] & 0x0003;
+}
+
+// Set upper address pins for uPD7759 sample ROM A17-A18.
+// Upper bits theorized to exist via Charles McDonald's doc, unconfirmed.
+// Banks 0-3 valid; possibly up to 0xF.
+void md_ioc_set_udp7759_bank(uint16_t bank)
+{
+	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
+	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x3C;
+	s_io_reg_cache[SYSC_IO_PORT_H] |= (bank & 0x000F) << 2;
+	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
+}
+
+// Assert (bring to 0) or Deassert (bring to 1) the reset pin for the uPD7759.
+void md_ioc_set_upd7759_reset(uint16_t asserted)
+{
+	static const uint8_t base_value = 0xF0;  // From Puyo 2 - Meaning unknown!
+	volatile uint8_t *reg_ctrl2 = (volatile uint8_t *)(SYSC_IO_LOC_CTRL2);
+	// As far as I can tell, CNT1 (second bit) is the reset signal.
+	*reg_ctrl2 = base_value | (asserted ? 0x00 : 0x02);
+}
+
+uint16_t md_ioc_get_upd7759_busy(void)
+{
+	return (md_ioc_get_misc_input() & SYSC_MISC_UPD7759_BUSY) ? 1 : 0;
 }
 
 // Internal Use ---------------------------------------------------------------

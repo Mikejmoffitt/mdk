@@ -22,9 +22,12 @@ void megadrive_init(void)
 
 #ifdef MDK_TARGET_C2
 	md_ioc_init();
+	md_ioc_set_upd7759_reset(1);
 	md_sysc_vctrl_set_blank(1);
 	md_sysc_vctrl_set_protection_reset(1);
 	md_sysc_vctrl_set_md_color_compat(1);
+	md_ioc_set_udp7759_bank(0);
+	md_ioc_set_upd7759_reset(0);
 #else
 	md_io_init();
 #endif
