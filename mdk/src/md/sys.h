@@ -103,20 +103,12 @@ static inline uint8_t md_sys_get_hw_rev(void)
 	return SYS_PORT_VERSION & 0x0F;
 }
 
-static inline uint16_t md_sys_z80_get_bus_status(void)
-{
-	return SYS_Z80_PORT_BUS;
-}
-
-static inline uint16_t md_sys_z80_get_reset_status(void)
-{
-	return SYS_Z80_PORT_RESET;
-}
-
 static inline void md_sys_z80_bus_req(uint8_t wait)
 {
 	SYS_Z80_PORT_BUS = 0x0100;
-	while (wait && (SYS_Z80_PORT_BUS & 0x0100) == 0) { __asm__("nop"); }
+	if (!wait) return;
+	MD_SYS_BARRIER();
+	while ((SYS_Z80_PORT_BUS & 0x0100)) { __asm__("nop"); }
 }
 
 static inline void md_sys_z80_bus_release(void)
