@@ -15,7 +15,7 @@ Michael Moffitt 2022 */
 void md_adpcm_set_reset(uint16_t reset);
 
 // Set a phrase request value for the uPD7759.
-void md_adpcm_select(uint8_t value);
+void md_adpcm_play(uint8_t value);
 
 // Select bank 0-3. Should call md_adpcm_reset() afterwards, unless the banks
 // don't change the voice table contents.

@@ -21,6 +21,8 @@ RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*')
 # In addition, you may define MDK_C2_ADPCM with the filename of the ADPCM ROM.
 TARGET_SYSTEM := MDK_TARGET_C2
 
+MDK_C2_ADPCM := adpcm.bin
+
 include $(MDKROOT)/md-rules.mk
 
 # Any additional build targets may go here.

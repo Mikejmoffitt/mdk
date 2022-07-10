@@ -1,4 +1,4 @@
-#include "md/upd7759.h"
+#include "md/adpcm.h"
 #include "md/mmio.h"
 #include "md/ioc.h"
 
@@ -16,7 +16,7 @@ void md_adpcm_set_reset(uint16_t reset)
 }
 
 // Set a phrase request value for the uPD7759.
-void md_adpcm_select(uint8_t value)
+void md_adpcm_play(uint8_t value)
 {
 	volatile uint8_t *phrase = (volatile uint8_t *)SYSC_IO_UPD7759_PHRASE_LOC;
 	*phrase = value;

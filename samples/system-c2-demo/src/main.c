@@ -12,6 +12,8 @@
 #include "util/plane.h"
 #include "md/psg.h"
 
+#include "md/adpcm.h"
+
 #include "res.h"
 
 static const uint16_t tile_vram_addr = 0x0;
@@ -112,9 +114,10 @@ void main(void)
 	draw_bg_color_bars();
 
 	// It makes a bunch of noise.
-	md_psg_vol(0, 8);
-	md_psg_vol(1, 8);
-	md_psg_vol(2, 8);
+	md_psg_vol(0, 0);
+	md_psg_vol(1, 0);
+	md_psg_vol(2, 0);
+	md_adpcm_play(0);
 	static uint16_t period = 0;
 	while (1)
 	{
