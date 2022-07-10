@@ -1,41 +1,64 @@
-/* mdk system functions
-Michael Moffitt 2018-2022 */
-#ifndef SYS_H
-#define SYS_H
-
+// mdk system functions
+// Michael Moffitt 2018-2022
+//
 // Most things in this file rely on the arbiter / controller in the Mega Drive.
 // System C2 does not have this IC, so most functions either work differently or
 // are dummy / no-op.
+#ifndef MD_SYS_H
+#define MD_SYS_H
 
 #include <stdint.h>
 #include "md/mmio.h"
 
-#define MD_SYS_BARRIER() __asm__ __volatile__("": : :"memory")
+// =============================================================================
+// Interface
+// =============================================================================
 
-extern uint16_t g_md_sys_ints_enabled;
-
+// If on Mega Drive / Genesis, initializes TMSS if applicable.
 void md_sys_init(void);
 
-// Get system information
+// Inserts a memory barrier.
+#define MD_SYS_BARRIER() __asm__ __volatile__("": : :"memory")
 
+// -----------------------------------------------------------------------------
+// Interrupts.
+// -----------------------------------------------------------------------------
+
+// Enable interrupts.
+static inline void md_sys_ei(void);
+// Disable interrupts.
+static inline void md_sys_di(void);
+
+// Returns true if interrupts are enabled. Useful for storing and restoring the
+// interrupt enablement status before and after changing them.
+static uint16_t md_sys_get_ints_enabled(void);
+
+// -----------------------------------------------------------------------------
+// Z80 control functions
+// -----------------------------------------------------------------------------
+
+// Uploads a binary blob to the Z80 program memory. Holds the Z80 bus, but does
+// not reset the z80.
+void md_sys_z80_init(const uint8_t *src, uint16_t size);
+
+// Requests access to the Z80 bus, halting it. Can block until granted.
+static inline void md_sys_z80_bus_req(uint8_t wait);
+static inline void md_sys_z80_bus_release(void);
+static inline void md_sys_z80_reset_on(void);
+static inline void md_sys_z80_reset_off(void);
+
+// -----------------------------------------------------------------------------
+// System information
+// -----------------------------------------------------------------------------
 static inline uint8_t md_sys_is_overseas(void);
 static inline uint8_t md_sys_is_pal(void);
 static inline uint8_t md_sys_is_disk_present(void);
 static inline uint8_t md_sys_get_hw_rev(void);
 
-// Enable and disable interrupts.
-// On System C2, the previous enablement state is stored upon a call to sys_ei()
-static inline void md_sys_ei(void);
-static inline void md_sys_di(void);
-
-// Z80 control functions
-void md_sys_z80_upload_program(uint8_t *src, uint16_t size);
-static inline uint16_t md_sys_z80_get_bus_status(void);
-static inline uint16_t md_sys_z80_get_reset_status(void);
-static inline void md_sys_z80_bus_req(void);
-static inline void md_sys_z80_bus_release(void);
-static inline void md_sys_z80_reset_on(void);
-static inline void md_sys_z80_reset_off(void);
+// =============================================================================
+// Implementations
+// =============================================================================
+extern uint16_t g_md_sys_ints_enabled;
 
 static inline void md_sys_ei(void)
 {
@@ -54,9 +77,9 @@ static uint16_t md_sys_get_ints_enabled(void)
 	return g_md_sys_ints_enabled;
 }
 
-// =============================================================================
+// -----------------------------------------------------------------------------
 // Megadrive Implementations
-// =============================================================================
+// -----------------------------------------------------------------------------
 
 #ifndef MDK_TARGET_C2
 
@@ -90,9 +113,10 @@ static inline uint16_t md_sys_z80_get_reset_status(void)
 	return SYS_Z80_PORT_RESET;
 }
 
-static inline void md_sys_z80_bus_req(void)
+static inline void md_sys_z80_bus_req(uint8_t wait)
 {
 	SYS_Z80_PORT_BUS = 0x0100;
+	while (wait && (SYS_Z80_PORT_BUS & 0x0100) == 0) { __asm__("nop"); }
 }
 
 static inline void md_sys_z80_bus_release(void)
@@ -110,9 +134,9 @@ static inline void md_sys_z80_reset_off(void)
 	SYS_Z80_PORT_RESET = 0x0000;
 }
 
-// =============================================================================
+// -----------------------------------------------------------------------------
 // System C/C2 Implementations
-// =============================================================================
+// -----------------------------------------------------------------------------
 
 #else
 
@@ -147,8 +171,9 @@ static inline uint16_t md_sys_z80_get_reset_status(void)
 	return 0;
 }
 
-static inline void md_sys_z80_bus_req(void)
+static inline void md_sys_z80_bus_req(uint8_t wait)
 {
+	(void)wait;
 }
 
 static inline void md_sys_z80_bus_release(void)
@@ -165,4 +190,4 @@ static inline void md_sys_z80_reset_off(void)
 
 #endif  // MDK_TARGET_C2
 
-#endif // SYS_H
+#endif // MD_SYS_H

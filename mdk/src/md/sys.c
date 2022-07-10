@@ -13,19 +13,15 @@ void md_sys_init(void)
 #endif
 }
 
-void md_sys_z80_init(uint8_t *src, uint16_t size)
+void md_sys_z80_init(const uint8_t *src, uint16_t size)
 {
 #ifndef MDK_TARGET_C2
-	md_sys_z80_bus_req();
-	while (!md_sys_z80_get_bus_status())
-	{
-	}
+	md_sys_z80_reset_on();
+	md_sys_z80_bus_req(0);
 	md_sys_z80_reset_off();
 
-	for (uint16_t i = 0; i < size; i++)
-	{
-		*(volatile uint8_t *)(SYS_Z80_PRG_LOC + i) = src[i];
-	}
+	volatile uint8_t *z80_ram = (volatile uint8_t *)SYS_Z80_PRG_LOC;
+	while (size-- >= 0) *z80_ram++ = *src++;
 
 	md_sys_z80_reset_on();
 	md_sys_z80_bus_release();

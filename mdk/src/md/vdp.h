@@ -38,7 +38,8 @@
                  (((_pal) & 0x3) << 13) | ((_prio) ? 0x8000 : 0))
 
 // Macro to form command to set an address via the control port.
-#define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | (((uint32_t)(_addr) & 0xC000) >> 14))
+#define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | \
+                               (((uint32_t)(_addr) & 0xC000) >> 14))
 
 // -----------------------------------------------------------------------------
 // Default VRAM layout - Optimized for 64x32 cell planes.

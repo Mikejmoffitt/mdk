@@ -221,7 +221,7 @@ void md_dma_process(void)
 
 	const uint16_t ints_enabled = md_sys_get_ints_enabled();
 	md_sys_di();
-	md_sys_z80_bus_req();
+	md_sys_z80_bus_req(1);
 	MD_SYS_BARRIER();
 
 	// Process single high-priority slot first.
