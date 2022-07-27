@@ -8,7 +8,7 @@ Michael Moffitt 2018 */
 
 #define DMA_QUEUE_DEPTH 256
 // Used with modulo operator, so should be power of 2.
-_Static_assert(NUM_IS_POW2(DMA_QUEUE_DEPTH))
+_Static_assert(NUM_IS_POW2(DMA_QUEUE_DEPTH), "DMA queue depth != power of 2!");
 
 typedef enum DmaOp
 {
@@ -33,8 +33,8 @@ typedef struct DmaCmd
 } DmaCmd;
 
 // DMA queue ring buffer.
-static uint8_t s_md_dma_write_pos;
-static uint8_t s_md_dma_read_pos;
+static uint8_t s_dma_q_write_pos;
+static uint8_t s_dma_q_read_pos;
 static DmaCmd s_dma_q[DMA_QUEUE_DEPTH];
 
 // Special simple high priority sprite list(s) queue.
@@ -43,8 +43,8 @@ static DmaCmd s_dma_spr_cmd[8];
 
 void md_dma_init(void)
 {
-	s_md_dma_read_pos = 0;
-	s_md_dma_write_pos = 0;
+	s_dma_q_read_pos = 0;
+	s_dma_q_write_pos = 0;
 	s_dma_spr_pos = 0;
 }
 
@@ -62,10 +62,10 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 	}
 	else
 	{
-		cmd = &s_dma_q[s_md_dma_write_pos];
-		s_md_dma_write_pos = (s_md_dma_write_pos + 1) %
-		                     ARRAYSIZE(DMA_QUEUE_DEPTH);
-		if (s_md_dma_write_pos == s_md_dma_read_pos) return;
+		cmd = &s_dma_q[s_dma_q_write_pos];
+		s_dma_q_write_pos = (s_dma_q_write_pos + 1) %
+		                     ARRAYSIZE(s_dma_q);
+		if (s_dma_q_write_pos == s_dma_q_read_pos) return;
 	}
 
 	// DMA register values are calculated ahead of time to be consumed during
@@ -234,10 +234,10 @@ void md_dma_process(void)
 	s_dma_spr_pos = 0;
 
 	// Process all queued transfers.
-	while (s_md_dma_read_pos != s_md_dma_write_pos)
+	while (s_dma_q_read_pos != s_dma_q_write_pos)
 	{
-		DmaCmd *cmd = &s_dma_q[s_md_dma_read_pos];
-		s_md_dma_read_pos = (s_md_dma_read_pos + 1) % DMA_QUEUE_DEPTH;
+		DmaCmd *cmd = &s_dma_q[s_dma_q_read_pos];
+		s_dma_q_read_pos = (s_dma_q_read_pos + 1) % DMA_QUEUE_DEPTH;
 		process_cmd(cmd);
 	}
 
