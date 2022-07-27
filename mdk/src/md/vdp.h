@@ -151,6 +151,21 @@
 #define VDP_MODESET4_LSM0  0x02
 #define VDP_MODESET4_RS0   0x01
 
+#ifndef MDK_TARGET_C2
+// Megadrive requires RS1 to be set to accept EDCLK so that the horizontal scan
+// rate is the correct ~15.7KHz.
+#define VDP_MODESET4_DEFAULT (VDP_MODESET4_RS0 | \
+                              VDP_MODESET4_RS1)
+#else
+// System C/C2 do not have EDCLK, so the VDP's internal H40 clock is used. This
+// produces a horizontal scan rate of closer to 16.0KHz.
+// The SPA/B pin and VSCLK pins need to be used for the external color DAC to
+// work correctly.
+#define VDP_MODESET4_DEFAULT (VDP_MODESET4_RS0 | \
+                              VDP_MODESET4_SPAEN | \
+                              VDP_MODESET4_VSCLK)
+#endif
+
 // -----------------------------------------------------------------------------
 // Debug registers. Selected with VDPPORT_DBG_SEL, written with VDPPORT_DBG_DATA
 // Unlike regular VDP registers, these are word-sized (16-bit).
@@ -174,21 +189,6 @@
 // .... .... .... ..e. EDCKO - Makes EDCLK output DCLK. Not useful on MD.
 // .... .... .... ...z Z80CK - Doubles the Z80 and PSG clock to about 7.67Mhz!
 #define VDP_DBG_CLKST_HS
-
-#ifndef MDK_TARGET_C2
-// Megadrive requires RS1 to be set to accept EDCLK so that the horizontal scan
-// rate is the correct ~15.7KHz.
-#define VDP_MODESET4_DEFAULT (VDP_MODESET4_RS0 | \
-                              VDP_MODESET4_RS1)
-#else
-// System C/C2 do not have EDCLK, so the VDP's internal H40 clock is used. This
-// produces a horizontal scan rate of closer to 16.0KHz.
-// The SPA/B pin and VSCLK pins need to be used for the external color DAC to
-// work correctly.
-#define VDP_MODESET4_DEFAULT (VDP_MODESET4_RS0 | \
-                              VDP_MODESET4_SPAEN | \
-                              VDP_MODESET4_VSCLK)
-#endif
 
 // Status flags
 #define VDP_STATUS_PAL    0x0001
