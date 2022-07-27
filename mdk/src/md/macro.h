@@ -1,6 +1,8 @@
 #ifndef MD_MACRO_H
 #define MD_MACRO_H
 
+#define NUM_IS_POW2(x) ((x & (x - 1)) == 0)
+
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif  // ARRAYSIZE

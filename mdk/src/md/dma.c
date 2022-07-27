@@ -2,11 +2,13 @@
 Michael Moffitt 2018 */
 
 #include "md/dma.h"
-#include "md/vdp.h"
+#include "md/macro.h"
 #include "md/sys.h"
+#include "md/vdp.h"
 
-// This should be a power of 2, since it is used with the modulo operator.
 #define DMA_QUEUE_DEPTH 256
+// Used with modulo operator, so should be power of 2.
+_Static_assert(NUM_IS_POW2(DMA_QUEUE_DEPTH))
 
 typedef enum DmaOp
 {
@@ -17,6 +19,7 @@ typedef enum DmaOp
 	DMA_OP_SPR_TRANSFER,
 } DmaOp;
 
+// Struct representing pre-calculated register values for the VDP's DMA.
 typedef struct DmaCmd
 {
 	DmaOp op;
@@ -30,44 +33,43 @@ typedef struct DmaCmd
 } DmaCmd;
 
 // DMA queue ring buffer.
-static volatile uint16_t s_md_dma_write_pos;
-static volatile uint16_t s_md_dma_read_pos;
+static uint8_t s_md_dma_write_pos;
+static uint8_t s_md_dma_read_pos;
 static DmaCmd s_dma_q[DMA_QUEUE_DEPTH];
-static uint16_t s_dma_spr_pos;
-static DmaCmd s_dma_spr_cmd[2];
+
+// Special simple high priority sprite list(s) queue.
+static uint8_t s_dma_spr_pos;
+static DmaCmd s_dma_spr_cmd[8];
 
 void md_dma_init(void)
 {
 	s_md_dma_read_pos = 0;
 	s_md_dma_write_pos = 0;
 	s_dma_spr_pos = 0;
-	s_dma_spr_cmd[0].op = DMA_OP_NONE;
-	s_dma_spr_cmd[1].op = DMA_OP_NONE;
 }
 
 // Calculate required register values for a transfer
 static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
                                uint32_t src, uint16_t n, uint16_t stride)
 {
-	// Disable interrupts for this critical section.
-	const uint16_t ints_enabled = md_sys_get_ints_enabled();
-	md_sys_di();
-	MD_SYS_BARRIER();
-
+	// A command slot is chosen from one of the two queues, based on the type.
 	DmaCmd *cmd;
 	if (op == DMA_OP_SPR_TRANSFER)
 	{
-		if (s_dma_spr_pos >= 2) goto finish;
+		if (s_dma_spr_pos >= ARRAYSIZE(s_dma_spr_cmd)) return;
 		cmd = &s_dma_spr_cmd[s_dma_spr_pos];
 		s_dma_spr_pos++;
 	}
 	else
 	{
 		cmd = &s_dma_q[s_md_dma_write_pos];
-		s_md_dma_write_pos = (s_md_dma_write_pos + 1) % DMA_QUEUE_DEPTH;
-		if (s_md_dma_write_pos == s_md_dma_read_pos) goto finish;
+		s_md_dma_write_pos = (s_md_dma_write_pos + 1) %
+		                     ARRAYSIZE(DMA_QUEUE_DEPTH);
+		if (s_md_dma_write_pos == s_md_dma_read_pos) return;
 	}
 
+	// DMA register values are calculated ahead of time to be consumed during
+	// VBlank faster.
 	cmd->op = op;
 	cmd->stride = stride;
 	cmd->len_1 = n & 0xFF;
@@ -75,7 +77,7 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 
 	switch (op)
 	{
-		default:
+		case DMA_OP_NONE:
 			return;
 
 		case DMA_OP_TRANSFER:
@@ -101,15 +103,10 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 	}
 
 	cmd->ctrl = VDP_CTRL_DMA_BIT | VDP_CTRL_ADDR(dest) | bus;
-
-finish:
-	// Re-enable ints if they were enabled before.
-	MD_SYS_BARRIER();
-	if (ints_enabled) md_sys_ei();
 }
 
 static inline void md_dma_enqueue(DmaOp op, uint32_t bus, uint16_t dest,
-                                 uint32_t src, uint16_t n, uint16_t stride)
+                                  uint32_t src, uint16_t n, uint16_t stride)
 {
 	if (op != DMA_OP_TRANSFER && op != DMA_OP_SPR_TRANSFER)
 	{
@@ -117,7 +114,7 @@ static inline void md_dma_enqueue(DmaOp op, uint32_t bus, uint16_t dest,
 		return;
 	}
 	// check that the source address + length won't cross a 128KIB boundary
-	// based on SGDK's DMA validation
+	// based on SGDK's DMA validation.
 	const uint32_t limit = 0x20000 - (src & 0x1FFFF);
 
 	// If the transfer will cross the 128KiB boundary, transfer the latter
@@ -217,6 +214,8 @@ static inline void process_cmd(DmaCmd *cmd)
 	md_vdp_set_dma_en(0);
 	MD_SYS_BARRIER();
 	md_sys_z80_bus_release();
+
+	cmd->op = DMA_OP_NONE;
 }
 
 void md_dma_process(void)
@@ -224,21 +223,14 @@ void md_dma_process(void)
 	md_vdp_wait_dma();
 	MD_SYS_BARRIER();
 
-	const uint16_t ints_enabled = md_sys_get_ints_enabled();
-	md_sys_di();
+	const uint16_t ints_enabled = md_sys_di();
 
 	// Process single high-priority slot first.
-	if (s_dma_spr_cmd[0].op == DMA_OP_SPR_TRANSFER)
+	for (uint16_t i = 0; i < ARRAYSIZE(s_dma_spr_cmd); i++)
 	{
-		process_cmd(&s_dma_spr_cmd[0]);
-		s_dma_spr_cmd[0].op = DMA_OP_NONE;
+		if (s_dma_spr_cmd[i].op == DMA_OP_NONE) break;
+		process_cmd(&s_dma_spr_cmd[i]);
 	}
-	if (s_dma_spr_cmd[1].op == DMA_OP_SPR_TRANSFER)
-	{
-		process_cmd(&s_dma_spr_cmd[1]);
-		s_dma_spr_cmd[1].op = DMA_OP_NONE;
-	}
-
 	s_dma_spr_pos = 0;
 
 	// Process all queued transfers.

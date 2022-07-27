@@ -26,12 +26,9 @@ void md_sys_init(void);
 
 // Enable interrupts.
 static inline void md_sys_ei(void);
-// Disable interrupts.
-static inline void md_sys_di(void);
-
-// Returns true if interrupts are enabled. Useful for storing and restoring the
-// interrupt enablement status before and after changing them.
-static uint16_t md_sys_get_ints_enabled(void);
+// Disable interrupts. Returns the previous interrupt enablement status, so that
+// they may be conditionally re-enabled later.
+static inline uint8_t md_sys_di(void);
 
 // -----------------------------------------------------------------------------
 // Z80 control functions
@@ -68,15 +65,12 @@ static inline void md_sys_ei(void)
 	g_md_sys_ints_enabled = 1;
 }
 
-static inline void md_sys_di(void)
+static inline uint8_t md_sys_di(void)
 {
 	__asm__ volatile("\tori.w	#0x0700, %sr\n");
+	const uint8_t ret = g_md_sys_ints_enabled;
 	g_md_sys_ints_enabled = 0;
-}
-
-static uint16_t md_sys_get_ints_enabled(void)
-{
-	return g_md_sys_ints_enabled;
+	return ret;
 }
 
 // -----------------------------------------------------------------------------

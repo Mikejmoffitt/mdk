@@ -33,7 +33,7 @@ void md_dma_transfer_cram(uint16_t dest, const void *src, uint16_t words,
                           uint16_t stride);
 void md_dma_transfer_vsram(uint16_t dest, const void *src, uint16_t words,
                            uint16_t stride);
-// Special high-priority slot for sprite table. Schedules a transfer that will
+// Special high-priority DMA for sprite tables. Schedules transfers that will
 // run before any others.
 void md_dma_transfer_spr_vram(uint16_t dest, const void *src, uint16_t words,
                               uint16_t stride);
