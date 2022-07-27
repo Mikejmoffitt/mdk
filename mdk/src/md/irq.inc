@@ -3,9 +3,8 @@ Michael Moffitt 2018-2022
 */
 
 /* This is a flag used for vblank waiting. */
-	.extern	g_vblank_wait
-/* This runs the sound effects. */
-	.extern sfx_tick
+	.extern g_vblank_wait
+
 /* Pointer to interrupt routines. Calling convention is just a standard void
    function which takes no arguments (e.g. my_irq_handler(void)).
    As the 68000 has a 24-bit address bus, the upper eight bits of a pointer can
@@ -17,13 +16,15 @@ Michael Moffitt 2018-2022
 	.extern g_irq_v_func
 
 	.macro	irq_func_handle symbol_name:req
+	/* Disable interrupts. Don't touch the global flag for it, though.*/
+	ori.w	#0x0700, %sr
 	/* Load handler, and nope out if nothing has been registered. */
 	tst.l	\symbol_name
 	beq	2f
 	/* If the top bit is set, this routine won't clobber d0-d1/a0-a1. */
 	btst	#31, \symbol_name
 	bne	1f
-	/* Otherwise, call it with clobber protection (little slower!) */
+	/* Otherwise, call it with clobber protection (a little slower!) */
 	movem.l	%d0-%d1/%a0-%a1, -(%sp)
 	move.l	\symbol_name, %a0
 	jsr	(%a0)
@@ -31,10 +32,10 @@ Michael Moffitt 2018-2022
 	bra	2f
 /* For functions that do not clobber. */
 1:
-	move.l	%a0, -(%sp)
+	move.l	%a0, -(%sp)  /* a0 is used so we have to save it */
 	move.l	\symbol_name, %a0
 	jsr	(%a0)
-	move.l	(%sp)+, %a0
+	move.l	(%sp)+, %a0  /* Restore a0 after. */
 2:
 	.endm
 

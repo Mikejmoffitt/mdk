@@ -359,6 +359,12 @@ static inline void md_vdp_set_hint_line(uint8_t line);
 // interrupt being enabled, so do not call this if those have been disabled!
 void md_vdp_wait_vblank(void);
 
+// Register a function to call while waiting for vblank. This is useful for any
+// code that handles work progressively across frames, where variable
+// of CPU time is acceptable.
+// Pass NULL in for function to remove a callback.
+void md_vdp_register_vblank_wait_callback(void *function);
+
 // -----------------------------------------------------------------------------
 // Base Address configuration
 // -----------------------------------------------------------------------------

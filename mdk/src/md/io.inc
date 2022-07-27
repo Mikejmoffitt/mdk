@@ -81,6 +81,10 @@ md_io_init:
 	.global	md_io_poll
 md_io_poll:
 	move.w	#0x0100, (SYS_Z80_PORT_BUS).l  /* Z80 Bus Request */
+.bus_req_wait:
+	btst.b	#0, (SYS_Z80_PORT_BUS).l
+	bne	.bus_req_wait
+
 	lea	g_pad_cache, %a0
 	lea	IO_LOC_DATA, %a1
 	bsr	read_pad

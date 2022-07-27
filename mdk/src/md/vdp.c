@@ -1,20 +1,18 @@
 /* mdk VDP control functions
-MIchael Moffitt 2018-2022 */
+Michael Moffitt 2018-2022 */
 
 #include "md/vdp.h"
 #include "md/dma.h"
 #include "md/sys.h"
 
+#include <stdlib.h>
+
 volatile uint16_t g_vblank_wait;
 uint8_t g_md_vdp_regvalues[0x18];
-static uint16_t plane_base[3];
-static uint16_t sprite_base;
-static uint16_t hscroll_base;
-
-// Puyo 2 VDP regs:
-// 14 44 87 59
-// Mine:
-// 04 64 80 91
+static uint16_t s_plane_base[3];
+static uint16_t s_sprite_base;
+static uint16_t s_hscroll_base;
+static void (*s_vbl_wait_func)(void) = NULL;
 
 void md_vdp_init(void)
 {
@@ -54,43 +52,18 @@ void md_vdp_init(void)
 	md_vdp_set_hscroll_base(VRAM_HSCR_BASE_DEFAULT);
 }
 
-void md_vdp_wait_vblank_status(void)
-{
-	while (!(md_vdp_get_status() & VDP_STATUS_VBLANK))
-	{
-		__asm__ volatile ("\tnop\n");
-	}
-}
-
 void md_vdp_wait_vblank(void)
 {
 	g_vblank_wait = 1;
 	while (g_vblank_wait)
 	{
-		__asm__ volatile ("\tnop\n");
+		if (s_vbl_wait_func) s_vbl_wait_func();
 	}
 }
-static inline uint16_t hsram_len_calc(void)
+
+void md_vdp_register_vblank_wait_callback(void *function)
 {
-	uint16_t len;
-	uint8_t scroll_mode = md_vdp_get_reg(VDP_MODESET3) & 0x03;
-	switch (scroll_mode)
-	{
-		default:
-		case 0x00:
-			len = 1;
-			break;
-		case 0x01:
-			len = 16;
-			break;
-		case 0x02:
-			len = md_vdp_get_raster_height() / 8;
-			break;
-		case 0x03:
-			len = md_vdp_get_raster_height();
-			break;
-	}
-	return len;
+	s_vbl_wait_func = function;
 }
 
 void md_vdp_set_plane_base(VdpPlane plane, uint16_t value)
@@ -101,52 +74,42 @@ void md_vdp_set_plane_base(VdpPlane plane, uint16_t value)
 			return;
 		case VDP_PLANE_A:
 			md_vdp_set_reg(VDP_SCRABASE, (value >> 13) << 3);
-			plane_base[0] = value;
+			s_plane_base[VDP_PLANE_A] = value;
 			break;
 		case VDP_PLANE_B:
 			md_vdp_set_reg(VDP_SCRBBASE, (value >> 13));
-			plane_base[1] = value;
+			s_plane_base[VDP_PLANE_B] = value;
 			break;
 		case VDP_PLANE_WINDOW:
-			md_vdp_set_reg(VDP_SCRWBASE, (value>> 11) << 1);
-			plane_base[2] = value;
+			md_vdp_set_reg(VDP_SCRWBASE, (value >> 11) << 1);
+			s_plane_base[VDP_PLANE_WINDOW] = value;
 			break;
 	}
 }
 
 void md_vdp_set_sprite_base(uint16_t value)
 {
-	sprite_base = value;
+	s_sprite_base = value;
 	md_vdp_set_reg(VDP_SPRBASE, (value  >>  9));
 }
 
 void md_vdp_set_hscroll_base(uint16_t value)
 {
-	hscroll_base = value;
+	s_hscroll_base = value;
 	md_vdp_set_reg(VDP_HSCRBASE, (value >> 10));
 }
 
 uint16_t md_vdp_get_plane_base(VdpPlane plane)
 {
-	switch(plane)
-	{
-		default:
-			return 0xFFFF;
-		case VDP_PLANE_A:
-			return plane_base[0];
-		case VDP_PLANE_B:
-			return plane_base[1];
-		case VDP_PLANE_WINDOW:
-			return plane_base[2];
-	}
+	return s_plane_base[plane];
 }
 
 uint16_t md_vdp_get_sprite_base(void)
 {
-	return sprite_base;
+	return s_sprite_base;
 }
 
 uint16_t md_vdp_get_hscroll_base(void)
 {
-	return hscroll_base;
+	return s_hscroll_base;
 }
