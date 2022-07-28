@@ -39,6 +39,8 @@ static inline void megadrive_finish(void)
 #endif  // MDK_TARGET_C2
 	md_dma_process();
 
+	md_spr_start();
+
 	// C2-specific screen blanking.
 #ifdef MDK_TARGET_C2
 	md_sysc_vctrl_set_blank(0);
