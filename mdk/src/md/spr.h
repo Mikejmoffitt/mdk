@@ -49,7 +49,7 @@ static inline void md_spr_mask_line_comb(int16_t y1, uint8_t size1,
 static inline void md_spr_put(int16_t x, int16_t y, uint16_t attr, uint8_t size)
 {
 	if (g_sprite_count >= ARRAYSIZE(g_sprite_table)) return;
-	if (x <= -32) return;  // Avoid accidentally triggering the line mask.
+	if (x <= -32 || x >= 320) return;  // Avoid triggering line mask.
 	SprSlot *spr = &g_sprite_table[g_sprite_count];
 	spr->ypos = y + 128;
 	spr->size = size;
