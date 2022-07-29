@@ -80,7 +80,7 @@ static inline void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
 	spr->ypos = y2 + 128;
 	spr->size = size2;
 	spr->xpos = 1;
-	g_sprite_count++;
+	g_sprite_count += 2;
 }
 
 #endif  // MD_SPR_H
