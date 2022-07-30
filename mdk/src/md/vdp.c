@@ -8,7 +8,9 @@ Michael Moffitt 2018-2022 */
 #include <stdlib.h>
 
 volatile uint16_t g_vblank_wait;
-uint8_t g_md_vdp_regvalues[0x18];
+uint8_t g_md_vdp_regs[0x18];
+uint16_t g_md_vdp_debug_regs[0x10];
+
 static uint16_t s_plane_base[3];
 static uint16_t s_sprite_base;
 static uint16_t s_hscroll_base;

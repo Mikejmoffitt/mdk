@@ -173,10 +173,13 @@
 
 // Register $00 - PSG debug and layer mixing
 // .sss .... .... .... SPRST - Sprite render state bits. Function unknown.
-// .... cc.. .... .... PSOCN - PSG Override volume source channel.
+// .... cc.. .... .... PSOCN - PSG Override attenuation source channel.
 // .... ..p. .... .... PSOVR - PSG Override - has all PSG channels share volume.
 // .... ...l l... .... LYSEL - Select layer to display with SOLO.
 // .... .... .S.. .... SOLO  - Hide all but one layer, selected by LYSEL.
+// .... .... ..j. .... JUNK5 - Seems to corrupt VRAM address access. See notes.
+// .... .... .... k... KILL1 - Seems to halt the game, or interrupts.
+// .... .... .... ..j. JUNK1 - Halts, fills the screen with a junk pattern.
 
 // LYSEL should be 00 in normal circumstances, but if it is used without setting
 // SOLO, the VDP will still try to display the selected layer, which cases the
@@ -185,12 +188,125 @@
 // but as this relies on analog behavior of a bus conflict, it's not stable, and
 // is not recommended. It may even be bad for the VDP!
 
-// Register $01 - Clock functions
+// At the moment this register is written, the remainder of the output line
+// buffer may be filled with a repeating junk pattern. It may be a scroll table.
+//
+// JUNK5 is interesting. It has the following effects that I can observe:
+// * The screen is filled with garbage data
+// * Sprites lose their horizontal position, adopting arbitrary values
+// * VRAM is corrupted in a predictable pattern, from my testing in H40:
+//   Tile $0000, $0020, $0041, $0061, $0082, $00A2... so on and so forth
+//   Within each tile, bytes are corrupt in this order:
+//   Every even tile in the pattern: $01, $04, $0B, $0E
+//   Every odd tile in the pattern: $11, $14, $1B, $1E
+//
+//   Going by VRAM addresses (addressing byte-wise):
+//   $0001, $0004, $000B, $000E, $0411, $0414, $041B, $041E, $0801, $0804... etc
+//
+//   The value of the junk data written is not yet clear.
+//
+//   If I enable this register during active display, and then disable it
+//   shortly after (~a few scanlines' duration), it does not appear to corrupt
+//   VRAM, at least not near $0000 where it is plainly obvious. The address and
+//   data might coincide with 
+
+#define VDP_DBG00_JUNK0   0x0001
+#define VDP_DBG00_DMAST   0x0002
+#define VDP_DBG00_SOLO    0x0040
+#define VDP_DBG00_LYSEL0  0x0080
+#define VDP_DBG00_LYSEL1  0x0100
+#define VDP_DBG00_PSOVR   0x0200
+#define VDP_DBG00_PSOCN0  0x0400
+#define VDP_DBG00_PSOCN1  0x0800
+#define VDP_DBG00_SPRST0  0x1000
+#define VDP_DBG00_SPRST1  0x2000
+#define VDP_DBG00_SPRST2  0x4000
+
+// Register $01 - Clock and counter functions
+// u... .... .... .... UNKF
+// .u.. .... .... .... UNKE
+// ..u. .... .... .... UNKD
+// ...u .... .... .... UNKC
+// .... u... .... .... UNKB
+// .... .s.. .... .... SCBAD - MOdifies scroll plane B's pixel data addressing.
+// .... ..s. .... .... SCAAD - Modifies scroll plane A's pixel data addressing.
+// .... ...t .... .... TILEF - Changes tile fetch addressing.
+// .... .... h... .... HSCRL - Makes Hscroll table read from address 0 (?)
+// .... .... .jjj .... JUNK  - Causes a moving pattern of junk.
+// .... .... .... u... UNK3  - Seems to lock up.
+// .... .... .... .v.. VCTST - Makes V counter increment very pixel. Not useful.
 // .... .... .... ..e. EDCKO - Makes EDCLK output DCLK. Not useful on MD.
 // .... .... .... ...z Z80CK - Doubles the Z80 and PSG clock to about 7.67Mhz!
-#define VDP_DBG_CLKST_HS
+#define VDP_DBG01_Z80CK   0x0001
+#define VDP_DBG01_EDCKO   0x0002
+#define VPD_DBG01_VCTST   0x0004
+#define VDP_DBG01_JUNK0   0x0010
+#define VDP_DBG01_JUNK1   0x0020
+#define VDP_DBG01_JUNK2   0x0040
+#define VDP_DBG01_HSCRL   0x0080
+#define VDP_DBG01_UNKF    0x8000
+#define VDP_DBG01_UNKE    0x4000
+#define VDP_DBG01_UNKD    0x2000
+#define VDP_DBG01_UNKC    0x1000
+#define VDP_DBG01_UNKB    0x0800
+#define VDP_DBG01_UNKA    0x0400
+#define VDP_DBG01_UNK9    0x0200
+#define VDP_DBG01_UNK8    0x0100
 
+// SCBAA/SCAAD notes:
+// Observed effects:
+// * Scroll plane repeatedly fetches (or displays) four pixels out of a 16
+//   pixel length of tile data.
+// * The other plane may fetch pixel data for what should be horizontally
+//   adjacent tiles.
+// * The other plane's pixel data seems to find its way into the plane data.
+// * The behavior of the above is dependent on the lower four bits of the
+//   horizontal scroll.
+// * Depending on how far the horizontal scroll is set, data from the sprite
+//   pixel fetch may appear to the right in what is normally blanked. This data
+//   is presented as if it is part of the scroll plane's fetched pixel data, so
+//   it assumes the attributes described by the scroll plane nametable.
+
+// TILEF notes:
+// * Every other column seems to have its tile layout data offset, so that the
+//   plane looks as though it's been coarsely interlaced vertically.
+// * In some cases, completely wrong tiles are fetched
+// * Data lingering from sprite pixel fetches sometimes appears in tiles
+
+// HSCRL notes:
+// * I think there is more to this than the H scroll table being redirected.
+// * Some tiles horizontally wobble within their boundaries unreliably.
+// * Sprite fetches affect the strange corrupted horizontal value.
+
+// Writing to this register frequently seems to increase the likelihood of a
+// crash or freeze, be it through corrupting the raster counters or halting the
+// Z80 (not yet investigated in detail).
+
+// Register $02 - Unknown
+// Reading from this register returns a walking bit pattern in the lower byte.
+
+// Register $03 - Unknown
+// Writing to this mid-screen screws up horizontal sync temporarily.
+
+// Register $04 - Unknown
+
+// Register $05 - Unknown
+// Writing to this mid-screen has a subtle effect on the horizontal scroll value
+// used for Plane B
+
+// Register $06 - Unknown
+// Writing to this mid-screen causes a small streak of junk pixel data to appear
+// that seems to come from sprite pixel data.
+
+// Register $07 - Unknown
+// Similar effect to reg $06.
+
+// Register $08 - Unknown
+// Very subtle corruption of sprite pixel data at the instant it is written.
+
+// -----------------------------------------------------------------------------
 // Status flags
+// -----------------------------------------------------------------------------
 #define VDP_STATUS_PAL    0x0001
 #define VDP_STATUS_DMA    0x0002
 #define VDP_STATUS_HBLANK 0x0004
@@ -249,8 +365,8 @@
 #define VDP_DMA_SRC_COPY 0xC0
 
 // The register cache.
-extern uint8_t g_md_vdp_regvalues[0x18];
-extern uint16_t g_mdp_vdp_dbg_regvalues[0x02];
+extern uint8_t g_md_vdp_regs[0x18];
+extern uint16_t g_md_vdp_debug_regs[0x10];
 
 // Enums for register access functions.
 typedef enum VdpHscrollMode
@@ -316,6 +432,15 @@ typedef enum VdpInterlaceMode
 	VDP_INTERLACE_DOUBLE
 } VdpInterlaceMode;
 
+// Enum for LYSEL values.
+typedef enum VdpDebugLayerSel
+{
+	VDP_DEBUG_LYSEL_NONE    = 0x0,
+	VDP_DEBUG_LYSEL_SPRITE  = 0x1,
+	VDP_DEBUG_LYSEL_PLANE_A = 0x2,
+	VDP_DEBUG_LYSEL_PLANE_B = 0x3
+} VdpDebugLayerSel;
+
 // =============================================================================
 // Functions and accessors
 // =============================================================================
@@ -335,7 +460,7 @@ static inline uint8_t md_vdp_get_reg(uint8_t num);
 static inline uint16_t md_vdp_get_status(void);
 
 // Write to the debug register.
-static inline void md_vdp_set_debug_reg(uint16_t num, uint16_t val);
+static inline void md_vdp_set_debug_reg(uint8_t num, uint16_t val);
 
 // -----------------------------------------------------------------------------
 // Interrupt config
@@ -511,12 +636,54 @@ static inline void md_vdp_set_dma_en(uint8_t enabled);
 // progress. Used by `dma.c`.
 static inline void md_vdp_wait_dma(void);
 
+// -----------------------------------------------------------------------------
+// Debug registers
+// -----------------------------------------------------------------------------
 
+// Enables SOLO layer mode. The layer to be displayed is selected with the LYSEL
+// register bits, set with md_vdp_debug_set_layer_select().
+// If this feature is enabled, all blanking logic is disabled, so the borders
+// of the display will contain garbage data that is not normally displayed.
+// This may include fetch data for nametables, sprite data, etc.
+static inline void md_vdp_debug_set_solo(uint8_t enabled);
 
+// Selects a layer to display for SOLO mode with md_vdp_debug_set_solo().
+// If a choice other than VDP_DEBUG_LYSEL_NONE(0) is chosen while SOLO is not
+// enabled, the VDP will still force the display of that layer. The chosen
+// layer's pixel data will interfere with the pixel data of the VDP's normal
+// output. This typically results in the pixel values being logically ANDed
+// with one another, which may be used to interesting effect.
+// Note that this phenomenon occurs at a hardware level, likely due to a bus
+// conflict, so results may vary based on hardware, revision, temperature,
+// voltage, luck, cosmic rays, fortune, and karma. It might be bad for the VDP.
+static inline void md_vdp_debug_set_layer_select(VdpDebugLayerSel layer);
 
+// If enabled, all PSG channels use the attenuation value from one channel.
+static inline void md_vdp_debug_set_psg_over(uint8_t enabled, uint8_t chan);
+
+// Sets sprite render state bits 0-2 (range 0-7). The meaning of each bit and
+// consequent impact are not yet known.
+static inline void md_vdp_debug_set_sprite_state_bits(uint8_t bits);
+
+// Doubles the Z80 and PSG clocks to about 7.67Mhz. This may not be stable on
+// units fitted with old NMOS Z80s rated for 4MHz, so it is not recommended that
+// your software rely on this functionality.
+// As a side effect, the PSG clock will be doubled, increasing the pitch by
+// an octave.
+static inline void md_vdp_debug_set_z80_overclock(uint8_t enabled);
+
+// Configures the EDCLK pin as an output, which outputs the dot clock. This is
+// not useful on the Megadrive, as EDCLK is supplied with a clock.
+static inline void md_vdp_debug_set_edclk_out(uint8_t enabled);
+
+// Returns a walking bit pattern in the lower byte.
+static inline uint16_t md_vdp_debug_get_bit_pattern(void);
+
+// Resets the VDP.
+static inline void md_vdp_debug_reset(void);
 
 // =============================================================================
-// Implementations
+// Static Implementations
 // =============================================================================
 
 // -----------------------------------------------------------------------------
@@ -537,22 +704,38 @@ do \
 	} \
 } while(0)
 
+#define VDP_DEBUG_SET(regbase, mask, en) \
+do \
+{ \
+	MD_SYS_BARRIER();\
+	if(en) \
+	{ \
+		md_vdp_set_debug_reg(regbase, md_vdp_get_debug_reg(regbase) | (mask)); \
+	} \
+	else \
+	{ \
+		md_vdp_set_debug_reg(regbase, md_vdp_get_debug_reg(regbase) & ~(mask)); \
+	} \
+} while(0)
+
 // Macro to write a value to a register directly.
 // Unless you have a good reason to do otherwise, use the md_vdp_set functions.
 // This bypasses the register cache that is used elsewhere, so this is not
 // recommended for regular use.
 #define VDP_REG_WRITE(reg, val) do { VDPPORT_CTRL = 0x8000 | (reg << 8) | (val); } while(0)
 
+void md_vdp_debug_port_sel(uint32_t num);  // vdp.inc
+
 // Accessors
 static inline void md_vdp_set_reg(uint8_t num, uint8_t val)
 {
-	g_md_vdp_regvalues[num] = val;
-	VDP_REG_WRITE(num, val);
+	g_md_vdp_regs[num] = val;
+	VDPPORT_CTRL = 0x8000 | (num << 8) | (val);
 }
 
 static inline uint8_t md_vdp_get_reg(uint8_t num)
 {
-	return g_md_vdp_regvalues[num];
+	return g_md_vdp_regs[num];
 }
 
 static inline uint16_t md_vdp_get_status(void)
@@ -560,10 +743,16 @@ static inline uint16_t md_vdp_get_status(void)
 	return VDPPORT_CTRL;
 }
 
-static inline void md_vdp_set_debug_reg(uint16_t num, uint16_t val)
+static inline void md_vdp_set_debug_reg(uint8_t num, uint16_t val)
 {
-	VDPPORT_DBG_SEL = num;
+	g_md_vdp_debug_regs[num] = val;
+	md_vdp_debug_port_sel(num);
 	VDPPORT_DBG_DATA = val;
+}
+
+static inline uint8_t md_vdp_get_debug_reg(uint8_t num)
+{
+	return g_md_vdp_debug_regs[num];
 }
 
 // Interrupt config
@@ -816,7 +1005,62 @@ static inline void md_vdp_set_spa_output(uint8_t enabled)
 	VDP_SET(VDP_MODESET4, VDP_MODESET4_SPAEN, enabled);
 }
 
+static inline void md_vdp_debug_set_solo(uint8_t enabled)
+{
+	VDP_DEBUG_SET(0, VDP_DBG00_SOLO, enabled);
+}
+
+static inline void md_vdp_debug_set_layer_select(VdpDebugLayerSel layer)
+{
+	uint16_t reg = md_vdp_get_debug_reg(0);
+	reg &= ~(VDP_DBG00_LYSEL0 | VDP_DBG00_LYSEL1);
+	layer &= 0x03;
+	reg |= layer << 7;
+	md_vdp_set_debug_reg(0, reg);
+}
+
+static inline void md_vdp_debug_set_psg_over(uint8_t enabled, uint8_t chan)
+{
+	uint16_t reg = md_vdp_get_debug_reg(0);
+	reg &= ~(VDP_DBG00_PSOVR | VDP_DBG00_PSOCN0 | VDP_DBG00_PSOCN1);
+	reg |= (enabled ? VDP_DBG00_PSOVR : 0);
+	chan &= 0x03;
+	reg |= ((uint16_t)chan) << 10;
+	md_vdp_set_debug_reg(0, reg);
+}
+
+static inline void md_vdp_debug_set_sprite_state_bits(uint8_t bits)
+{
+	uint16_t reg = md_vdp_get_debug_reg(0);
+	reg &= ~(VDP_DBG00_SPRST0 | VDP_DBG00_SPRST1 | VDP_DBG00_SPRST2);
+	bits &= 0x07;
+	reg |= ((uint16_t)bits) << 12;
+	md_vdp_set_debug_reg(0, reg);
+}
+
+static inline void md_vdp_debug_set_z80_overclock(uint8_t enabled)
+{
+	VDP_DEBUG_SET(1, VDP_DBG01_Z80CK, enabled);
+}
+
+static inline void md_vdp_debug_set_edclk_out(uint8_t enabled)
+{
+	VDP_DEBUG_SET(1, VDP_DBG01_EDCKO, enabled);
+}
+
+static inline uint16_t md_vdp_debug_get_bit_pattern(void)
+{
+	md_vdp_debug_port_sel(2);
+	return VDPPORT_DBG_DATA;
+}
+
+static inline void md_vdp_debug_reset(void)
+{
+	md_vdp_debug_port_sel(0xF);
+	VDPPORT_DBG_DATA = 0x00;
+}
+
 #undef VDP_SET
-#undef VDP_REG_WRITE
+#undef VDP_SET_DEBUG
 
 #endif // MD_VDP_H

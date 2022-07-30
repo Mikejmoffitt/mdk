@@ -1,7 +1,7 @@
 /* mdk SRAM routiness
 Michael Moffitt 2020
 
-Thanks to Chilly Willy and Steophane Dallongeville for extant reference code.
+Thanks to Chilly Willy and Stephane Dallongeville for extant reference code.
 
 */
 

@@ -156,6 +156,7 @@ softreset:
 .include	"md/irq.inc"
 .include	"md/io.inc"
 .include	"md/sram.inc"
+.include	"md/vdp.inc"
 
 _v_access_fault:
 _v_access_error:
