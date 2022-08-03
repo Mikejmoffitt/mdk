@@ -21,12 +21,15 @@ int main(int argc, char **argv)
 
 	if (argc < 2)
 	{
+		printf("Usage: %s\n");
 		fprintf(stderr, "%s: not enough arguments", argv[0]);
 		return EXIT_FAILURE;
 	}
 
 	for (arg = 1; arg < argc; arg++)
 	{
+		// Omit optional ".cfg" files
+		if (strstr(argv[arg], ".cfg")) continue;
 		fin = fopen(argv[arg], "rb");
 		if (!fin)
 		{
@@ -57,11 +60,7 @@ int main(int argc, char **argv)
 		}
 		fclose(fin);
 
-		// The prolog for each included file has two purposes:
-		// 1. align to 32-bit boundary
-		// 2. provide length info (as a Pascal-like string)
 		printf("extern const uint8_t %s[%d];\n", argv[arg], filelen);
-		printf("extern const unsigned int %s_size;\n", argv[arg]);
 	}
 	return 0;
 }

@@ -18,7 +18,7 @@ UTILDIR := $(MDKROOT)/util
 MDKSOURCES_C := $(shell find $(MDKSRCDIR)/ -type f -name '*.c')
 MDKSOURCES_ASM := $(shell find $(MDKSRCDIR)/ -type f -name '*.s')
 
-HOSTCFLAGS := -O3 -std=c11
+HOSTCFLAGS := -O3 -std=gnu11
 CC_HOST := cc
 CC := $(GBIN)/m68k-elf-gcc
 AS := $(GBIN)/m68k-elf-gcc
@@ -58,7 +58,7 @@ CFLAGS += -fdata-sections -ffunction-sections
 CFLAGS += -mcpu=68000
 CFLAGS += -I$(SRCDIR) -I$(MDKSRCDIR) -I.
 CFLAGS += -O3
-CFLAGS += -std=c11
+CFLAGS += -std=gnu11
 CFLAGS += -Wall -Wextra -Wno-unused-function
 CFLAGS += # -fno-store-merging # Needed to avoid breakage with GCC8.
 CFLAGS += -ffunction-sections -fdata-sections -fconserve-stack
