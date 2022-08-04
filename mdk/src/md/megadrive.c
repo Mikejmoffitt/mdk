@@ -19,6 +19,10 @@ void megadrive_init(void)
 	md_dma_fill_vram(0, 0, 32768, 2);
 	md_dma_fill_vram(1, 0, 32768, 2);
 	md_dma_process();
+	const uint16_t scroll_default = 0;
+	md_dma_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &scroll_default, 1, 2);
+	md_dma_transfer_vsram(0, &scroll_default, 1, 2);
+	md_dma_process();
 
 #ifdef MDK_TARGET_C2
 	md_ioc_init();

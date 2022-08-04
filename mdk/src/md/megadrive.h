@@ -22,7 +22,6 @@
 // Run after completing the logic in one game tick loop.
 static inline void megadrive_finish(void)
 {
-
 	md_spr_finish();
 	md_pal_poll();
 	md_vdp_wait_vblank();

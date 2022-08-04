@@ -37,8 +37,6 @@ static signed short s_player_dx;
 static unsigned short s_player_frame;
 static unsigned short s_player_facing;
 
-static unsigned short s_scroll;
-
 static void load_player(void)
 {
 	s_player_x = 64 << 8;
@@ -49,7 +47,7 @@ static void load_player(void)
 
 static void move_player(void)
 {
-	unsigned short cur_keys = md_io_pad_read(0);
+	unsigned short cur_keys = g_md_pad[0];
 	// Acceleration and braking while moving right
 	if (s_player_dx >= 0)
 	{
@@ -166,16 +164,10 @@ void draw_bg(void)
 	{
 		VDPPORT_DATA = 0x61;
 	}
-
-	// Transfer our scroll coordinate of 0 to VRAM and VSRAM for H and V scroll
-	s_scroll = 0;
-	md_dma_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &s_scroll, 1, 2);
-	md_dma_transfer_vsram(0, &s_scroll, 1, 2);
 }
 
 void main(void)
 {
-	// Get the megadrive ready to go! (See md/megadrive.h)
 	megadrive_init();
 
 	draw_bg();
@@ -185,10 +177,6 @@ void main(void)
 	{
 		move_player();
 		draw_player_sprite();
-
-		// Set the background color to get an idea of how much CPU is utilized
-		megadrive_finish(); // Terminate the sprite list and wait for vblank
-		// Controller polling and DMA queue process is handled in VBL ISR
+		megadrive_finish();
 	}
-
 }

@@ -29,10 +29,12 @@ typedef uint16_t MdButton;
 #define MD_PAD_UNPLUGGED  0x4000  // This may also be set for an SMS controller.
 #define MD_PAD_6B         0x8000
 
-// Get the state of one control port (0 or 1)
-// This returns from the cache captured from io_poll() after vblank, so there
-// are no side effects if this is read multiple times per frame.
-uint16_t md_io_pad_read(uint8_t port);
+// Input state data for player 1 and 2. Test these variables with the BTN_*
+// constants above to read button data.
+extern uint16_t g_md_pad[2];       // Button data for the current frame.
+extern uint16_t g_md_pad_pos[2];   // Buttons pressed on the current frame.
+extern uint16_t g_md_pad_neg[2];   // Buttons released on the current frame.
+extern uint16_t g_md_pad_prev[2];  // The state of buttons from the last frame.
 
 // Configures control registers for gamepad reading.
 // th interrupts are disabled for each port.
@@ -43,4 +45,4 @@ void md_io_init(void);
 // Poll controller inputs.
 void md_io_poll(void);
 
-#endif // MD_IO_H
+#endif  // MD_IO_H

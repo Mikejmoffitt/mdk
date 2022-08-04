@@ -30,13 +30,6 @@ static void draw_interface(void)
 	text_puts(VDP_PLANE_A, 1, 9,  "SP  1");
 	text_puts(VDP_PLANE_A, 1, 10, "SP  2");
 	text_puts(VDP_PLANE_A, 1, 11, "SP  3");
-
-	// Center the screen at 0, 0.
-	static uint16_t x_scroll, y_scroll;
-	x_scroll = 0;
-	y_scroll = 0;
-	md_dma_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &x_scroll, 1, 2);
-	md_dma_transfer_vsram(0, &y_scroll, 1, 2);
 }
 
 static void draw_bg_color_bars(void)
@@ -113,11 +106,12 @@ void main(void)
 	draw_interface();
 	draw_bg_color_bars();
 
-	// It makes a bunch of noise.
+	// Make a bunch of noise.
 	md_psg_vol(0, 0);
 	md_psg_vol(1, 0);
 	md_psg_vol(2, 0);
 	md_adpcm_play(0);
+
 	static uint16_t period = 0;
 	while (1)
 	{

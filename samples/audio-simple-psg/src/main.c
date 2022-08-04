@@ -1,6 +1,6 @@
-// md-toolchain example "psg" main.c
+// md-toolchain example "audio-simple-psg" main.c
 // Damian Yerrick 2019
-// Michael Moffitt 2018
+// Michael Moffitt 2022
 //
 // This demo plays two chords through the programmable sound
 // generator (PSG) that the MD inherits from the Master System.
@@ -17,6 +17,7 @@ struct Chord
 	unsigned short duration;
 };
 
+// Notes about tuning:
 // NTSC defines the color burst frequency as 35/44 of the 4.5 MHz
 // audio carrier offset, that is, 315/88 MHz or about 3.58 MHz.
 // The PSG divides this by 32 to form the basic frequency for its
@@ -33,20 +34,15 @@ static const struct Chord s_sega_chords[] =
 	// C, G, E, one second
 	{{(111860.8/130.8128), (111860.8/195.9977), (111860.8/329.6276)}, 60},
 	{{0, 0, 0}, 0}
-};	
+};
 
 void main(void)
 {
-	// Get the megadrive ready to go! (See md/megadrive.h)
 	megadrive_init();
-
-	// Set up text graphics at VRAM address 0x400 palette 0
 	text_init(res_font_gfx_bin, 3072, 0x400, res_font_pal_bin, 0);
-
-	// Print a simple message in the center of plane A
 	text_puts(VDP_PLANE_A, 15, 11, "PSG Chords");
 
-	// Play a sequence of chords
+	// Play a sequence of chords.
 	for (const struct Chord *playpos = s_sega_chords;
 	     playpos->duration > 0;
 	     playpos++)
@@ -68,10 +64,8 @@ void main(void)
 		}
 	}
 
-	for (unsigned int ch = 0; ch < 3; ch++)
-	{
-		md_psg_vol(ch, 15);
-	}
+	// Silence all channels with max attenuation (15).
+	for (unsigned int ch = 0; ch < 3; ch++) md_psg_vol(ch, 15);
 
 	while (1)
 	{

@@ -8,52 +8,20 @@
 
 #include "res.h"
 
-void scroll_movement(void)
+void draw_inputs(void)
 {
-	static uint16_t xs, ys;
-
-	if (md_io_pad_read(0) & BTN_RIGHT) xs++;
-	else if (md_io_pad_read(0) & BTN_LEFT) xs--;
-	if (md_io_pad_read(0) & BTN_DOWN) ys--;
-	else if (md_io_pad_read(0) & BTN_UP) ys++;
-
-	md_dma_transfer_vram(VRAM_HSCR_BASE_DEFAULT, &xs, 1, 2);
-	md_dma_transfer_vsram(0, &ys, 1, 2);
-}
-
-void btn_draw(void)
-{
-	typedef struct ButtonMeta
+	for (uint16_t j = 0; j < ARRAYSIZE(g_md_pad); j++)
 	{
-		uint16_t mask;
-		char chara;
-	} ButtonMeta;
+		uint16_t plot_x = 12 * 8;
+		const uint16_t plot_y = (12 + j) * 8;
 
-	for (uint16_t j = 0; j < 2; j++)
-	{
-		const uint16_t buttons = md_io_pad_read(j);
-
-		static const ButtonMeta button_meta[] =
-		{
-			{BTN_UP, 'U'},
-			{BTN_DOWN, 'D'},
-			{BTN_LEFT, 'L'},
-			{BTN_RIGHT, 'R'},
-			{BTN_A, 'A'},
-			{BTN_B, 'B'},
-			{BTN_C, 'C'},
-			{BTN_X, 'X'},
-			{BTN_Y, 'Y'},
-			{BTN_Z, 'Z'},
-			{BTN_START, 'S'},
-			{BTN_MODE, 'M'},
-		};
-
-		uint16_t plot_x = 8;
-		const uint16_t plot_y = 32 + (j * 8);
-		md_spr_put(plot_x, plot_y, SPR_ATTR(j == 0 ? '1' : '2', 0, 0, 0, 0), SPR_SIZE(1, 1));
+		// Player number indicator.
+		md_spr_put(plot_x, plot_y, SPR_ATTR((j == 0 ? '1' : '2'), 0, 0, 0, 0),
+		           SPR_SIZE(1, 1));
 		plot_x += 16;
-		if (buttons & MD_PAD_UNPLUGGED)
+
+		// If the pad isn't plugged in, indicate as such and continue.
+		if (g_md_pad[j] & MD_PAD_UNPLUGGED)
 		{
 			const char msg[] = "No Controller";
 			for (uint16_t i = 0; i < sizeof(msg); i++)
@@ -63,10 +31,36 @@ void btn_draw(void)
 			}
 			continue;
 		}
-		for (uint16_t i = 0; i < sizeof(button_meta) / sizeof(button_meta[0]); i++)
+
+		// The button_meta struct is used to associate button masks (e.g.
+		// BTN_A) with a char (e.g. 'a'). Each button is checked in a loop.
+		// If the corresponding button is pressed, the character is printed.
+		struct ButtonMeta
 		{
-			const char chara = (buttons & button_meta[i].mask) ?
-			                   button_meta[i].chara : '.';
+			uint16_t mask;
+			char chara;
+		} button_meta[] =
+		{
+			{BTN_UP, 'u'},
+			{BTN_DOWN, 'd'},
+			{BTN_LEFT, 'l'},
+			{BTN_RIGHT, 'r'},
+			{BTN_A, 'a'},
+			{BTN_B, 'b'},
+			{BTN_C, 'c'},
+			{BTN_X, 'x'},
+			{BTN_Y, 'y'},
+			{BTN_Z, 'z'},
+			{BTN_START, 's'},
+			{BTN_MODE, 'm'},
+		};
+
+		for (uint16_t i = 0; i < ARRAYSIZE(button_meta); i++)
+		{
+			char chara = (g_md_pad[j] & button_meta[i].mask) ?
+			              button_meta[i].chara : '.';
+			// Make letters uppercase if they are a positive edge.
+			if (g_md_pad_pos[j] & button_meta[i].mask) chara &= ~0x20;
 			md_spr_put(plot_x, plot_y, SPR_ATTR(chara, 0, 0, 0, 0), SPR_SIZE(1, 1));
 			plot_x += 8;
 		}
@@ -84,13 +78,11 @@ void main(void)
 	text_init(res_gfx_font_bin, sizeof(res_gfx_font_bin), 0x400, res_pal_font_bin, 0);
 
 	// Print a simple message in the center of plane A
-	text_puts(VDP_PLANE_A, 14, 11, "Hello World");
-	text_puts(VDP_PLANE_A, 5, 13, "(Scroll around with the d-pad)");
+	text_puts(VDP_PLANE_A, 10, 8, "Input Demonstration");
 
 	while (1)
 	{
-		btn_draw();
-		scroll_movement();
+		draw_inputs();
 
 		megadrive_finish(); // Terminate the sprite list and wait for vblank
 		// Controller polling and DMA queue process is handled in VBL ISR

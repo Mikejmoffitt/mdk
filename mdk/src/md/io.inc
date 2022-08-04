@@ -7,7 +7,10 @@
 	.equ IO_LOC_CTRL_L,  0xA10008
 
 	/* uint16_t[2] */
-	.extern	g_pad_cache
+	.extern	g_md_pad[2]
+	.extern	g_md_pad_pos[2]
+	.extern	g_md_pad_neg[2]
+	.extern	g_md_pad_prev[2]
 
 /* %a0 points to pad cache in RAM we are updating.
    %a1 points to the pad data port (byte address). */
@@ -74,22 +77,46 @@ store_pad:
 
 	.global	md_io_init
 md_io_init:
-	clr.l	g_pad_cache
+	clr.l	%d0
+	move.l	%d0, g_md_pad
+	move.l	%d0, g_md_pad_prev
+	move.l	%d0, g_md_pad_pos
+	move.l	%d0, g_md_pad_neg
 	move.l	#0x00400040, (IO_LOC_CTRL_L).l  /* Set TH pin as an output */
 	rts
 
 	.global	md_io_poll
 md_io_poll:
+	/* Move stale pad data into previous frame var. */
+	move.l	g_md_pad, g_md_pad_prev
+
+	/* Pause Z80 before we touch the ports. */
 	move.w	#0x0100, (SYS_Z80_PORT_BUS).l  /* Z80 Bus Request */
 .bus_req_wait:
 	btst.b	#0, (SYS_Z80_PORT_BUS).l
 	bne	.bus_req_wait
 
-	lea	g_pad_cache, %a0
+	lea	g_md_pad, %a0
 	lea	IO_LOC_DATA, %a1
 	bsr	read_pad
-	lea	g_pad_cache + 2, %a0
+	lea	g_md_pad + 2, %a0
 	lea	IO_LOC_DATA + 2, %a1
 	bsr	read_pad
+
+	/* Done with the ports, so release the Z80. */
 	move.w	#0x0000, (SYS_Z80_PORT_BUS).l  /* Z80 Bus Release */
+
+	/* Generate pos and neg edge data. */
+	move.l	g_md_pad, %d0
+	move.l	g_md_pad_prev, %d1
+	eori.l	#0xFFFFFFFF, %d1
+	and.l	%d1, %d0
+	move.l	%d0, g_md_pad_pos
+
+	move.l	g_md_pad_prev, %d0
+	move.l	g_md_pad, %d1
+	eori.l	#0xFFFFFFFF, %d1
+	and.l	%d1, %d0
+	move.l	%d0, g_md_pad_neg
+
 	rts
