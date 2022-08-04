@@ -21,28 +21,26 @@ void md_spr_init(void)
 
 void md_spr_start(void)
 {
-	// TODO: This case shouldn't ever be hit, so consider removing this.
-	if (g_sprite_count == 0)
+	// Restoration of link field.
+	g_sprite_table[0].link = 1;
+	if (g_sprite_count > 0)
 	{
-		g_sprite_table[0].link = 1;
-		return;
+		g_sprite_table[g_sprite_count - 1].link = g_sprite_count;
+		g_sprite_count = 0;
 	}
-
-	// Put back the link value that was set to zero in the last frame.
-	g_sprite_table[g_sprite_count - 1].link = g_sprite_count;
-
-	g_sprite_count = 0;
 }
 
 void md_spr_finish(void)
 {
+	uint8_t transfer_count = g_sprite_count;
 	if (g_sprite_count == 0)
 	{
 		// Sets sprite 0 to be invisible, and point at itself. This is used
 		// to terminate the list in the absence of any sprite placements.
 		g_sprite_table[0].link = 0;
 		g_sprite_table[0].ypos = 0;
-		g_sprite_count = 1;
+		g_sprite_table[0].size = 0;
+		transfer_count = 1;
 	}
 	else
 	{
@@ -52,5 +50,5 @@ void md_spr_finish(void)
 
 	// Schedule a transfer for the sprite table.
 	md_dma_transfer_spr_vram(md_vdp_get_sprite_base(), (void *)g_sprite_table,
-	                         sizeof(SprSlot) * g_sprite_count / 2, 2);
+	                         sizeof(SprSlot) * transfer_count / 2, 2);
 }
