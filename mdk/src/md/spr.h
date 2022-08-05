@@ -12,7 +12,7 @@ Michael Moffitt 2018-2020 */
 
 #define SPR_MAX 80
 
-typedef struct __attribute__((packed)) SprSlot
+typedef struct SprSlot
 {
 	uint16_t ypos;
 	uint8_t size;
