@@ -12,7 +12,7 @@ Michael Moffitt 2018-2020 */
 
 #define SPR_MAX 80
 
-typedef struct SprSlot __attribute__((packed))
+typedef struct __attribute__((packed)) SprSlot
 {
 	uint16_t ypos;
 	uint8_t size;
@@ -69,7 +69,7 @@ static inline void md_spr_mask_line_full(int16_t y, uint8_t size)
 }
 
 static inline void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
-                                         int16_t y2, uint8_t size2)
+                                           int16_t y2, uint8_t size2)
 {
 	if (g_sprite_count >= ARRAYSIZE(g_sprite_table) - 1) return;
 	SprSlot *spr = &g_sprite_table[g_sprite_count];

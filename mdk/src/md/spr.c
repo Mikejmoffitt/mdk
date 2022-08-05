@@ -18,7 +18,6 @@ void md_spr_init(void)
 	md_spr_finish();
 }
 
-
 void md_spr_start(void)
 {
 	// Restoration of link field.
