@@ -45,4 +45,7 @@ void md_io_init(void);
 // Poll controller inputs.
 void md_io_poll(void);
 
+// Generates g_md_pad_pos and g_md_pad_neg from g_md_pad.
+void md_io_generate_edges(void);
+
 #endif  // MD_IO_H

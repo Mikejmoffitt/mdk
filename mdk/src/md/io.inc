@@ -75,6 +75,22 @@ store_pad:
 	move.b	#0x00, (%a1)  /* TH back to low */
 	rts
 
+	.global	md_io_generate_edges
+md_io_generate_edges:
+	/* Generate pos and neg edge data. */
+	move.l	g_md_pad, %d0
+	move.l	g_md_pad_prev, %d1
+	eori.l	#0xFFFFFFFF, %d1
+	and.l	%d1, %d0
+	move.l	%d0, g_md_pad_pos
+
+	move.l	g_md_pad_prev, %d0
+	move.l	g_md_pad, %d1
+	eori.l	#0xFFFFFFFF, %d1
+	and.l	%d1, %d0
+	move.l	%d0, g_md_pad_neg
+	rts
+
 	.global	md_io_init
 md_io_init:
 	clr.l	%d0
@@ -106,17 +122,6 @@ md_io_poll:
 	/* Done with the ports, so release the Z80. */
 	move.w	#0x0000, (SYS_Z80_PORT_BUS).l  /* Z80 Bus Release */
 
-	/* Generate pos and neg edge data. */
-	move.l	g_md_pad, %d0
-	move.l	g_md_pad_prev, %d1
-	eori.l	#0xFFFFFFFF, %d1
-	and.l	%d1, %d0
-	move.l	%d0, g_md_pad_pos
-
-	move.l	g_md_pad_prev, %d0
-	move.l	g_md_pad, %d1
-	eori.l	#0xFFFFFFFF, %d1
-	and.l	%d1, %d0
-	move.l	%d0, g_md_pad_neg
+	bsr	md_io_generate_edges
 
 	rts

@@ -1,8 +1,14 @@
 #include "md/ioc.h"
 #include "md/mmio.h"
 #include "md/macro.h"
+#include "md/io.h"
 
 static uint8_t s_io_reg_cache[8];  // Data for ports A - H.
+
+uint8_t g_md_c2_in[SYSC_INPUT_TYPE_COUNT];
+uint8_t g_md_c2_in_prev[SYSC_INPUT_TYPE_COUNT];
+uint8_t g_md_c2_in_pos[SYSC_INPUT_TYPE_COUNT];
+uint8_t g_md_c2_in_neg[SYSC_INPUT_TYPE_COUNT];
 
 // Read register data directly from Port A - Port H (0 - 7).
 // Reading from registers intended for output isn't recommended.
@@ -10,29 +16,6 @@ uint8_t md_ioc_read_reg_raw(MdIoCIoPort port)
 {
 	volatile uint8_t *reg_porta = (volatile uint8_t *)(SYSC_IO_LOC_PORTA);
 	return reg_porta[port << 1];
-}
-
-// Reading inputs. Data is copied at start of vblank with md_ioc_poll().
-MdIoCPlayerInput md_ioc_get_player_input(int16_t player)
-{
-	player &= 0x0001;
-	return s_io_reg_cache[SYSC_IO_PORT_A + player];
-}
-
-MdIoCMiscInput md_ioc_get_misc_input(void)
-{
-	return s_io_reg_cache[SYSC_IO_PORT_C];
-}
-
-MdIoCSystemInput md_ioc_get_system_input(void)
-{
-	return s_io_reg_cache[SYSC_IO_PORT_E];
-}
-
-MdIoCDipInput md_ioc_get_dip_input(int16_t sw)
-{
-	sw &= 0x0001;
-	return s_io_reg_cache[SYSC_IO_PORT_F + sw];
 }
 
 void md_ioc_set_watchdog_ctrl(int16_t jp15_pin3)
@@ -95,9 +78,6 @@ uint16_t md_ioc_get_pal_bank(void)
 	return s_io_reg_cache[SYSC_IO_PORT_H] & 0x0003;
 }
 
-// Set upper address pins for uPD7759 sample ROM A17-A18.
-// Upper bits theorized to exist via Charles McDonald's doc, unconfirmed.
-// Banks 0-3 valid; possibly up to 0xF.
 void md_ioc_set_udp7759_bank(uint16_t bank)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
@@ -106,7 +86,6 @@ void md_ioc_set_udp7759_bank(uint16_t bank)
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
 }
 
-// Assert (bring to 0) or Deassert (bring to 1) the reset pin for the uPD7759.
 void md_ioc_set_upd7759_reset(uint16_t asserted)
 {
 	static const uint8_t base_value = 0xF0;  // From Puyo 2 - Meaning unknown!
@@ -117,7 +96,53 @@ void md_ioc_set_upd7759_reset(uint16_t asserted)
 
 uint16_t md_ioc_get_upd7759_busy(void)
 {
-	return (md_ioc_get_misc_input() & SYSC_MISC_UPD7759_BUSY) ? 1 : 0;
+	return (g_md_c2_in[SYSC_INPUT_MISC] & SYSC_MISC_UPD7759_BUSY) ? 1 : 0;
+}
+
+
+// Populates the controller data variables used for Megadrive development with
+// C/C2-derived data. This exists to allow for easier patching of a game that
+// targets Mega Drive to work on C/C2.
+static void md_ioc_generate_compatible_input(void)
+{
+	typedef struct PadMapping
+	{
+		uint8_t c2_button;
+		uint16_t md_button;
+	} PadMapping;
+
+	static const PadMapping c2_to_md_mappings[] =
+	{
+		{SYSC_PL_LEFT,  BTN_LEFT},
+		{SYSC_PL_RIGHT, BTN_RIGHT},
+		{SYSC_PL_UP,    BTN_UP},
+		{SYSC_PL_DOWN,  BTN_DOWN},
+		{SYSC_PL_D,     BTN_Z},
+		{SYSC_PL_C,     BTN_C},
+		{SYSC_PL_B,     BTN_B},
+		{SYSC_PL_A,     BTN_A},
+	};
+	
+	for (uint16_t i = 0; i < ARRAYSIZE(g_md_pad); i++)
+	{
+		g_md_pad_prev[i] = g_md_pad[i];
+		g_md_pad[i] = 0;
+		for (uint16_t j = 0; j < ARRAYSIZE(c2_to_md_mappings); j++)
+		{
+			if (g_md_c2_in[SYSC_INPUT_P1] &
+			    c2_to_md_mappings[j].c2_button)
+			{
+				g_md_pad[i] |= c2_to_md_mappings[j].md_button;
+			}
+		}
+		if (g_md_c2_in[SYSC_INPUT_SYSTEM] &
+		    (i == 0 ? SYSC_SYSTEM_START1 : SYSC_SYSTEM_START2))
+		{
+			g_md_pad[i] |= BTN_START;
+		}
+	}
+	
+	md_io_generate_edges();
 }
 
 // Internal Use ---------------------------------------------------------------
@@ -142,10 +167,15 @@ void md_ioc_init(void)
 	md_ioc_set_coin_outputs(0, 0, 0, 0);
 }
 
-// Poll controller inputs.
+static void generate_edges(const uint8_t *fresh, const uint8_t *prev,
+                           uint8_t *pos, uint8_t *neg)
+{
+	*pos = *fresh & ~(*prev);
+	*neg = *prev & ~(*pos);
+}
+
 void md_ioc_poll(void)
 {
-	// Read inputs.
 	volatile uint8_t *reg_porta = (volatile uint8_t *)(SYSC_IO_LOC_PORTA);
 	volatile uint8_t *reg_portb = (volatile uint8_t *)(SYSC_IO_LOC_PORTB);
 	volatile uint8_t *reg_portc = (volatile uint8_t *)(SYSC_IO_LOC_PORTC);
@@ -158,4 +188,23 @@ void md_ioc_poll(void)
 	s_io_reg_cache[SYSC_IO_PORT_E] = ~(*reg_porte);
 	s_io_reg_cache[SYSC_IO_PORT_F] = ~(*reg_portf);
 	s_io_reg_cache[SYSC_IO_PORT_G] = ~(*reg_portg);
+
+	for (uint16_t i = 0; i < ARRAYSIZE(g_md_c2_in); i++)
+	{
+		g_md_c2_in_prev[i] = g_md_c2_in[i];
+	}
+
+	g_md_c2_in[SYSC_INPUT_P1] = s_io_reg_cache[SYSC_IO_PORT_A];
+	g_md_c2_in[SYSC_INPUT_P2] = s_io_reg_cache[SYSC_IO_PORT_B];
+	g_md_c2_in[SYSC_INPUT_MISC] = s_io_reg_cache[SYSC_IO_PORT_C];
+	g_md_c2_in[SYSC_INPUT_SYSTEM] = s_io_reg_cache[SYSC_IO_PORT_E];
+	g_md_c2_in[SYSC_INPUT_DIP1] = s_io_reg_cache[SYSC_IO_PORT_F];
+	g_md_c2_in[SYSC_INPUT_DIP2] = s_io_reg_cache[SYSC_IO_PORT_G];
+
+	for (uint16_t i = 0; i < ARRAYSIZE(g_md_c2_in); i++)
+	{
+		generate_edges(&g_md_c2_in[i], &g_md_c2_in_prev[i],
+		               &g_md_c2_in_pos[i], &g_md_c2_in_neg[i]);
+	}
+	md_ioc_generate_compatible_input();
 }
