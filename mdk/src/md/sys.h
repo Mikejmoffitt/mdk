@@ -46,6 +46,7 @@ void md_sys_z80_init(const uint8_t *src, uint16_t size);
 // Requests access to the Z80 bus, halting it. Can block until granted.
 static inline void md_sys_z80_bus_req(uint8_t wait);
 static inline void md_sys_z80_bus_release(void);
+static inline uint8_t md_sys_z80_bus_taken(void);
 // Set the Z80 reset line high or low. Low (asserted) holds it and the YM2612
 // in a reset state.
 static inline void md_sys_z80_reset_deassert(void);
@@ -104,6 +105,12 @@ static inline uint8_t md_sys_get_hw_rev(void)
 	return SYS_PORT_VERSION & 0x0F;
 }
 
+static inline uint8_t md_sys_z80_bus_taken(void)
+{
+	volatile uint8_t *z80_bus = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
+	return !(*z80_bus & 0x01);
+}
+
 static inline void md_sys_z80_bus_req(uint8_t wait)
 {
 	volatile uint8_t *z80_bus = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
@@ -153,6 +160,11 @@ static inline uint8_t md_sys_is_disk_present(void)
 }
 
 static inline uint8_t md_sys_get_hw_rev(void)
+{
+	return 0;
+}
+
+static inline uint8_t md_sys_z80_bus_taken(void)
 {
 	return 0;
 }

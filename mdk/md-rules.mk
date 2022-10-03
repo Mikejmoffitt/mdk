@@ -32,7 +32,7 @@ CC_HOST := cc
 CC := $(MDK_BIN)/m68k-elf-gcc
 CPPC := $(MDK_BIN)/m68k-elf-g++
 AS := $(MDK_BIN)/m68k-elf-as
-LD := $(MDK_BIN)/m68k-elf-ld
+LD := $(MDK_BIN)/m68k-elf-gcc
 NM := $(MDK_BIN)/m68k-elf-nm
 OBJCOPY := $(MDK_BIN)/m68k-elf-objcopy
 
@@ -74,11 +74,13 @@ ASFLAGS += --register-prefix-optional
 
 # Linker.
 GCC_VER := $(shell $(CC) -dumpversion)
-LDFLAGS := -L$(MDK_ENV)/m68k-elf/lib -L$(MDK_ENV)/lib/gcc/m68k-elf/$(GCC_VER)
-LDFLAGS += --gc-sections -nostdlib
-LDFLAGS += -T$(LDSCRIPT)
-LDFLAGS += -Map $(PROJECT_NAME).map
-LIBS += -lgcc
+LDFLAGS += -nostartfiles
+LDFLAGS += -T $(LDSCRIPT)
+LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Wl,-Map $(PROJECT_NAME).map
+
+LIBS := -L $(MDK_ENV)/m68k-elf/lib -lnosys
+LIBS += -L $(MDK_ENV)/lib/gcc/m68k-elf/$(GCC_VER) -lgcc
 
 # C (on the host, for tools, etc)
 HOSTCFLAGS := -O3 -std=gnu11
@@ -112,8 +114,10 @@ endif
 ext_deps: $(EXTERNAL_DEPS)
 
 vars:
+	@echo "GCC_VER is" "$(GCC_VER)"
 	@echo "CFLAGS is" "$(CFLAGS)"
 	@echo "CPPFLAGS is" "$(CPPFLAGS)"
+	@echo "LDFLAGS is" "$(LDFLAGS)"
 	@echo "MDKSOURCES_C is" "$(MDKSOURCES_C)"
 	@echo "MDKSOURCES_ASM is" "$(MDKSOURCES_ASM)"
 	@echo "SOURCES_C is" "$(SOURCES_C)"
