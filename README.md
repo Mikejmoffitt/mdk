@@ -23,12 +23,7 @@ Rather than provide a library to link against, this project is intended to act a
 MD support functions may be compiled and used. The suggested use case is to make an `mdk` submodule for a project.
 
 Sample code and Makefiles exist in the `samples/` directory. 
-A makefile is provided that will recursively look for source files
-in the `src/` directory. It links using the provided linker script,
-which puts ROM from $000000 to $3FFFFF and RAM at $FF0000-$FFFFFF.
-The crt0 startup code does nothing more than satisfy TMSS, clear main
-memory, initialize variables, set the stack, and move forwards.
-
+A makefile is provided that will recursively look for source files in the `src/` directory. It links using the provided linker script, which puts ROM from $000000 to $3FFFFF and RAM at $FF0000-$FFFFFF.
 
 Setup
 =====
@@ -72,38 +67,26 @@ Move the necessary files to the toolchain directory:
 
 If you don't want to use /opt/mdk-toolchain (e.g. you wish to just use ~/marsdev, or something else) you can set the environment variable MD_BASE to point at the root containing m68k-elf/.
 
-Cloning the Submodule
---------------------
-
-If you are starting a fresh project, I'd suggest cloning this repro as a submodule in the project root:
-
-```
-    $ git submodule add git@github.com:mikejmoffitt/mdk mdk
-    $ git add mdk && git commit -m "Added MDK submodule."
-```
-
-You can periodically update MDK with the following command:
-
-```
-    $ git submodule update --remote --merge
-    $ git add mdk && git commit -m "Updated MDK submodule."
-```
-
-Makefile
-------------
+Starting a Project
+------------------
 
 If you are starting fresh, I recommend copying the contents of blank-project into your root and using that:
 
 ```
-    $ cp -r mdk/blank-project .
+    $ cp -r mdk/blank-project my-project
 ```
 
-This makefile searches in the `src` directory recursively for any .c files or .s files, and compiles or assembles them accordingly.
+Then, add MDK as a submodule:
+
+```
+    $ cd my-project
+    $ git submodule add git@github.com:mikejmoffitt/mdk mdk
+    $ git add mdk && git commit -m "Added MDK submodule."
+```
+
+The default Makefile searches in the `src` directory recursively for any .c files or .s files, and compiles or assembles them accordingly.
 In addition, files placed in `res` are included in binary form. Their usage is detailed further below.
-
-You may edit the Makefile to reflect the name of your project.
-
-You may also declare any external build dependencies with `EXTERNAL_DEPS`, and make the build system aware of externally generated artifacts with `EXTERNAL_ARTIFACTS` (so they can be cleaned when the `clean` target is run).
+Edit the Makefile to change the name from blank-project to that if your project.
 
 At this stage, you should be able to build your project, though it will not do anything interesting.
 
@@ -112,6 +95,18 @@ At this stage, you should be able to build your project, though it will not do a
 ```
 
 It's not required to do so, but you may want to edit mdk/header.inc to include your project metadata as well.
+
+You can periodically update MDK with the following command:
+
+```
+    $ git submodule update --remote --merge
+    $ git add mdk && git commit -m "Updated MDK submodule."
+```
+
+Extra Dependencies
+------------------
+
+If you have edited your Makefile to include additional generated files (script parsing, data generation, etc), you should declare any external build dependencies with `EXTERNAL_DEPS`, and make the build system aware of externally generated artifacts with `EXTERNAL_ARTIFACTS` (so they can be cleaned when the `clean` target is run).
 
 Utils
 -----
