@@ -17,7 +17,7 @@ This project aims to supply a set of minimal support code for use in making soft
 Current solutions exist on both ends of the complexity spectrum, with straight 68000 assembly programming on one and SGDK on the other.
 This project aims to deliver something a little more in the middle in terms of weight and simplicity.
 
-This project is oriented towards development on a Linux or Unix-like host, and is implemented as a mixture of C and assembly.
+This project supports Linux, Windows, and MacOS-based development. For Windows, I strongly suggest using Windows Subsytem for Linux.
 
 Rather than provide a library to link against, this project is intended to act as a skeleton that is the basis of another project.
 MD support functions may be compiled and used. The suggested use case is to make an `mdk` submodule for a project.
@@ -30,12 +30,12 @@ Setup
 
 Environment Prerequisites
 -------------------------
-The toolchain is provided by git@github.com:andwn/marsdev. This has all been developed and tested on Linux, but was also run successfully on WSL.
+The toolchain is provided by git@github.com:andwn/marsdev.
 There are two options to set it up:
 
 Option 1: Use my install script
 -------------------------------
-On Linux (and probably WSL on Windows) you may run install-toolchain.sh. This script
+Run install-toolchain.sh. This script
 1) Clones marsdev into a directory in /tmp
 2) Creates /opt/mdk-toolchain
 3) Builds GCC, binutils, and friends with marsdev
