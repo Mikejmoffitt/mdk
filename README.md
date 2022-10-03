@@ -65,7 +65,7 @@ Move the necessary files to the toolchain directory:
     $ rm -rf ~/marsdev
 ```
 
-If you don't want to use /opt/mdk-toolchain (e.g. you wish to just use ~/marsdev, or something else) you can set the environment variable MD_BASE to point at the root containing m68k-elf/.
+If you don't want to use /opt/mdk-toolchain (e.g. you wish to just use ~/marsdev, or something else) you can set the environment variable MDK_BASE to point at the root containing m68k-elf/.
 
 Starting a Project
 ------------------
