@@ -8,8 +8,8 @@ RESDIR := res
 OBJDIR := obj
 
 # Sources.
-SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
-RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*')
+SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
+RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*')
 
 # Target configuration.
 # TARGET_SYSTEM:

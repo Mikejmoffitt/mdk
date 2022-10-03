@@ -8,8 +8,8 @@ RESDIR := res
 OBJDIR := obj
 
 # Sources.
-SOURCES_CPP := $(shell find $(SRCDIR)/ -type f -name '*.cpp')
-RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*')
+SOURCES_CPP := $(shell find $(SRCDIR) -type f -name '*.cpp')
+RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*')
 
 include $(MDKROOT)/md-rules.mk
 

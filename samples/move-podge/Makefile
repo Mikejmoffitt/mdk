@@ -6,12 +6,12 @@ MDKROOT := ../../mdk
 SRCDIR := src
 RESDIR := res
 OBJDIR := obj
-SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
-RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*.bin')
+SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
+RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*.bin')
 LIBS :=
 
 # Experimental PNG rules
-IMAGES_PNG := $(shell find $(RESDIR)/ -type f -name '*.png')
+IMAGES_PNG := $(shell find $(RESDIR) -type f -name '*.png')
 RESOURCES_LIST += $(patsubst $(RESDIR)/%.png,$(OBJDIR)/%_gfx.bin,$(IMAGES_PNG))
 RESOURCES_LIST += $(patsubst $(RESDIR)/%.png,$(OBJDIR)/%_pal.bin,$(IMAGES_PNG))
 
