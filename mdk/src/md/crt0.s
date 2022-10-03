@@ -118,7 +118,7 @@ start:
 	move.w	#0x2700, sr
 
 	/* set up SP */
-	move.l	0x00000000, sp
+	move.l	(0x000000).l, sp
 
 	/* clear WRAM */
 	move.l	#0x00FF0000, a4
@@ -145,12 +145,11 @@ start:
 	dbra	d7, .copy_var
 
 .no_copy:
-
+	move.l	(0x000000).l, sp
 	jmp	main
 
 	.global	softreset
 softreset:
-	move.l	#0xFFFFE0, sp
 	jmp	start
 
 .include	"md/irq.inc"
