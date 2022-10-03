@@ -11,8 +11,8 @@
 # are only needed during the final step.
 export MARSDEV=/tmp/_marsdev_tmp_
 
-# The destination for the toolchain (MD_BASE).
-export MD_BASE=/opt/mdk-toolchain
+# The destination for the toolchain (MDK_BASE).
+export MDK_BASE=/opt/mdk-toolchain
 
 # Clone marsdev.
 mkdir -p $MARSDEV
@@ -24,10 +24,10 @@ git clone git@github.com:andwn/marsdev
 cd marsdev
 make m68k-toolchain-newlib LANGS=c,c++
 
-# Install it into MD_BASE.
+# Install it into MDK_BASE.
 # TODO: Move or delete mdk-toolchain that already exists
-sudo mkdir -p $MD_BASE
-sudo mv $MARSDEV/m68k-elf $MD_BASE
+sudo mkdir -p $MDK_BASE
+sudo mv $MARSDEV/m68k-elf $MDK_BASE
 
 # Clean up.
 cd /
