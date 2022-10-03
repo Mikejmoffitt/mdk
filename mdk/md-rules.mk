@@ -1,40 +1,22 @@
 # md-framework common build rules.
 
-# Determine the target platform.
-# Valid platforms:
-#   md
-#   c2
-ifeq ($(PLATFORM),)
-PLATFORM := md
+# Environment
+MDK_BASE := /opt/mdk-toolchain
+MDK_ENV := $(MDK_BASE)/m68k-elf
+MDK_BIN := $(MDK_ENV)/bin
+
+# If the user didn't specify the MDK root dir, assume it's at the project root.
+ifeq ($(MDKROOT),)
+MDKROOT := mdk
 endif
 
-# Environment
-MD_ENV := /opt/toolchains/gen/m68k-elf
-GBIN := $(MD_ENV)/bin
-
 MDKSRCDIR := $(MDKROOT)/src
-LDSCRIPT := $(MDKROOT)/$(PLATFORM).ld
+LDSCRIPT := $(MDKROOT)/md.ld
 UTILDIR := $(MDKROOT)/util
 MDKSOURCES_C := $(shell find $(MDKSRCDIR)/ -type f -name '*.c')
 MDKSOURCES_ASM := $(shell find $(MDKSRCDIR)/ -type f -name '*.s')
 
-HOSTCFLAGS := -O3 -std=gnu11
-CC_HOST := cc
-CC := $(GBIN)/m68k-elf-gcc
-AS := $(GBIN)/m68k-elf-gcc
-LD := $(GBIN)/m68k-elf-ld
-NM := $(GBIN)/m68k-elf-nm
-OBJCOPY := $(GBIN)/m68k-elf-objcopy
-BIN2S := $(UTILDIR)/bin2s
-BIN2H := $(UTILDIR)/bin2h
-BINPAD := $(UTILDIR)/binpad
-BSPLIT := $(UTILDIR)/bsplit
-SPLIT := split
-MEGALOADER := $(UTILDIR)/megaloader
-PNGTO := $(UTILDIR)/pngto
-BLASTEM := $(UTILDIR)/blastem64-*/blastem
-
-# Target-specific.
+# Target-specific
 ifeq ($(TARGET_SYSTEM),)
 TARGET_SYSTEM = MDK_TARGET_MD
 endif
@@ -46,37 +28,68 @@ MDK_C2_ADPCM = /dev/zero
 endif
 endif
 
-# If the user didn't specify the MDK root dir, assume it's at the project root.
-ifeq ($(MDKROOT),)
-MDKROOT := mdk
-endif
+CC_HOST := cc
+CC := $(MDK_BIN)/m68k-elf-gcc
+CPPC := $(MDK_BIN)/m68k-elf-g++
+AS := $(MDK_BIN)/m68k-elf-as
+LD := $(MDK_BIN)/m68k-elf-ld
+NM := $(MDK_BIN)/m68k-elf-nm
+OBJCOPY := $(MDK_BIN)/m68k-elf-objcopy
 
-# Compiler, assembler, and linker flag setup
-CFLAGS += -Wno-strict-aliasing -ffreestanding
-CFLAGS += -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
-CFLAGS += -fdata-sections -ffunction-sections
-CFLAGS += -mcpu=68000
-CFLAGS += -I$(SRCDIR) -I$(MDKSRCDIR) -I.
-CFLAGS += -O3
-CFLAGS += -std=gnu11
-CFLAGS += -Wall -Wextra -Wno-unused-function
-CFLAGS += # -fno-store-merging # Needed to avoid breakage with GCC8.
-CFLAGS += -ffunction-sections -fdata-sections -fconserve-stack
-CFLAGS += -D$(TARGET_SYSTEM)
-ASFLAGS := -Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(MDKSRCDIR)
-# LDFLAGS := -L/usr/lib/gcc-cross/m68k-linux-gnu/8
-LDFLAGS := -L$(MD_ENV)/m68k-elf/lib -L$(MD_ENV)/lib/gcc/m68k-elf/6.3.0
+# Utilities
+SPLIT := split
+BIN2S := $(UTILDIR)/bin2s
+BIN2H := $(UTILDIR)/bin2h
+BINPAD := $(UTILDIR)/binpad
+BSPLIT := $(UTILDIR)/bsplit
+MEGALOADER := $(UTILDIR)/megaloader
+PNGTO := $(UTILDIR)/pngto
+BLASTEM := $(UTILDIR)/blastem64-*/blastem
+MDTOOLS := $(UTILDIR)/mdtools
+MDTILER := $(UTILDIR)/mdtools/mdtiler/tool/mdtiler
+# TODO: Various echo tools
+
+# Flags shared by both C and C++.
+COMMON_FLAGS := -mcpu=68000
+COMMON_FLAGS += -O3
+COMMON_FLAGS += -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
+COMMON_FLAGS += -Wall -Wextra -Wno-unused-function
+COMMON_FLAGS += -ffreestanding
+COMMON_FLAGS += -ffunction-sections -fdata-sections -fconserve-stack
+COMMON_FLAGS += -I$(SRCDIR) -I$(MDKSRCDIR) -I.
+COMMON_FLAGS += -D$(TARGET_SYSTEM)
+
+# For C.
+CFLAGS := $(COMMON_FLAGS)
+CFLAGS += -std=gnu2x
+CFLAGS += -Wno-strict-aliasing
+
+# For C++.
+CPPFLAGS := $(COMMON_FLAGS)
+CPPFLAGS += -std=gnu++2b
+
+# For ASM.
+ASFLAGS := -m68000 --bitwise-or -I$(SRCDIR) -I$(OBJDIR) -I$(MDKSRCDIR)
+ASFLAGS += --register-prefix-optional
+
+# Linker.
+GCC_VER := $(shell $(CC) -dumpversion)
+LDFLAGS := -L$(MDK_ENV)/m68k-elf/lib -L$(MDK_ENV)/lib/gcc/m68k-elf/$(GCC_VER)
 LDFLAGS += --gc-sections -nostdlib
 LDFLAGS += -T$(LDSCRIPT)
 LDFLAGS += -Map $(PROJECT_NAME).map
 LIBS += -lgcc
 
+# C (on the host, for tools, etc)
+HOSTCFLAGS := -O3 -std=gnu11
 
 # Naming intermediates
 OUTPUT_ELF := $(OBJDIR)/$(PROJECT_NAME).elf
 OUTPUT_GEN := $(PROJECT_NAME).gen
 OBJECTS_C := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SOURCES_C)) \
   $(patsubst $(MDKSRCDIR)/%.c,$(OBJDIR)/%.o,$(MDKSOURCES_C))
+OBJECTS_CPP := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES_CPP)) \
+  $(patsubst $(MDKSRCDIR)/%.cpp,$(OBJDIR)/%.o,$(MDKSOURCES_CPP))
 OBJECTS_ASM := $(patsubst $(SRCDIR)/%.s,$(OBJDIR)/%.o,$(SOURCES_ASM)) \
   $(patsubst $(MDKSRCDIR)/%.s,$(OBJDIR)/%.o,$(MDKSOURCES_ASM))
 OBJECTS_RES := $(OBJDIR)/res.o
@@ -100,11 +113,14 @@ ext_deps: $(EXTERNAL_DEPS)
 
 vars:
 	@echo "CFLAGS is" "$(CFLAGS)"
+	@echo "CPPFLAGS is" "$(CPPFLAGS)"
 	@echo "MDKSOURCES_C is" "$(MDKSOURCES_C)"
 	@echo "MDKSOURCES_ASM is" "$(MDKSOURCES_ASM)"
 	@echo "SOURCES_C is" "$(SOURCES_C)"
+	@echo "SOURCES_CPP is" "$(SOURCES_CPP)"
 	@echo "SOURCES_ASM is" "$(SOURCES_ASM)"
 	@echo "OBJECTS_C is" "$(OBJECTS_C)"
+	@echo "OBJECTS_CPP is" "$(OBJECTS_CPP)"
 	@echo "OBJECTS_ASM is" "$(OBJECTS_ASM)"
 
 # An archive for Blastem is included; this just unpacks it.
@@ -113,6 +129,12 @@ $(BLASTEM):
 
 $(MEGALOADER): $(UTILDIR)/megaloader.c
 	@$(CC_HOST) -D_DEFAULT_SOURCE $< -o $@ $(HOSTCFLAGS)
+
+$(MDTOOLS):
+	git clone git@github.com:sikthehedgehog/mdtools $@
+
+$(MDTILER): $(MDTOOLS)
+	cd $(MDTOOLS)/mdtiler/tool && CC=$(CC_HOST) make
 
 $(BIN2S): $(UTILDIR)/bin2s.c
 	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
@@ -139,10 +161,10 @@ else
 endif
 	@bash -c 'printf "\e[92m [ OK! ]\e[0m --> $(OUTPUT_GEN)\n"'
 
-$(OBJDIR)/$(PROJECT_NAME).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM)
+$(OBJDIR)/$(PROJECT_NAME).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_CPP) $(OBJECTS_ASM)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[36m[ LNK ]\e[0m ... --> $@\n"'
-	$(LD) -o $@ $(LDFLAGS) $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_ASM) $(LIBS)
+	$(LD) -o $@ $(LDFLAGS) $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_CPP) $(OBJECTS_ASM) $(LIBS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER) ext_deps
 	@mkdir -p $(dir $@)
@@ -150,6 +172,14 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER) ext_deps
 	$(CC) $(CFLAGS) -c $< -o $@
 ifneq ($(MDK_WANT_ASM_OUT),)
 	$(CC) $(CFLAGS) -S $< -o $@.asm
+endif
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(OBJECTS_RES) $(RES_HEADER) ext_deps
+	@mkdir -p $(dir $@)
+	@bash -c 'printf " \e[96m[ CPP ]\e[0m $< --> $@\n"'
+	$(CPPC) $(CPPFLAGS) -c $< -o $@
+ifneq ($(MDK_WANT_ASM_OUT),)
+	$(CPPC) $(CPPFLAGS) -S $< -o $@.asm
 endif
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES) ext_deps
@@ -229,10 +259,13 @@ mame: $(OUTPUT_GEN)
 endif
 
 clean:
-	-rm -f $(OBJECTS_C) $(OBJECTS_ASM) $(OUTPUT_GEN)
+	-rm -f $(OBJECTS_C) $(OBJECTS_CPP) $(OBJECTS_ASM) $(OUTPUT_GEN)
 	-rm -f $(OUTPUT_ELF)
 	-rm -f $(OBJECTS_RES) $(OBJDIR)/res.s $(RES_HEADER)
 	-rm -rf $(OBJDIR)
 	-rm -f $(PROJECT_NAME).map
 	-rm -rf zunkyou
 	echo $(EXTERNAL_ARTIFACTS) | xargs --no-run-if-empty rm -f $(EXTERNAL_ARTIFACTS)
+
+
+toolchain:

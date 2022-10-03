@@ -8,6 +8,11 @@
 #ifndef UTIL_TEXT_H
 #define UTIL_TEXT_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #include "md/megadrive.h"
 
 // Load the font graphics and palette.
@@ -21,5 +26,9 @@ void text_init(const unsigned char *font_chr, uint16_t font_len,
 
 // Print a string s on a specified plane at coordinates x, y
 void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s);
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // UTIL_TEXT_H

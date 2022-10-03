@@ -1,6 +1,11 @@
 #ifndef UTIL_PLANE_H
 #define UTIL_PLANE_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #include "md/megadrive.h"
 
 static inline void plane_clear(VdpPlane plane);
@@ -15,5 +20,9 @@ static inline void plane_clear(VdpPlane plane)
 
 	md_dma_fill_vram(plane_dest, 0, plane_size, 1);
 }
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif  // UTIL_PLANE_H

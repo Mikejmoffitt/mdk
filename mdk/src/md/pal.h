@@ -3,6 +3,11 @@ Michael Moffitt 2018-2022 */
 #ifndef MD_PAL_H
 #define MD_PAL_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 // Functions to read and write to the palette. Color data is cached in a small
 // buffer that is queued for transfer during vblank if needed.
 
@@ -46,5 +51,9 @@ extern uint16_t g_palette[64];
 void md_pal_poll(void);
 
 void md_pal_init(void);
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // MD_PAL_H

@@ -22,6 +22,11 @@ transfer operations complete within the blanking period.
 #ifndef MD_DMA_H
 #define MD_DMA_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #include "md/vdp.h"
 
 void md_dma_init(void);
@@ -48,5 +53,9 @@ void md_dma_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stri
 
 // Process any queued DMA requests.
 void md_dma_process(void);
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // MD_DMA_H

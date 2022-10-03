@@ -3,6 +3,11 @@ Michael Moffitt 2018-2020 */
 #ifndef MD_PSG_H
 #define MD_PSG_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 // TODO: PSG noise control
 
 // Base note frequencies - tuned to 4th octave
@@ -97,5 +102,9 @@ static inline void md_psg_note(uint8_t chan, uint8_t note, uint8_t octave)
 	base = base >> octave;
 	md_psg_pitch(chan,base);
 }
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif  // MD_PAL_H

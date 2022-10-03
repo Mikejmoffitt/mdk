@@ -71,42 +71,57 @@ void md_pal_upload(uint16_t dest, const void *source, uint16_t count)
 			do
 			{
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 15:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 14:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 13:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 12:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 11:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 10:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 9:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 8:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 7:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 6:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 5:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 4:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 3:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 2:
 				g_palette[dest++] = *source_16++;
+				__attribute__((fallthrough));
 		case 1:
 				g_palette[dest++] = *source_16++;
 			} while (--n > 0);
 	}
 #endif  // MD_PAL_STANDARD_COPY_LOOP
 }
-#ifndef MDK_TARGET_C2
 
+#ifndef MDK_TARGET_C2
 // =============================================================================
 // Megadrive implementation, using DMA
 // =============================================================================

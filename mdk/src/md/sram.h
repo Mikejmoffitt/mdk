@@ -13,6 +13,11 @@ representing save data.
 #ifndef MD_SRAM_H
 #define MD_SRAM_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 // Copies n bytes from 68000 memory space src_addr to dest_offset within SRAM.
 void md_sram_write(uint32_t dest_offset, const void *src_addr, uint32_t n);
 
@@ -21,5 +26,9 @@ void md_sram_read(uint32_t src_offset, void *dest_addr, uint32_t n);
 
 // Set n bytes, starting from offset in SRAM, to constant value c.
 void md_sram_set(uint32_t dest_offset, uint16_t c, uint32_t n);
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif  // MD_SRAM_H

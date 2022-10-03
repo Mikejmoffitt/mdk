@@ -3,6 +3,11 @@ Michael Moffitt 2018-2022 */
 #ifndef MD_OPN_H
 #define MD_OPN_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #define OPN_PORT_ADDR0 *(volatile uint8_t *)(0xA04000)
 #define OPN_PORT_DATA0 *(volatile uint8_t *)(0xA04001)
 #define OPN_PORT_ADDR1 *(volatile uint8_t *)(0xA04002)
@@ -25,5 +30,9 @@ static inline void md_opn_write(uint8_t part, uint8_t addr, uint8_t data)
 		OPN_PORT_DATA0 = data;
 	}
 }
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // MD_OPN_H

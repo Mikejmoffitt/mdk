@@ -17,25 +17,25 @@ Michael Moffitt 2018-2022
 
 	.macro	irq_func_handle symbol_name:req
 	/* Disable interrupts. Don't touch the global flag for it, though.*/
-	ori.w	#0x0700, %sr
+	ori.w	#0x0700, sr
 	/* Load handler, and nope out if nothing has been registered. */
 	tst.l	\symbol_name
 	beq	2f
 	/* If the top bit is set, this routine won't clobber d0-d1/a0-a1. */
-	btst	#31, \symbol_name
+	btst.b	#7, \symbol_name
 	bne	1f
 	/* Otherwise, call it with clobber protection (a little slower!) */
-	movem.l	%d0-%d1/%a0-%a1, -(%sp)
-	move.l	\symbol_name, %a0
-	jsr	(%a0)
-	movem.l	(%sp)+, %d0-%d1/%a0-%a1
+	movem.l	d0-d1/a0-a1, -(sp)
+	move.l	\symbol_name, a0
+	jsr	(a0)
+	movem.l	(sp)+, d0-d1/a0-a1
 	bra	2f
 /* For functions that do not clobber. */
 1:
-	move.l	%a0, -(%sp)  /* a0 is used so we have to save it */
-	move.l	\symbol_name, %a0
-	jsr	(%a0)
-	move.l	(%sp)+, %a0  /* Restore a0 after. */
+	move.l	a0, -(sp)  /* a0 is used so we have to save it */
+	move.l	\symbol_name, a0
+	jsr	(a0)
+	move.l	(sp)+, a0  /* Restore a0 after. */
 2:
 	.endm
 

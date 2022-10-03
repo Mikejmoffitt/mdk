@@ -115,34 +115,34 @@ _v_table:
 _start:
 start:
 	/* disable ints */
-	move.w	#0x2700, %sr
+	move.w	#0x2700, sr
 
 	/* set up SP */
-	move.l	0x00000000, %sp
+	move.l	0x00000000, sp
 
 	/* clear WRAM */
-	move.l	#0x00FF0000, %a4
-	move.w	#0x3FFF, %d7
-	moveq	#0, %d0
+	move.l	#0x00FF0000, a4
+	move.w	#0x3FFF, d7
+	moveq	#0, d0
 .clr_loop:
-	move.l	%d0, (%a4)+
-	dbra	%d7, .clr_loop
+	move.l	d0, (a4)+
+	dbra	d7, .clr_loop
 
 	/* copy data to work RAM */
-	lea	_stext, %a0
-	lea	0x00FF0000, %a1
-	move.l	#_sdata, %d7
+	lea	_stext, a0
+	lea	0x00FF0000, a1
+	move.l	#_sdata, d7
 
 	/* last byte init fix */
-	addq.l	#1, %d7
-	lsr.l	#1, %d7
+	addq.l	#1, d7
+	lsr.l	#1, d7
 	beq	.no_copy
 
-	subq.w	#1, %d7
+	subq.w	#1, d7
 
 .copy_var:
-	move.w	(%a0)+, (%a1)+
-	dbra	%d7, .copy_var
+	move.w	(a0)+, (a1)+
+	dbra	d7, .copy_var
 
 .no_copy:
 
@@ -150,7 +150,7 @@ start:
 
 	.global	softreset
 softreset:
-	move.l	#0xFFFFE0, %sp
+	move.l	#0xFFFFE0, sp
 	jmp	start
 
 .include	"md/irq.inc"

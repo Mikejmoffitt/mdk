@@ -5,6 +5,11 @@ Michael Moffitt 2018-2022
 #ifndef MD_IRQ_H
 #define MD_IRQ_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 typedef enum MdIrqType
 {
 	MD_IRQ_VBLANK = 0,  // Vertical raster interrupt.
@@ -22,5 +27,9 @@ void md_irq_register(MdIrqType type, void (*function_ptr)(void));
 // clobber protection. Unless you carefully wrote this function in asm, use
 // md_irq_register()!
 void md_irq_register_unsafe(MdIrqType type, void (*function_ptr)(void));
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif  // MD_IRQ_H

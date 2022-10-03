@@ -1,5 +1,5 @@
 # Project meta configuration
-PROJECT_NAME := controller-demo
+PROJECT_NAME := cpp-direct-sprite-demo
 MDKROOT := ../../mdk
 
 # Project directories.
@@ -8,7 +8,7 @@ RESDIR := res
 OBJDIR := obj
 
 # Sources.
-SOURCES_C := $(shell find $(SRCDIR)/ -type f -name '*.c')
+SOURCES_CPP := $(shell find $(SRCDIR)/ -type f -name '*.cpp')
 RESOURCES_LIST := $(shell find $(RESDIR)/ -type f -name '*')
 
 include $(MDKROOT)/md-rules.mk

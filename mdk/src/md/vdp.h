@@ -24,6 +24,11 @@
 #ifndef MD_VDP_H
 #define MD_VDP_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #include "md/mmio.h"
 #include "md/sys.h"
 #include <stdint.h>
@@ -547,10 +552,12 @@ static inline void md_vdp_set_bg_color(uint8_t idx);
 // Set the display resolution. VDP_VMODE_V30 is only available for PAL/50Hz.)
 static inline void md_vdp_set_hmode(VdpHmode mode);
 static inline void md_vdp_set_vmode(VdpVmode mode);
+static inline VdpHmode md_vdp_get_hmode(void);
+static inline VdpVmode md_vdp_get_vmode(void);
 
 // Get the size of the display in pixels. Dependent on H and V modes set above.
-static uint16_t md_vdp_get_raster_height(void);
 static uint16_t md_vdp_get_raster_width(void);
+static uint16_t md_vdp_get_raster_height(void);
 
 // Enable shadow/highlight mode. In this mode, the priority bit for the scroll
 // darkens the cell when cleared. Sprites will be shaded by the background cell
@@ -959,6 +966,18 @@ static inline void md_vd_set_hv_count_latch(uint8_t latch)
 	VDP_SET(VDP_MODESET1, VDP_MODESET1_M3, latch);
 }
 
+static inline VdpHmode md_vdp_get_hmode(void)
+{
+	return (md_vdp_get_reg(VDP_MODESET4) & VDP_MODESET4_RS1)
+	       ? VDP_HMODE_H40 : VDP_HMODE_H32;
+}
+
+static inline VdpVmode md_vdp_get_vmode(void)
+{
+	return (md_vdp_get_reg(VDP_MODESET2) & VDP_MODESET2_M2)
+	       ? VDP_VMODE_V30 : VDP_VMODE_V28;
+}
+
 static uint16_t md_vdp_get_raster_height(void)
 {
 	return (md_vdp_get_reg(VDP_MODESET2) & VDP_MODESET2_M2) ? 240 : 224;
@@ -966,7 +985,7 @@ static uint16_t md_vdp_get_raster_height(void)
 
 static uint16_t md_vdp_get_raster_width(void)
 {
-	return (md_vdp_get_reg(VDP_MODESET4) & VDP_MODESET4_RS0) ? 320 : 256;
+	return (md_vdp_get_reg(VDP_MODESET4) & VDP_MODESET4_RS1) ? 320 : 256;
 }
 
 static inline void md_vdp_set_sms_vl(uint8_t enabled)
@@ -1014,8 +1033,9 @@ static inline void md_vdp_debug_set_layer_select(VdpDebugLayerSel layer)
 {
 	uint16_t reg = md_vdp_get_debug_reg(0);
 	reg &= ~(VDP_DBG00_LYSEL0 | VDP_DBG00_LYSEL1);
-	layer &= 0x03;
-	reg |= layer << 7;
+	uint8_t layer_as_int = (uint8_t)layer;
+	layer_as_int &= 0x03;
+	reg |= layer_as_int << 7;
 	md_vdp_set_debug_reg(0, reg);
 }
 
@@ -1062,5 +1082,9 @@ static inline void md_vdp_debug_reset(void)
 
 #undef VDP_SET
 #undef VDP_SET_DEBUG
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // MD_VDP_H

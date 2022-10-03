@@ -3,6 +3,11 @@ Michael Moffitt 2018-2022 */
 #ifndef MD_IO_SYSTEMC_H
 #define MD_IO_SYSTEMC_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #include <stdint.h>
 
 // Input types for C/C2.
@@ -113,5 +118,9 @@ void md_ioc_init(void);
 
 // Poll controller inputs.
 void md_ioc_poll(void);
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // MD_IO_SYSTEMC_H

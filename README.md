@@ -35,10 +35,42 @@ Setup
 
 Environment Prerequisites
 -------------------------
-You will a compiler and various utilities.
+The toolchain is provided by git@github.com:andwn/marsdev. This has all been developed and tested on Linux, but was also run successfully on WSL.
+There are two options to set it up:
 
-For now, the easiest way to install the needed m68k-elf toolchain is
-to install "gendev" from https://github.com/kubilus1/gendev.
+Option 1: Use my install script
+-------------------------------
+On Linux (and probably WSL on Windows) you may run install-toolchain.sh. This script
+1) Clones marsdev into a directory in /tmp
+2) Creates /opt/mdk-toolchain
+3) Builds GCC, binutils, and friends with marsdev
+4) Moves m68k-elf into /opt-mdk-toolchain/
+5) Cleans up after itself in /tmp
+
+Option 2: Build marsdev yourself
+--------------------------------
+Clone git@github.com:andwn/marsdev:
+
+```
+    $ git clone git@github.com:andwn/marsdev
+```
+
+Build the toolchain:
+
+```
+    $ cd marsdev
+    $ make m68k-toolchain-newlib LANGS=c,c++
+```
+
+Move the necessary files to the toolchain directory:
+
+```
+    $ sudo mkdir -p /opt/mdk-toolchain
+    $ mv ~/marsdev/m68k-elf /opt/mdk-toolchain/
+    $ rm -rf ~/marsdev
+```
+
+If you don't want to use /opt/mdk-toolchain (e.g. you wish to just use ~/marsdev, or something else) you can set the environment variable MD_BASE to point at the root containing m68k-elf/.
 
 Cloning the Submodule
 --------------------

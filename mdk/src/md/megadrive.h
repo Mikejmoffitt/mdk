@@ -5,6 +5,11 @@
 #ifndef MD_MEGADRIVE_H
 #define MD_MEGADRIVE_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #include "md/macro.h"       // Helpful macros.
 #include "md/vdp.h"         // VDP control: all things graphics and some more
 #include "md/sys.h"         // System control: interrupts, sub-CPU control
@@ -65,5 +70,9 @@ static inline void megadrive_finish(void)
 // * Configures IO ports for gamepad reads
 // * Enables interrupts
 void megadrive_init(void);
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // MD_MEGADRIVE_H

@@ -15,7 +15,7 @@ void megadrive_init(void)
 	md_sys_init();
 	md_vdp_init();
 	md_dma_init();
-	md_spr_init();
+	md_spr_init(SPR_MODE_SIMPLE);
 	md_dma_fill_vram(0, 0, 32768, 2);
 	md_dma_fill_vram(1, 0, 32768, 2);
 	md_dma_process();

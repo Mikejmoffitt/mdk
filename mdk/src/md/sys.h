@@ -7,6 +7,11 @@
 #ifndef MD_SYS_H
 #define MD_SYS_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif  // __cplusplus
+
 #include <stdint.h>
 #include "md/mmio.h"
 
@@ -181,5 +186,9 @@ static inline void md_sys_z80_reset_assert(void)
 }
 
 #endif  // MDK_TARGET_C2
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
 
 #endif // MD_SYS_H
