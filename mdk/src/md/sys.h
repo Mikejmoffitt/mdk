@@ -13,6 +13,7 @@ extern "C"
 #endif  // __cplusplus
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "md/mmio.h"
 
 // =============================================================================
@@ -44,9 +45,9 @@ static inline uint8_t md_sys_di(void);
 void md_sys_z80_init(const uint8_t *src, uint16_t size);
 
 // Requests access to the Z80 bus, halting it. Can block until granted.
-static inline void md_sys_z80_bus_req(uint8_t wait);
+static inline void md_sys_z80_bus_req(bool wait);
 static inline void md_sys_z80_bus_release(void);
-static inline uint8_t md_sys_z80_bus_taken(void);
+static inline bool md_sys_z80_bus_taken(void);
 // Set the Z80 reset line high or low. Low (asserted) holds it and the YM2612
 // in a reset state.
 static inline void md_sys_z80_reset_deassert(void);
@@ -55,27 +56,27 @@ static inline void md_sys_z80_reset_assert(void);
 // -----------------------------------------------------------------------------
 // System information
 // -----------------------------------------------------------------------------
-static inline uint8_t md_sys_is_overseas(void);
-static inline uint8_t md_sys_is_pal(void);
-static inline uint8_t md_sys_is_disk_present(void);
+static inline bool md_sys_is_overseas(void);
+static inline bool md_sys_is_pal(void);
+static inline bool md_sys_is_disk_present(void);
 static inline uint8_t md_sys_get_hw_rev(void);
 
 // =============================================================================
 // Implementations
 // =============================================================================
-extern uint16_t g_md_sys_ints_enabled;
+extern bool g_md_sys_ints_enabled;
 
 static inline void md_sys_ei(void)
 {
 	__asm__ volatile("\tandi.w	#0xF8FF, %sr\n");
-	g_md_sys_ints_enabled = 1;
+	g_md_sys_ints_enabled = true;
 }
 
 static inline uint8_t md_sys_di(void)
 {
 	__asm__ volatile("\tori.w	#0x0700, %sr\n");
 	const uint8_t ret = g_md_sys_ints_enabled;
-	g_md_sys_ints_enabled = 0;
+	g_md_sys_ints_enabled = false;
 	return ret;
 }
 
@@ -85,19 +86,19 @@ static inline uint8_t md_sys_di(void)
 
 #ifndef MDK_TARGET_C2
 
-static inline uint8_t md_sys_is_overseas(void)
+static inline bool md_sys_is_overseas(void)
 {
-	return (SYS_PORT_VERSION & 0x80) ? 1 : 0;
+	return (SYS_PORT_VERSION & 0x80) ? true : false;
 }
 
-static inline uint8_t md_sys_is_pal(void)
+static inline bool md_sys_is_pal(void)
 {
-	return (SYS_PORT_VERSION & 0x40) ? 1 : 0;
+	return (SYS_PORT_VERSION & 0x40) ? true : false;
 }
 
-static inline uint8_t md_sys_is_disk_present(void)
+static inline bool md_sys_is_disk_present(void)
 {
-	return (SYS_PORT_VERSION & 0x20) ? 1 : 0;
+	return (SYS_PORT_VERSION & 0x20) ? true : false;
 }
 
 static inline uint8_t md_sys_get_hw_rev(void)
@@ -105,13 +106,13 @@ static inline uint8_t md_sys_get_hw_rev(void)
 	return SYS_PORT_VERSION & 0x0F;
 }
 
-static inline uint8_t md_sys_z80_bus_taken(void)
+static inline bool md_sys_z80_bus_taken(void)
 {
 	volatile uint8_t *z80_bus = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
 	return !(*z80_bus & 0x01);
 }
 
-static inline void md_sys_z80_bus_req(uint8_t wait)
+static inline void md_sys_z80_bus_req(bool wait)
 {
 	volatile uint8_t *z80_bus = (volatile uint8_t *)SYS_Z80_PORT_BUS_LOC;
 
@@ -144,19 +145,19 @@ static inline void md_sys_z80_reset_assert(void)
 
 #else
 
-static inline uint8_t md_sys_is_overseas(void)
+static inline bool md_sys_is_overseas(void)
 {
-	return 0;
+	return false;
 }
 
-static inline uint8_t md_sys_is_pal(void)
+static inline bool md_sys_is_pal(void)
 {
-	return 0;
+	return false;
 }
 
-static inline uint8_t md_sys_is_disk_present(void)
+static inline bool md_sys_is_disk_present(void)
 {
-	return 0;
+	return false;
 }
 
 static inline uint8_t md_sys_get_hw_rev(void)
@@ -164,7 +165,7 @@ static inline uint8_t md_sys_get_hw_rev(void)
 	return 0;
 }
 
-static inline uint8_t md_sys_z80_bus_taken(void)
+static inline bool md_sys_z80_bus_taken(void)
 {
 	return 0;
 }
@@ -180,7 +181,7 @@ static inline uint16_t md_sys_z80_get_reset_status(void)
 	return 0;
 }
 
-static inline void md_sys_z80_bus_req(uint8_t wait)
+static inline void md_sys_z80_bus_req(bool wait)
 {
 	(void)wait;
 }

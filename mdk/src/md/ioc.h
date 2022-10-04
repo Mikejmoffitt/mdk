@@ -9,6 +9,7 @@ extern "C"
 #endif  // __cplusplus
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Input types for C/C2.
 
@@ -99,11 +100,11 @@ void md_ioc_set_cn4_bits(int16_t a19, int16_t b19);
 // Banks 0-3 valid; possibly up to 0xF.
 void md_ioc_set_udp7759_bank(uint16_t bank);
 
-// Assert (bring to 0) or Deassert (bring to 1) the reset pin for the uPD7759.
-void md_ioc_set_upd7759_reset(uint16_t asserted);
+// Assert (drive to 0) or Deassert (raise to 1) the reset pin for the uPD7759.
+void md_ioc_set_upd7759_reset(bool asserted);
 
 // Returns true if the uPD7759 reports it is busy.
-uint16_t md_ioc_get_upd7759_busy(void);
+bool md_ioc_get_upd7759_busy(void);
 
 // Set global palette bank 0-3 through bits A9 and A10 of CRAM.
 void md_ioc_set_pal_bank(uint16_t bank);

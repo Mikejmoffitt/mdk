@@ -7,14 +7,15 @@ Michael Moffitt 2018-2022 */
 
 #include <stdlib.h>
 
-volatile uint16_t g_vblank_wait;
+volatile uint16_t g_vblank_wait;  // Also modified by vdp.inc (in asm)
+static void (*s_vbl_wait_func)(void) = NULL;
+
 uint8_t g_md_vdp_regs[0x18];
 uint16_t g_md_vdp_debug_regs[0x10];
 
 static uint16_t s_plane_base[3];
 static uint16_t s_sprite_base;
 static uint16_t s_hscroll_base;
-static void (*s_vbl_wait_func)(void) = NULL;
 
 void md_vdp_init(void)
 {
@@ -63,7 +64,7 @@ void md_vdp_wait_vblank(void)
 	}
 }
 
-void md_vdp_register_vblank_wait_callback(void *function)
+void md_vdp_register_vblank_wait_callback(void (*function)(void))
 {
 	s_vbl_wait_func = function;
 }

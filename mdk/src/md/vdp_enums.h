@@ -1,0 +1,77 @@
+#ifndef MD_VDP_ENUMS_H
+#define MD_VDP_ENUMS_H
+
+// Enums for register access functions.
+typedef enum VdpHscrollMode
+{
+	VDP_HSCROLL_PLANE = 0,
+	VDP_HSCROLL_UNDEF = VDP_MODESET3_HS0,
+	VDP_HSCROLL_CELL = VDP_MODESET3_HS1,
+	VDP_HSCROLL_LINE = VDP_MODESET3_HS0 | VDP_MODESET3_HS1
+} VdpHscrollMode;
+
+typedef enum VdpVscrollMode
+{
+	VDP_VSCROLL_PLANE,
+	VDP_VSCROLL_CELL
+} VdpVscrollMode;
+
+typedef enum VdpHmode
+{
+	VDP_HMODE_H40,
+	VDP_HMODE_H32
+} VdpHmode;
+
+typedef enum VdpVmode
+{
+	VDP_VMODE_V28,
+	VDP_VMODE_V30
+} VdpVmode;
+
+typedef enum VdpPlaneSize
+{
+	VDP_PLANESIZE_32x32   = 0x00,
+	VDP_PLANESIZE_64x32   = 0x01,
+	VDP_PLANESIZE_UNDx32  = 0x02,
+	VDP_PLANESIZE_128x32  = 0x03,
+
+	VDP_PLANESIZE_32x64   = 0x10,
+	VDP_PLANESIZE_64x64   = 0x11,
+	VDP_PLANESIZE_UNDx64  = 0x12,
+	VDP_PLANESIZE_128x64  = 0x13,
+
+	VDP_PLANESIZE_32xUND  = 0x20,
+	VDP_PLANESIZE_64xUND  = 0x21,
+	VDP_PLANESIZE_UNDxUND = 0x22,
+	VDP_PLANESIZE_128xUND = 0x23,
+
+	VDP_PLANESIZE_32x128  = 0x30,
+	VDP_PLANESIZE_64x128  = 0x31,
+	VDP_PLANESIZE_UNDx128 = 0x32,
+	VDP_PLANESIZE_128x128 = 0x33,
+} VdpPlaneSize;
+
+typedef enum VdpPlane
+{
+	VDP_PLANE_A = 0x00,
+	VDP_PLANE_B = 0x01,
+	VDP_PLANE_WINDOW = 0x02
+} VdpPlane;
+
+typedef enum VdpInterlaceMode
+{
+	VDP_INTERLACE_NONE,
+	VDP_INTERLACE_NORMAL,
+	VDP_INTERLACE_DOUBLE
+} VdpInterlaceMode;
+
+// Enum for LYSEL values.
+typedef enum VdpDebugLayerSel
+{
+	VDP_DEBUG_LYSEL_NONE    = 0x0,
+	VDP_DEBUG_LYSEL_SPRITE  = 0x1,
+	VDP_DEBUG_LYSEL_PLANE_A = 0x2,
+	VDP_DEBUG_LYSEL_PLANE_B = 0x3
+} VdpDebugLayerSel;
+
+#endif  // MD_VDP_ENUMS_H

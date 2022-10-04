@@ -86,7 +86,7 @@ void md_ioc_set_udp7759_bank(uint16_t bank)
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
 }
 
-void md_ioc_set_upd7759_reset(uint16_t asserted)
+void md_ioc_set_upd7759_reset(bool asserted)
 {
 	static const uint8_t base_value = 0xF0;  // From Puyo 2 - Meaning unknown!
 	volatile uint8_t *reg_ctrl2 = (volatile uint8_t *)(SYSC_IO_LOC_CTRL2);
@@ -94,9 +94,9 @@ void md_ioc_set_upd7759_reset(uint16_t asserted)
 	*reg_ctrl2 = base_value | (asserted ? 0x00 : 0x02);
 }
 
-uint16_t md_ioc_get_upd7759_busy(void)
+bool md_ioc_get_upd7759_busy(void)
 {
-	return (g_md_c2_in[SYSC_INPUT_MISC] & SYSC_MISC_UPD7759_BUSY) ? 1 : 0;
+	return (g_md_c2_in[SYSC_INPUT_MISC] & SYSC_MISC_UPD7759_BUSY) ? true : false;
 }
 
 

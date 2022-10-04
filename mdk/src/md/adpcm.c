@@ -10,7 +10,7 @@
 // properly register the change in the voice table (if applicable).
 // Reset line is asserted (brought to 0) when reset = 1.
 // This function wraps md_ioc_set_upd7759_reset().
-void md_adpcm_set_reset(uint16_t reset)
+void md_adpcm_set_reset(bool reset)
 {
 	md_ioc_set_upd7759_reset(reset);
 }
@@ -31,7 +31,7 @@ void md_adpcm_set_bank(uint16_t bank)
 }
 
 // Returns 1 if the uPD7759 IC is busy.
-uint16_t md_adpcm_busy(void)
+bool md_adpcm_busy(void)
 {
 	return md_ioc_get_upd7759_busy();
 }

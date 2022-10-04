@@ -4,7 +4,7 @@ Michael Moffitt 2018-2022 */
 #include "md/sys.h"
 #include "md/tmss.h"
 
-uint16_t g_md_sys_ints_enabled;
+bool g_md_sys_ints_enabled;
 
 void md_sys_init(void)
 {
