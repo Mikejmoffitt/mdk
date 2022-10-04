@@ -33,6 +33,7 @@ static constexpr uint16_t kPalette[16] =
 void main(void)
 {
 	megadrive_init();
+
 	md_spr_init(SPR_MODE_DIRECT);
 	srand(0);
 	md_dma_transfer_vram(32, res_ball_bin, sizeof(res_ball_bin) / 2, 2);
@@ -44,7 +45,6 @@ void main(void)
 
 	while (1)
 	{
-		md_spr_put(0, 0, SPR_ATTR(1, 0, 0, 0, 0), SPR_SIZE(1, 1));
 		for (auto &dot : dots)
 		{
 			dot.Move();

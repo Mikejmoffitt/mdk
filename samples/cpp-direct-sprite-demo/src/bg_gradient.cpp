@@ -44,7 +44,7 @@ namespace
 		PALRGB(0, 0, 0),
 	};
 
-	static int s_color_index;
+	static uint16_t s_color_index;
 }  // namespace
 
 void bg_gradient_on_hbl(void)
@@ -52,6 +52,10 @@ void bg_gradient_on_hbl(void)
 	if (s_color_index >= ARRAYSIZE(kColorTable)) s_color_index--;
 	VDPPORT_CTRL32 = VDP_CTRL_CRAM_WRITE | VDP_CTRL_ADDR(0);
 	// This ugly delay was tuned to move the CRAM write into HBlank.
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
 	asm("nop");
 	asm("nop");
 	asm("nop");
