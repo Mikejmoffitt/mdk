@@ -1,6 +1,12 @@
 #ifndef MD_VDP_ENUMS_H
 #define MD_VDP_ENUMS_H
 
+#define MD_VDP_WIDTH_H40_PX 320
+#define MD_VDP_WIDTH_H32_PX 256
+
+#define MD_VDP_HEIGHT_V28_PX 224
+#define MD_VDP_HEIGHT_V30_PX 240
+
 // Enums for register access functions.
 typedef enum VdpHscrollMode
 {
