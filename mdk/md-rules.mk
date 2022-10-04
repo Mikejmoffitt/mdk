@@ -211,7 +211,7 @@ $(OBJDIR)/%.o: $(OBJDIR)/%.s
 
 # Converts a file to object files
 $(OBJDIR)/res.s: $(BIN2S) $(RESOURCES_LIST)
-	mkdir -p $(dir $@)
+	mkdir -p $(dir $@) ext_deps
 	@bash -c 'printf " \e[95m[ BIN ]\e[0m $^ --> $@\n"'
 	$^ > $@
 
@@ -269,7 +269,7 @@ clean:
 	-rm -rf $(OBJDIR)
 	-rm -f $(PROJECT_NAME).map
 	-rm -rf zunkyou
-	echo $(EXTERNAL_ARTIFACTS) | xargs --no-run-if-empty rm -f $(EXTERNAL_ARTIFACTS)
+	echo $(EXTERNAL_ARTIFACTS) | xargs --no-run-if-empty rm -rf $(EXTERNAL_ARTIFACTS)
 
 
 toolchain:
