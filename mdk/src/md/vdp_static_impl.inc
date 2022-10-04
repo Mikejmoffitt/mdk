@@ -155,24 +155,24 @@ static inline uint16_t md_vdp_get_plane_height(void)
 	}
 }
 
-static inline void md_vdp_set_window_top(uint8_t height)
+static inline void md_vdp_set_window_top(uint8_t cell)
 {
-	md_vdp_set_reg(VDP_WINVERT, height & 0x1F);
+	md_vdp_set_reg(VDP_WINVERT, cell & 0x1F);
 }
 
-static inline void md_vdp_set_window_bottom(uint8_t height)
+static inline void md_vdp_set_window_bottom(uint8_t cell)
 {
-	md_vdp_set_reg(VDP_WINVERT, 0x80 | ((31-height) & 0x1F));
+	md_vdp_set_reg(VDP_WINVERT, 0x80 | (cell & 0x1F));
 }
 
-static inline void md_vdp_set_window_right(uint8_t width)
+static inline void md_vdp_set_window_right(uint8_t cell)
 {
-	md_vdp_set_reg(VDP_WINHORI, 0x80 | ((31-width) & 0x1F));
+	md_vdp_set_reg(VDP_WINHORI, 0x80 | (cell & 0x1F));
 }
 
-static inline void md_vdp_set_window_left(uint8_t width)
+static inline void md_vdp_set_window_left(uint8_t cell)
 {
-	md_vdp_set_reg(VDP_WINHORI, width & 0x1F);
+	md_vdp_set_reg(VDP_WINHORI, cell & 0x1F);
 }
 
 // Blanking

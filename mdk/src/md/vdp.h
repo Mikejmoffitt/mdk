@@ -154,12 +154,12 @@ static inline void md_vdp_set_vscroll_mode(VdpVscrollMode mode);
 static inline uint16_t md_vdp_get_plane_width(void);
 static inline uint16_t md_vdp_get_plane_height(void);
 
-// Enable the window plane, and set its size (in cells) from a screen edge.
-// Call any of these with 0 to disable the window plane.
-static inline void md_vdp_set_window_top(uint8_t height);
-static inline void md_vdp_set_window_bottom(uint8_t height);
+// Enable the window plane, and have it draw from the column/line specified with
+// `cell`. Call any of these with 0 to disable the horizontal or vertical window.
+static inline void md_vdp_set_window_top(uint8_t cell);
+static inline void md_vdp_set_window_bottom(uint8_t cell);
 static inline void md_vdp_set_window_right(uint8_t width);
-static inline void md_vdp_set_window_left(uint8_t width); // Buggy with H scroll
+static inline void md_vdp_set_window_left(uint8_t width);
 
 // -----------------------------------------------------------------------------
 // Raster config
