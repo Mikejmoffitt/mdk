@@ -11,9 +11,10 @@ void md_spr_init(SprMode mode)
 {
 	s_mode = mode;
 	// The sprite table has its link values installed ahead of time.
-	for (uint16_t i = 1; i < ARRAYSIZE(g_sprite_table); i++)
+	for (uint16_t i = 0; i < ARRAYSIZE(g_sprite_table); i++)
 	{
 		g_sprite_table[i].link = i + 1;
+		g_sprite_table[i].xpos = 2;  // Avoid triggering line mask.
 	}
 
 	switch (s_mode)
