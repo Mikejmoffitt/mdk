@@ -98,7 +98,7 @@ OBJECTS_RES := $(OBJDIR)/res.o
 
 RES_HEADER := res.h
 
-.PHONY: all vars $(RES_HEADER) $(MDK_C2_TESTROM) test_c2
+.PHONY: all vars $(RES_HEADER) $(MDK_C2_TESTROM) test_c2 $(EXTERNAL_DEPS)
 
 # Generic var for additional files, etc. that are a build prereq.
 EXTERNAL_DEPS ?=
@@ -109,9 +109,6 @@ all: $(BINCLUDE) $(MDK_C2_TESTROM)
 else
 all: $(BLASTEM) $(BINCLUDE) $(MEGALOADER) $(OUTPUT_GEN)
 endif
-
-# Generic target that is intended to be overridden.
-ext_deps: $(EXTERNAL_DEPS)
 
 vars:
 	@echo "GCC_VER is" "$(GCC_VER)"
@@ -170,7 +167,7 @@ $(OBJDIR)/$(PROJECT_NAME).elf: $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_CPP) $(OBJE
 	@bash -c 'printf " \e[36m[ LNK ]\e[0m ... --> $@\n"'
 	$(LD) -o $@ $(LDFLAGS) $(OBJECTS_RES) $(OBJECTS_C) $(OBJECTS_CPP) $(OBJECTS_ASM) $(LIBS)
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER) ext_deps
+$(OBJDIR)/%.o: $(SRCDIR)/%.c $(OBJECTS_RES) $(RES_HEADER) $(EXTERNAL_DEPS)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[  C  ]\e[0m $< --> $@\n"'
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -178,7 +175,7 @@ ifneq ($(MDK_WANT_ASM_OUT),)
 	$(CC) $(CFLAGS) -S $< -o $@.asm
 endif
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(OBJECTS_RES) $(RES_HEADER) ext_deps
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(OBJECTS_RES) $(RES_HEADER) $(EXTERNAL_DEPS)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[ CPP ]\e[0m $< --> $@\n"'
 	$(CPPC) $(CPPFLAGS) -c $< -o $@
@@ -186,12 +183,12 @@ ifneq ($(MDK_WANT_ASM_OUT),)
 	$(CPPC) $(CPPFLAGS) -S $< -o $@.asm
 endif
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES) ext_deps
+$(OBJDIR)/%.o: $(SRCDIR)/%.s $(OBJECTS_RES) $(EXTERNAL_DEPS)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[33m[ ASM ]\e[0m $< --> $@\n"'
 	$(AS) $(ASFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: $(MDKSRCDIR)/%.c $(OBJECTS_RES) ext_deps
+$(OBJDIR)/%.o: $(MDKSRCDIR)/%.c $(OBJECTS_RES) $(EXTERNAL_DEPS)
 	@mkdir -p $(dir $@)
 	@bash -c 'printf " \e[96m[ C:C ]\e[0m $< --> $@\n"'
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -199,7 +196,7 @@ ifneq ($(MDK_WANT_ASM_OUT),)
 	$(CC) $(CFLAGS) -S $< -o $@.asm
 endif
 
-$(OBJDIR)/%.o: $(MDKSRCDIR)/%.s $(OBJECTS_RES) ext_deps
+$(OBJDIR)/%.o: $(MDKSRCDIR)/%.s $(OBJECTS_RES) $(EXTERNAL_DEPS)
 	@mkdir -p $(dir $@	)
 	@bash -c 'printf " \e[33m[C:ASM]\e[0m $< --> $@\n"'
 	$(AS) $(ASFLAGS) -c $< -o $@
@@ -210,20 +207,17 @@ $(OBJDIR)/%.o: $(OBJDIR)/%.s
 	$(AS) -c $< -o $@
 
 # Converts a file to object files
-$(OBJDIR)/res.s: $(BIN2S) $(RESOURCES_LIST)
-	mkdir -p $(dir $@) ext_deps
-	@bash -c 'printf " \e[95m[ BIN ]\e[0m $^ --> $@\n"'
-	$^ > $@
+$(OBJDIR)/res.s: $(BIN2S) $(EXTERNAL_DEPS)
+	mkdir -p $(dir $@) $(EXTERNAL_DEPS)
+	@bash -c 'printf " \e[95m[RES.S]\e[0m $(RESDIR) --> $@\n"'
+	$< $(shell find $(RESDIR) -type f -name '*') > $@
 
 # Generates header entries for resource data
-$(RES_HEADER): $(BIN2H) $(RESOURCES_LIST)
-	@bash -c 'printf " \e[95m[RES.H]\e[0m $^ --> $@\n"'
+$(RES_HEADER): $(BIN2H) $(EXTERNAL_DEPS)
+	@bash -c 'printf " \e[95m[RES.H]\e[0m $(RESDIR) --> $@\n"'
 	@printf '#ifndef _RES_AUTOGEN_H\n#define _RES_AUTOGEN_H\n' > $@
-	$^ >> $@
+	$< $(shell find $(RESDIR) -type f -name '*') >> $@
 	@printf '#endif  // _RES_AUTOGEN_H\n' >> $@
-
-res_post:
-	printf
 
 flash: $(OUTPUT_GEN) $(MEGALOADER)
 	$(MEGALOADER) md $< /dev/ttyUSB0 2> /dev/null
