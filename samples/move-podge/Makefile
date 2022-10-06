@@ -6,33 +6,40 @@ MDKROOT := ../../mdk
 SRCDIR := src
 RESDIR := res
 OBJDIR := obj
-SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
-RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*.bin')
-LIBS :=
+PNGDIR := png
 
-# Experimental PNG rules
-IMAGES_PNG := $(shell find $(RESDIR) -type f -name '*.png')
-RESOURCES_LIST += $(patsubst $(RESDIR)/%.png,$(OBJDIR)/%_gfx.bin,$(IMAGES_PNG))
-RESOURCES_LIST += $(patsubst $(RESDIR)/%.png,$(OBJDIR)/%_pal.bin,$(IMAGES_PNG))
+SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
+
+# Experimental PNG rules - in this example, the `res` directory contains
+# artifacts from automatic image conversion.
+IMAGES_PNG := $(shell find $(PNGDIR) -type f -name '*.png')
+CONVERTED_CHR := $(patsubst $(PNGDIR)/%.png,$(RESDIR)/%_gfx.bin,$(IMAGES_PNG))
+CONVERTED_PAL := $(patsubst $(PNGDIR)/%.png,$(RESDIR)/%_pal.bin,$(IMAGES_PNG))
+
+EXTERNAL_DEPS := gen_graphics
+EXTERNAL_ARTIFACTS := $(CONVERTED_CHR) $(CONVERTED_PAL)
 
 include $(MDKROOT)/md-rules.mk
 
-$(OBJDIR)/%_gfx.bin: $(PNGTO) $(RESDIR)/%.png
-	@mkdir -p $(dir $@)
-	$(PNGTO) -p "3210" $(filter-out $<,$^) $@
+gen_graphics: $(CONVERTED_CHR) $(CONVERTED_PAL)
 
-$(OBJDIR)/%H16_gfx.bin: $(PNGTO) $(RESDIR)/%H16.png
+$(RESDIR)/%_gfx.bin: $(PNGTO) $(PNGDIR)/%.png
 	@mkdir -p $(dir $@)
-	$(PNGTO) -p "3210" -H 16 $(filter-out $<,$^) $@
+	$(PNGTO) -p "3210" -i $(filter-out $<,$^) -o $@
 
-$(OBJDIR)/%H24_gfx.bin: $(PNGTO) $(RESDIR)/%H24.png
+$(RESDIR)/%H16_gfx.bin: $(PNGTO) $(PNGDIR)/%H16.png
 	@mkdir -p $(dir $@)
-	$(PNGTO) -p "3210" -H 24 $(filter-out $<,$^) $@
+	$(PNGTO) -p "3210" -H 16 -i $(filter-out $<,$^) -o $@
 
-$(OBJDIR)/%H32_gfx.bin: $(PNGTO) $(RESDIR)/%H32.png
+$(RESDIR)/%H24_gfx.bin: $(PNGTO) $(PNGDIR)/%H24.png
 	@mkdir -p $(dir $@)
-	$(PNGTO) -p "3210" -H 32 $(filter-out $<,$^) $@
+	$(PNGTO) -p "3210" -H 24 -i $(filter-out $<,$^) -o $@
 
-$(OBJDIR)/%_pal.bin: $(PNGTO) $(RESDIR)/%.png
+$(RESDIR)/%H32_gfx.bin: $(PNGTO) $(PNGDIR)/%H32.png
 	@mkdir -p $(dir $@)
-	$(PNGTO) -c 0000BBB0GGG0RRR0 --num-colors=16 $(filter-out $<,$^) $@
+	$(PNGTO) -p "3210" -H 32 -i $(filter-out $<,$^) -o $@
+
+$(RESDIR)/%_pal.bin: $(PNGTO) $(PNGDIR)/%.png
+	@mkdir -p $(dir $@)
+	$(PNGTO) -c 0000BBB0GGG0RRR0 --num-colors=16 -i $(filter-out $<,$^) -o $@
+

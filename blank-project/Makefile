@@ -11,7 +11,6 @@ OBJDIR := obj
 SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
 SOURCES_CPP := $(shell find $(SRCDIR) -type f -name '*.cpp')
 SOURCES_ASM := $(shell find $(SRCDIR) -type f -name '*.s')
-RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*')
 
 # Target configuration.
 # TARGET_SYSTEM:
@@ -20,7 +19,7 @@ RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*')
 # In addition, you may define MDK_C2_ADPCM with the filename of the ADPCM ROM.
 TARGET_SYSTEM := MDK_TARGET_MD
 
-include $(MDKROOT)/md-rules.mk
-
 # Any additional CFLAGS/CPPFLAGS/ASFLAGS additions or build targets may go here.
 # Please read about EXTERNAL_DEPS and EXTERNAL_ARTIFACTS in readme.md.
+
+include $(MDKROOT)/md-rules.mk

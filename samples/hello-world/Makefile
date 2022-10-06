@@ -9,9 +9,5 @@ OBJDIR := obj
 
 # Sources.
 SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
-RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*')
 
 include $(MDKROOT)/md-rules.mk
-
-# Any additional build targets may go here.
-# Please read about EXTERNAL_DEPS and EXTERNAL_ARTIFACTS in readme.md.

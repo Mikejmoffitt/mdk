@@ -9,7 +9,6 @@ OBJDIR := obj
 
 # Sources.
 SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
-RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*')
 
 # Target configuration.
 # TARGET_SYSTEM:
@@ -20,9 +19,6 @@ RESOURCES_LIST := $(shell find $(RESDIR) -type f -name '*')
 # In addition, you may define MDK_C2_ADPCM with the filename of the ADPCM ROM.
 TARGET_SYSTEM := MDK_TARGET_C2
 
-MDK_C2_ADPCM := adpcm.bin
+MDK_C2_ADPCM := adpcm/puyo2.bin
 
 include $(MDKROOT)/md-rules.mk
-
-# Any additional build targets may go here.
-# Please read about EXTERNAL_DEPS and EXTERNAL_ARTIFACTS in readme.md.

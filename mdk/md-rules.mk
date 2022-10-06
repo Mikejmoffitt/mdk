@@ -208,7 +208,7 @@ $(OBJDIR)/%.o: $(OBJDIR)/%.s
 
 # Converts a file to object files
 $(OBJDIR)/res.s: $(BIN2S) $(EXTERNAL_DEPS)
-	mkdir -p $(dir $@) $(EXTERNAL_DEPS)
+	mkdir -p $(dir $@)
 	@bash -c 'printf " \e[95m[RES.S]\e[0m $(RESDIR) --> $@\n"'
 	$< $(shell find $(RESDIR) -type f -name '*') > $@
 

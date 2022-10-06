@@ -41,8 +41,8 @@ static void load_player(void)
 {
 	s_player_x = 64 << 8;
 	s_player_dx = s_player_frame = s_player_facing = 0;
-	md_dma_transfer_vram(PLAYER_CEL_ADDR, (void *)obj_PodgeH24_gfx_bin, 32*6*8/2, 2);
-	md_pal_upload(32, (void *)obj_PodgeH24_pal_bin, 16);
+	md_dma_transfer_vram(PLAYER_CEL_ADDR, (void *)res_PodgeH24_gfx_bin, 32*6*8/2, 2);
+	md_pal_upload(32, (void *)res_PodgeH24_pal_bin, 16);
 }
 
 static void move_player(void)
@@ -130,7 +130,7 @@ void draw_bg(void)
 	// Set up text graphics at VRAM address 0x400 palette 0
 	// This lines it up nicely with the actual ASCII values, which we will
 	// use to draw letters with sprites.
-	text_init(obj_font_gfx_bin, 2560, 0x400, obj_font_pal_bin, 0);
+	text_init(res_font_gfx_bin, 2560, 0x400, res_font_pal_bin, 0);
 
 	// Print a simple message in the center of plane A
 	text_puts(VDP_PLANE_A, 7, 11, "MOVE PODGE WITH THE D-PAD");
