@@ -24,7 +24,7 @@ void md_sys_z80_init(const uint8_t *src, uint16_t size)
 {
 #ifndef MDK_TARGET_C2
 	md_sys_z80_reset_assert();
-	md_sys_z80_bus_req(/*wait=*/0);
+	md_sys_z80_bus_req(/*wait=*/false);
 	md_sys_z80_reset_deassert();
 
 	volatile uint8_t *z80_ram = (volatile uint8_t *)SYS_Z80_PRG_LOC;
