@@ -7,8 +7,10 @@ Michael Moffitt 2018-2022 */
 #include "md/vdp.h"
 #include "md/ioc.h"
 
+#include <string.h>
+
 #ifndef MDK_TARGET_C2
-uint16_t g_palette[64];
+uint16_t g_palette[16 * 4];
 static uint16_t s_dirty = 0x000F;
 #else
 // Two sets, between BG and Sprites of:
@@ -26,7 +28,7 @@ static uint8_t s_prot_reg_cache;
 // -----------------------------------------------------------------------------
 void md_pal_mark_dirty(uint16_t first_index, uint16_t count)
 {
-	const uint16_t pal_line = (first_index >> 4) % (ARRAYSIZE(g_palette) / 16);
+	const uint16_t pal_line = (first_index / 16) % (ARRAYSIZE(g_palette) / 16);
 	uint32_t dirty_mask = (1 << pal_line);
 	uint16_t line_span = 1 + ((count - 1) / 16);
 	while (line_span-- > 0)
@@ -53,72 +55,9 @@ void md_pal_set(uint16_t idx, uint16_t val)
 // Upload as-is.
 void md_pal_upload(uint16_t dest, const void *source, uint16_t count)
 {
+	if (dest + count > ARRAYSIZE(g_palette)) return;
 	md_pal_mark_dirty(dest, count);
-
-	const uint16_t *source_16 = (const uint16_t *)source;
-#ifdef MD_PAL_STANDARD_COPY_LOOP
-	for (uint16_t i = 0; i < count; i++)
-	{
-		g_palette[dest++] = *source_16++;
-	}
-#else
-	// TODO: Profile this duff's device against a standard copy loop.
-	// Let's make sure it's not just a code boondoggle! It is 2022
-	uint16_t n = (count + 15) / 16;
-	switch (count % 16)
-	{
-		case 0:
-			do
-			{
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 15:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 14:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 13:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 12:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 11:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 10:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 9:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 8:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 7:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 6:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 5:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 4:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 3:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 2:
-				g_palette[dest++] = *source_16++;
-				__attribute__((fallthrough));
-		case 1:
-				g_palette[dest++] = *source_16++;
-			} while (--n > 0);
-	}
-#endif  // MD_PAL_STANDARD_COPY_LOOP
+	memcpy(&g_palette[dest], source, count * sizeof(uint16_t));
 }
 
 #ifndef MDK_TARGET_C2
@@ -205,10 +144,7 @@ void md_pal_poll(void)
 
 void md_pal_init(void)
 {
-	for (uint16_t i = 0; i < ARRAYSIZE(g_palette); i++)
-	{
-		g_palette[i] = 0;
-	}
+	memset(g_palette, 0, sizeof(g_palette));
 	s_dirty = 0x000F;
 }
 
@@ -243,26 +179,10 @@ void md_pal_poll(void)
 	volatile uint32_t *src32 = (uint32_t *)g_palette;
 	for (uint16_t i = 0; i < ARRAYSIZE(g_palette) / 16; i++)
 	{
-		// TODO: Consider asm here - wouldn't this be so much nicer if we just
-		// cleared the relevant bit and checked the Z flag?
 		if (s_dirty & test_bit)
 		{
-			// Copy a whole palette line as 32-bit ints because
-			// 1) It is guaranteed on 68000 that the palette, made of 16-bit
-			//    words, is word-aligned (otherwise a uint16_t * would not work)
-			// 2) 32-bit accesses on 16-bit alignment is absolutely okay
-			// 3) It is a wee bit faster (skip every other instruction fetch)
-			volatile uint32_t *dest = cram32;
-			volatile uint32_t *src = src32;
-			*dest++ = *src++;
-			*dest++ = *src++;
-			*dest++ = *src++;
-			*dest++ = *src++;
-			*dest++ = *src++;
-			*dest++ = *src++;
-			*dest++ = *src++;
-			*dest++ = *src++;
-			*dest++ = *src++;
+			uint16_t *cram = (uint16_t *)CRAM_SYSTEMC_LOC_BASE;
+			memcpy(&cram[i * 16], &g_palette[i * 16], sizeof(uint16_t) * 16);
 		}
 		test_bit = test_bit << 1;
 		cram32 += 8;
@@ -279,10 +199,7 @@ void md_pal_init(void)
 	MD_SYS_BARRIER();
 	md_pal_set_spr_bank(0);
 	md_pal_set_bg_bank(0);
-	for (uint16_t i = 0; i < ARRAYSIZE(g_palette); i++)
-	{
-		g_palette[i] = 0;
-	}
+	memset(g_palette, 0, sizeof(g_palette));
 	s_dirty = 0x0001FFFF;
 }
 
