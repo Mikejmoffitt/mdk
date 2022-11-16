@@ -35,6 +35,18 @@ There are two options to set it up:
 
 Option 1: Use my install script
 -------------------------------
+I put together a script to set up the M68000 GCC toolchain from marsdev. It will clone and build GCC on your machine.
+
+As a prerequisite, you will need a host build environment appropriate for building GCC.
+
+I use Debian, so the following packages are appropriate for me:
+
+```
+
+    $ sudo apt install build-essential git texinfo
+
+```
+
 Run install-toolchain.sh. This script
 1) Clones marsdev into a directory in /tmp
 2) Creates /opt/mdk-toolchain
