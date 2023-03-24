@@ -30,12 +30,11 @@ Setup
 
 Environment Prerequisites
 -------------------------
-The toolchain is provided by git@github.com:andwn/marsdev.
-There are two options to set it up:
+The Sega Mega Drive / Genesis is powered by the Motorola 68000 processor. In this era, it is expected that development is gone through cross-assembly and cross-compilation from a more powerful host computer. To that end, we need to install a toolchain.
 
-GCC M68000 Toolchain
---------------------
-GCC can be built with support for cross compilation targeting the Motorola 68000 processor. A pre-existing makefile to build it can be leveraged using the following command:
+Building the Cross Compiler
+---------------------------
+A Makefile has already been made which will clone the GCC 12 source, configure it appropriately for M68000, and kick off a build. Run the following commands:
 
 ```
     $ git clone git@github.com:andwn/m68k-gcc-toolchain
@@ -44,7 +43,7 @@ GCC can be built with support for cross compilation targeting the Motorola 68000
     $ sudo make install
 ```
 
-This will install the toolchain into /opt/toolchains/m68k-elf/ .
+This will install the toolchain into /opt/toolchains/m68k-elf/.
 
 Afterwards, you may remove the build artifacts and GCC sources cloned earlier.
 
