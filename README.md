@@ -33,39 +33,24 @@ Environment Prerequisites
 The toolchain is provided by git@github.com:andwn/marsdev.
 There are two options to set it up:
 
-Option 1: Use my install script
--------------------------------
-Run install-toolchain.sh. This script
-1) Clones marsdev into a directory in /tmp
-2) Creates /opt/mdk-toolchain
-3) Builds GCC, binutils, and friends with marsdev
-4) Moves m68k-elf into /opt-mdk-toolchain/
-5) Cleans up after itself in /tmp
-
-Option 2: Build marsdev yourself
---------------------------------
-Clone git@github.com:andwn/marsdev:
+GCC M68000 Toolchain
+--------------------
+GCC can be built with support for cross compilation targeting the Motorola 68000 processor. A pre-existing makefile to build it can be leveraged using the following command:
 
 ```
-    $ git clone git@github.com:andwn/marsdev
+    $ git clone git@github.com:andwn/m68k-gcc-toolchain
+    $ cd m68k-gcc-toolchain
+    $ make
+    $ sudo make install
 ```
 
-Build the toolchain:
+This will install the toolchain into /opt/toolchains/m68k-elf/ .
+
+Afterwards, you may remove the build artifacts and GCC sources cloned earlier.
 
 ```
-    $ cd marsdev
-    $ make m68k-toolchain-newlib LANGS=c,c++
+    $ rm -rf ./m68k-gcc-toolchain
 ```
-
-Move the necessary files to the toolchain directory:
-
-```
-    $ sudo mkdir -p /opt/mdk-toolchain
-    $ mv ~/marsdev/m68k-elf /opt/mdk-toolchain/
-    $ rm -rf ~/marsdev
-```
-
-If you don't want to use /opt/mdk-toolchain (e.g. you wish to just use ~/marsdev, or something else) you can set the environment variable MDK_BASE to point at the root containing m68k-elf/.
 
 Starting a Project
 ------------------

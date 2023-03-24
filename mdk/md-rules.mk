@@ -1,8 +1,7 @@
 # md-framework common build rules.
 
 # Environment
-MDK_BASE := /opt/mdk-toolchain
-MDK_ENV := $(MDK_BASE)/m68k-elf
+MDK_ENV := /opt/toolchains/m68k-elf
 MDK_BIN := $(MDK_ENV)/bin
 
 # If the user didn't specify the MDK root dir, assume it's at the project root.
