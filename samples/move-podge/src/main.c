@@ -29,6 +29,7 @@ In web color format, these are the usable grays:
 #define WALK_BRAKE 8
 #define LEFT_WALL 40
 #define RIGHT_WALL 280
+#define PLAYER_Y 168
 
 #define PLAYER_CEL_ADDR 0x8000
 
@@ -37,12 +38,18 @@ static signed short s_player_dx;
 static unsigned short s_player_frame;
 static unsigned short s_player_facing;
 
+static SprParam s_spr_param;
+
 static void load_player(void)
 {
 	s_player_x = 64 << 8;
 	s_player_dx = s_player_frame = s_player_facing = 0;
 	md_dma_transfer_vram(PLAYER_CEL_ADDR, (void *)res_PodgeH24_gfx_bin, 32*6*8/2, 2);
 	md_pal_upload(32, (void *)res_PodgeH24_pal_bin, 16);
+
+	// Set sprite drawing parameters that won't be changed.
+	s_spr_param.size = SPR_SIZE(2, 3);
+	s_spr_param.y = PLAYER_Y;
 }
 
 static void move_player(void)
@@ -122,7 +129,9 @@ void draw_player_sprite(void)
 		player_hotspot_x += s_player_facing ? -1 : 1;
 	}
 
-	md_spr_put(player_hotspot_x, 168, SPR_ATTR(tilenum, s_player_facing, 0, 2, 0), SPR_SIZE(2, 3));
+	s_spr_param.x = player_hotspot_x;
+	s_spr_param.attr = SPR_ATTR(tilenum, s_player_facing, 0, 2, 0);
+	md_spr_put_st(&s_spr_param);
 }
 
 void draw_bg(void)
@@ -170,6 +179,7 @@ void main(void)
 {
 	megadrive_init();
 
+	s_spr_param = (SprParam){0};
 	draw_bg();
 	load_player();
 

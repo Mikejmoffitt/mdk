@@ -74,6 +74,7 @@ void md_spr_mask_line_full(int16_t y, uint8_t size)
 	spr->ypos = y + SPR_STATIC_OFFS;
 	spr->size = size;
 	spr->xpos = 0;
+	spr->attr = 0;
 	g_sprite_count++;
 }
 
@@ -85,9 +86,11 @@ void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
 	spr->ypos = y1 + SPR_STATIC_OFFS;
 	spr->size = size1;
 	spr->xpos = 0;
+	spr->attr = 0;
 	spr++;
 	spr->ypos = y2 + SPR_STATIC_OFFS;
 	spr->size = size2;
 	spr->xpos = 1;
+	spr->attr = 0;
 	g_sprite_count += 2;
 }

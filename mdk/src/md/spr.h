@@ -44,7 +44,7 @@ typedef struct SprParam
 	int16_t x, y;  // Screen coordinates. (0, 0) is the top-left corner.
 	uint16_t attr;  // See SPR_ATTR macro.
 	uint8_t size;  // See SPR_SIZE macro.
-	uint8_t prio;  // Sorting priority.
+	uint8_t prio;  // Sorting priority. TODO (unimplemented)
 } SprParam;
 
 // Struct for composite sprite drawing parameters.
@@ -88,6 +88,7 @@ void md_spr_init(SprMode mode);
 // preparation of the list for the next frame.
 
 // Place a sprite using screen position coordinates.
+// TODO: Priority field
 void md_spr_put(int16_t x, int16_t y, uint16_t attr, uint16_t size);
 
 // (Parameter struct reference version).
