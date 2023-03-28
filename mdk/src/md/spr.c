@@ -4,7 +4,7 @@ Michael Moffitt */
 #include "md/dma.h"
 
 SprSlot g_sprite_table[SPR_MAX];
-uint8_t g_sprite_count;
+uint16_t g_sprite_count;
 static SprMode s_mode;
 
 void md_spr_init(SprMode mode)
@@ -65,4 +65,29 @@ void md_spr_finish(void)
 	// Schedule a transfer for the sprite table.
 	md_dma_transfer_spr_vram(md_vdp_get_sprite_base(), (void *)g_sprite_table,
 	                         sizeof(SprSlot) * transfer_count / 2, 2);
+}
+
+void md_spr_mask_line_full(int16_t y, uint8_t size)
+{
+	if (g_sprite_count >= ARRAYSIZE(g_sprite_table)) return;
+	SprSlot *spr = &g_sprite_table[g_sprite_count];
+	spr->ypos = y + SPR_STATIC_OFFS;
+	spr->size = size;
+	spr->xpos = 0;
+	g_sprite_count++;
+}
+
+void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
+                              int16_t y2, uint8_t size2)
+{
+	if (g_sprite_count >= ARRAYSIZE(g_sprite_table) - 1) return;
+	SprSlot *spr = &g_sprite_table[g_sprite_count];
+	spr->ypos = y1 + SPR_STATIC_OFFS;
+	spr->size = size1;
+	spr->xpos = 0;
+	spr++;
+	spr->ypos = y2 + SPR_STATIC_OFFS;
+	spr->size = size2;
+	spr->xpos = 1;
+	g_sprite_count += 2;
 }
