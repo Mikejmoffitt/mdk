@@ -152,7 +152,8 @@ start:
 softreset:
 	jmp	start
 
-/* SRAM access code is included here explicitly so it is always in low ROM. */
+/* Code is included here explicitly so it is always in low ROM. */
+.include	"md/asm/dma_process.inc"
 .include	"md/asm/sram.inc"
 
 _v_access_fault:
