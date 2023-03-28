@@ -176,47 +176,6 @@ void md_dma_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stri
 
 void md_dma_process_cmd(DmaCmd *cmd);  // dma_impl.s
 
-static inline void process_cmd(DmaCmd *cmd)
-{
-	md_vdp_set_autoinc(cmd->stride);
-	md_vdp_set_dma_en(/*wait=*/true);
-
-	md_vdp_set_reg(VDP_DMALEN1, cmd->len_1);
-	md_vdp_set_reg(VDP_DMALEN2, cmd->len_2);
-
-	md_sys_z80_bus_req(/*wait=*/false);
-
-	switch (cmd->op)
-	{
-		default:
-			break;
-	
-		case DMA_OP_FILL:
-			md_vdp_set_reg(VDP_DMASRC3, cmd->src_3);
-			VDPPORT_CTRL32 = cmd->ctrl;
-			VDPPORT_DATA = (cmd->src_1 << 8) | (cmd->src_1);
-			break;
-
-		case DMA_OP_SPR_TRANSFER:
-		case DMA_OP_TRANSFER:
-		case DMA_OP_COPY:
-			md_vdp_set_reg(VDP_DMASRC1, cmd->src_1);
-			md_vdp_set_reg(VDP_DMASRC2, cmd->src_2);
-			MD_SYS_BARRIER();
-			md_vdp_set_reg(VDP_DMASRC3, cmd->src_3);
-			VDPPORT_CTRL32 = cmd->ctrl;
-			break;
-	}
-
-	MD_SYS_BARRIER();
-	MD_SYS_BARRIER();
-	md_vdp_set_dma_en(/*wait=*/false);
-	MD_SYS_BARRIER();
-	md_sys_z80_bus_release();
-
-	cmd->op = DMA_OP_NONE;
-}
-
 void md_dma_process(void)
 {
 	md_vdp_wait_dma();

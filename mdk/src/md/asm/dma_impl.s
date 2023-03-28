@@ -20,15 +20,15 @@
 md_dma_process_cmd:
 # A0 holds the DMA command.
 	movea.l	ARG_CMD(sp), a0
-# Set auto inc.
-	move.w	#VDP_REGST_AUTOINC, d0
-	move.b	PRM_STRIDE(a0), d0
-	move.w	d0, VDPPORT_CTRL
 # Turn on DMA bit.
 	move.b	g_md_vdp_regs+VDP_MODESET2, d1  /* storage of original MODE2 */
 	move.w	#VDP_REGST_MODESET2, d0
 	move.b	d1, d0
 	bset	#4, d0  /* DMA enable */
+	move.w	d0, VDPPORT_CTRL
+# Set auto inc.
+	move.w	#VDP_REGST_AUTOINC, d0
+	move.b	PRM_STRIDE(a0), d0
 	move.w	d0, VDPPORT_CTRL
 # Set length registers.
 	move.w	#VDP_REGST_DMALEN1, d0
@@ -66,7 +66,7 @@ run_dma_fill:
 	zbusreq
 	move.w	#VDP_REGST_DMASRC3 | 0x80, VDPPORT_CTRL  /* Fill */
 	move.l	PRM_CTRL32(a0), VDPPORT_CTRL
-	move.b	PRM_LEN1(a0), d0
+	move.b	PRM_SRC1(a0), d0
 	move.b	d0, d1
 	lsl.w	#8, d0
 	move.b	d1, d0
