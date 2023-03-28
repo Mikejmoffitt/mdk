@@ -13,24 +13,24 @@ _Static_assert(NUM_IS_POW2(DMA_QUEUE_DEPTH), "DMA queue depth != power of 2!");
 typedef enum DmaOp DmaOp;
 enum DmaOp
 {
-	DMA_OP_NONE,
-	DMA_OP_TRANSFER,
-	DMA_OP_FILL,
-	DMA_OP_COPY,
-	DMA_OP_SPR_TRANSFER,
+	DMA_OP_NONE         = 0x0000,
+	DMA_OP_TRANSFER     = 0x0001,
+	DMA_OP_SPR_TRANSFER = 0x0002,
+	DMA_OP_COPY         = 0x0003,
+	DMA_OP_FILL         = 0x8000,
 } __attribute__ ((__packed__));
 
 // Struct representing pre-calculated register values for the VDP's DMA.
 typedef struct DmaCmd DmaCmd;
 struct DmaCmd
 {
-	DmaOp op;
+	uint16_t /*DmaOp*/ op;
 	uint8_t stride;
-	uint8_t len_1;
-	uint8_t len_2;
 	uint8_t src_1;  // Used as data for DMA fill.
 	uint8_t src_2;
 	uint8_t src_3;
+	uint8_t len_1;
+	uint8_t len_2;
 	uint32_t ctrl;
 } __attribute__ ((aligned (0x08)));
 
@@ -174,19 +174,17 @@ void md_dma_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stri
 	md_dma_enqueue(DMA_OP_COPY, VDP_CTRL_VRAM_WRITE, dest, src, bytes, stride);
 }
 
+void md_dma_process_cmd(DmaCmd *cmd);  // dma_impl.s
+
 static inline void process_cmd(DmaCmd *cmd)
 {
-	MD_SYS_BARRIER();
-
 	md_vdp_set_autoinc(cmd->stride);
 	md_vdp_set_dma_en(/*wait=*/true);
 
 	md_vdp_set_reg(VDP_DMALEN1, cmd->len_1);
 	md_vdp_set_reg(VDP_DMALEN2, cmd->len_2);
-	MD_SYS_BARRIER();
 
 	md_sys_z80_bus_req(/*wait=*/false);
-	MD_SYS_BARRIER();
 
 	switch (cmd->op)
 	{
@@ -211,7 +209,6 @@ static inline void process_cmd(DmaCmd *cmd)
 	}
 
 	MD_SYS_BARRIER();
-	md_vdp_wait_dma();
 	MD_SYS_BARRIER();
 	md_vdp_set_dma_en(/*wait=*/false);
 	MD_SYS_BARRIER();
@@ -224,6 +221,7 @@ void md_dma_process(void)
 {
 	md_vdp_wait_dma();
 	MD_SYS_BARRIER();
+	md_sys_z80_bus_req(/*wait=*/false);
 
 	const bool ints_enabled = md_sys_di();
 
@@ -231,7 +229,7 @@ void md_dma_process(void)
 	for (uint16_t i = 0; i < ARRAYSIZE(s_dma_prio_q_cmd); i++)
 	{
 		if (s_dma_prio_q_cmd[i].op == DMA_OP_NONE) break;
-		process_cmd(&s_dma_prio_q_cmd[i]);
+		md_dma_process_cmd(&s_dma_prio_q_cmd[i]);
 	}
 	s_dma_prio_q_idx = 0;
 
@@ -240,7 +238,7 @@ void md_dma_process(void)
 	{
 		DmaCmd *cmd = &s_dma_q[s_dma_q_read_idx];
 		s_dma_q_read_idx = (s_dma_q_read_idx + 1) % DMA_QUEUE_DEPTH;
-		process_cmd(cmd);
+		md_dma_process_cmd(cmd);
 	}
 
 	if (ints_enabled) md_sys_ei();

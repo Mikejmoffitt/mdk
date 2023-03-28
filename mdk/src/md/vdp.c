@@ -7,7 +7,7 @@ Michael Moffitt 2018-2022 */
 
 #include <stdlib.h>
 
-volatile uint16_t g_vblank_wait;  // Also modified by vdp.inc (in asm)
+volatile uint16_t g_vblank_wait;
 static void (*s_vbl_wait_func)(void) = NULL;
 
 uint8_t g_md_vdp_regs[0x18];

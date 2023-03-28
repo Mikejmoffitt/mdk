@@ -21,6 +21,10 @@
 // facilitate the use of the VDP's DMA features, as it is large and complex
 // enough to warrant it.
 
+// TODO: Deprecate storage of some of these registers that have no reason to
+// be read (e.g. DMA parameters). Modeset, plane size will be kept so that
+// specific accessor functions will work.
+
 #ifndef MD_VDP_H
 #define MD_VDP_H
 

@@ -2,6 +2,14 @@
 Michael Moffitt 2018-2022
 */
 
+	.global	_v_irq1
+	.global	_v_irq2
+	.global	_v_irq3
+	.global	_v_irq4
+	.global	_v_irq5
+	.global	_v_irq6
+	.global	_v_irq7
+
 /* This is a flag used for vblank waiting. */
 	.extern g_vblank_wait
 
