@@ -1,0 +1,11 @@
+core/bin2h
+core/bin2s
+core/binpad
+core/bsplit
+
+debug/megaloader/megaloader
+
+emu/blastem/blastem64-*/
+emu/blastem/blastem-win64-*/
+
+image/pngto/pngto

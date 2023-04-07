@@ -4,6 +4,12 @@
 MDK_ENV := /opt/toolchains/m68k-elf
 MDK_BIN := $(MDK_ENV)/bin
 
+WSLENV ?= not_wsl
+ifndef WSLENV
+HOST_WSL := 1
+endif
+
+
 # If the user didn't specify the MDK root dir, assume it's at the project root.
 ifeq ($(MDKROOT),)
 MDKROOT := mdk
@@ -35,18 +41,25 @@ LD := $(MDK_BIN)/m68k-elf-gcc
 NM := $(MDK_BIN)/m68k-elf-nm
 OBJCOPY := $(MDK_BIN)/m68k-elf-objcopy
 
-# Utilities
 SPLIT := split
-BIN2S := $(UTILDIR)/bin2s
-BIN2H := $(UTILDIR)/bin2h
-BINPAD := $(UTILDIR)/binpad
-BSPLIT := $(UTILDIR)/bsplit
-MEGALOADER := $(UTILDIR)/megaloader
-PNGTO := $(UTILDIR)/pngto
-BLASTEM := $(UTILDIR)/blastem64-*/blastem
+# Utilities packed in
+BIN2S := $(UTILDIR)/core/bin2s
+BIN2H := $(UTILDIR)/core/bin2h
+BINPAD := $(UTILDIR)/core/binpad
+BSPLIT := $(UTILDIR)/core/bsplit
+PNGTO := $(UTILDIR)/image/pngto/pngto
+# Sik's tools
 MDTOOLS := $(UTILDIR)/mdtools
 MDTILER := $(UTILDIR)/mdtools/mdtiler/tool/mdtiler
 # TODO: Various echo tools
+
+# Emulator(s)
+ifdef HOST_WSL
+BLASTEM := $(UTILDIR)/emu/blastem/blastem-win64-*/blastem.exe
+else
+BLASTEM := $(UTILDIR)/emu/blastem/blastem64-*/blastem
+endif
+MEGALOADER := $(UTILDIR)/debug/megaloader/megaloader
 
 # Flags shared by both C and C++.
 COMMON_FLAGS := -mcpu=68000
@@ -125,9 +138,13 @@ vars:
 
 # An archive for Blastem is included; this just unpacks it.
 $(BLASTEM):
-	cd $(UTILDIR) && tar -xf blastem64-*.tar.gz
+ifdef HOST_WSL
+	cd $(UTILDIR)/emu/blastem/ && unzip blastem-win64-*.zip
+else
+	cd $(UTILDIR)/emu/blastem/ && tar -xf blastem64-*.tar.gz
+endif
 
-$(MEGALOADER): $(UTILDIR)/megaloader.c
+$(MEGALOADER): $(UTILDIR)/debug/megaloader/megaloader.c
 	@$(CC_HOST) -D_DEFAULT_SOURCE $< -o $@ $(HOSTCFLAGS)
 
 $(MDTOOLS):
@@ -136,20 +153,20 @@ $(MDTOOLS):
 $(MDTILER): $(MDTOOLS)
 	cd $(MDTOOLS)/mdtiler/tool && CC=$(CC_HOST) make
 
-$(BIN2S): $(UTILDIR)/bin2s.c
+$(BIN2S): $(UTILDIR)/core/bin2s.c
 	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
 
-$(BIN2H): $(UTILDIR)/bin2h.c
+$(BIN2H): $(UTILDIR)/core/bin2h.c
 	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
 
-$(BINPAD): $(UTILDIR)/binpad.c
+$(BINPAD): $(UTILDIR)/core/binpad.c
 	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
 
-$(BSPLIT): $(UTILDIR)/bsplit.c
+$(BSPLIT): $(UTILDIR)/core/bsplit.c
 	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
 
-$(PNGTO): $(UTILDIR)/pngto.c $(UTILDIR)/musl_getopt.c $(UTILDIR)/lodepng.c $(UTILDIR)/indexedimage.c
-	@$(CC_HOST) $^ -o $@ -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
+$(PNGTO): $(UTILDIR)/image/pngto/pngto.c $(UTILDIR)/image/pngto/musl_getopt.c $(UTILDIR)/image/pngto/lodepng.c $(UTILDIR)/image/pngto/indexedimage.c
+	@$(CC_HOST) $^ -I $(UTILDIR)/image/pngto -o $@ -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
 
 $(OUTPUT_GEN): $(OUTPUT_ELF) $(BINPAD)
 	@bash -c 'printf " \e[36m[ PAD ]\e[0m ... --> $@\n"'
@@ -248,7 +265,7 @@ debug: $(OUTPUT_GEN) $(BLASTEM)
 	$(BLASTEM) -m gen -d $<
 
 test: $(OUTPUT_GEN) $(BLASTEM)
-	bash -c 'PULSE_LATENCY_MSEC=80 $(BLASTEM) -m gen $<'
+	$(BLASTEM) -m gen $<
 
 mame: $(OUTPUT_GEN)
 	exec mame megadrij -cart $< -debug -r 640x480
