@@ -1,4 +1,4 @@
-// png2cspr
+// png2csp
 // (c) 2023 Michael Moffitt
 //
 // Utility to convert a spritesheet PNG into data for use with MDK's composite
@@ -6,7 +6,7 @@
 //
 // Usage:
 //
-//     png2cspr spritesheet.png frame_width frame_height output_name <origin>
+//     png2csp spritesheet.png frame_width frame_height output_name <origin>
 
 /*
 
