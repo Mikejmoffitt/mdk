@@ -42,6 +42,9 @@ typedef struct RecordRef
 2   sprite size attribute field (other bits 0)
 2   tile id
 2   relative X offset (signed word)
+2   flip X offset
+2   flip Y offset
+4   reserved
 */
 
 typedef struct RecordSpr
@@ -49,6 +52,7 @@ typedef struct RecordSpr
 	int dx, dy;  // Relative offsets.
 	int w, h;  // In tiles.
 	int tile;  // From first tile of tile bank.
+	int flip_dx, flip_dy;
 } RecordSpr;
 
 //
@@ -74,7 +78,7 @@ static uint16_t s_pal_dat[PALSIZE];
 static void write_ref(const RecordRef *ref, FILE *f)
 {
 	fwrite_uint16be(ref->spr_count, f);
-	fwrite_uint16be(ref->spr_index * 8, f);  // * sizeof(spr_def)
+	fwrite_uint16be(ref->spr_index * 16, f);  // * sizeof(spr_def)
 	fwrite_uint16be(ref->tile_index * TBYTES, f);  // Offset within tile data.
 	fwrite_uint16be(ref->tile_count * (TBYTES / 2), f);  // DMA size in words.
 }
@@ -86,6 +90,10 @@ static void write_spr(const RecordSpr *spr, FILE *f)
 	fwrite_uint16be(sizebits, f);
 	fwrite_uint16be(spr->tile, f);
 	fwrite_int16be(spr->dx, f);
+	fwrite_int16be(spr->flip_dy, f);
+	fwrite_uint16be(0, f);
+	fwrite_uint16be(0, f);
+	fwrite_int16be(spr->flip_dx, f);
 }
 
 //
@@ -191,7 +199,7 @@ void record_ref(int spr_count, int spr_index, int tile_index, int tile_count)
 	ref->tile_count = tile_count;
 }
 
-void record_spr(int dx, int dy, int w, int h, int tile)
+void record_spr(int dx, int dy, int w, int h, int tile, int flip_dx, int flip_dy)
 {
 	if (s_spr_count >= RECORD_MAX_SPR_COUNT)
 	{
@@ -206,6 +214,8 @@ void record_spr(int dx, int dy, int w, int h, int tile)
 	spr->w = w;
 	spr->h = h;
 	spr->tile = tile;
+	spr->flip_dx = flip_dx;
+	spr->flip_dy = flip_dy;
 }
 
 void record_tiles(const uint8_t *src, int count)

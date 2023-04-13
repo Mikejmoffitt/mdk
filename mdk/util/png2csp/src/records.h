@@ -17,7 +17,7 @@ bool record_init(void);
 void record_complete(const char *spr_name, const char *fname);
 
 void record_palette(const uint16_t *pal_data);
-void record_spr(int dx, int dy, int w, int h, int tile);
+void record_spr(int dx, int dy, int w, int h, int tile, int flip_dx, int flip_dy);
 void record_ref(int spr_count, int spr_index, int tile_index, int tile_count);
 void record_tiles(const uint8_t *src, int count);
 

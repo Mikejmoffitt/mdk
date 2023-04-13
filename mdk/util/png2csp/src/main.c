@@ -155,8 +155,13 @@ static void chop_sprite(uint8_t *imgdat, int iw, int ih, ConvOrigin origin,
 	//render_region(imgdat, iw, ih, sx, sy, sw, sh);
 
 	int clip_x, clip_y;
-	int last_vx = 0;
-	int last_vy = 0;
+
+	// X and Y posiiton are initially offset by 128 to bake in the offset
+	// built in to the MD.
+	int last_vx = -SPR_STATIC_OFFS;
+	int last_vy = -SPR_STATIC_OFFS;
+	int last_fvx = -SPR_STATIC_OFFS;
+	int last_fvy = -SPR_STATIC_OFFS;
 
 	//
 	// Claim an area from which a sprite can be extracted.
@@ -202,11 +207,20 @@ static void chop_sprite(uint8_t *imgdat, int iw, int ih, ConvOrigin origin,
 		const int vx = ((clip_x % sw) - ox);
 		const int vy = ((clip_y % sh) - oy);
 
+		int fvx = -1 * ((clip_x % sw) - ox);
+		int fvy = -1 * ((clip_y % sh) - oy);
+//		fvx -= (fvx - ox);
+		fvx -= tiles_w * TSIZE;
+//		fvy -= (fvy - oy);
+		fvy -= tiles_h * TSIZE;
+
 		record_spr(vx - last_vx, vy - last_vy, tiles_w, tiles_h,
-		           tiles_for_sprite);
+		           tiles_for_sprite, fvx - last_fvx, fvy - last_fvy);
 
 		last_vx = vx;
 		last_vy = vy;
+		last_fvx = fvx;
+		last_fvy = fvy;
 
 		//
 		// Offset tiles (within base tile index)
