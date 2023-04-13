@@ -12,7 +12,7 @@ PNGDIR := png
 SOURCES_C := $(shell find $(SRCDIR) -type f -name '*.c')
 
 EXTERNAL_DEPS := convert_graphics
-EXTERNAL_ARTIFACTS := $(RESDIR)/cirno.csp $(RESDIR)/count.csp
+EXTERNAL_ARTIFACTS := $(RESDIR)/cirno.csp $(RESDIR)/count.csp $(RESDIR)/sonic.csp
 
 include $(MDKROOT)/md-rules.mk
 
@@ -20,6 +20,9 @@ convert_graphics: $(EXTERNAL_ARTIFACTS)
 
 $(RESDIR)/cirno.csp: $(PNG2CSP)
 	$(PNG2CSP) png/cirno.png 80 80 $@ "Cirno Laugh"
+
+$(RESDIR)/sonic.csp: $(PNG2CSP)
+	$(PNG2CSP) png/sonic.png 64 64 $@ "Sonic"
 
 $(RESDIR)/count.csp: $(PNG2CSP)
 	$(PNG2CSP) png/count.png 64 64 $@ "Count Anim"

@@ -79,7 +79,7 @@ static void write_ref(const RecordRef *ref, FILE *f)
 {
 	fwrite_uint16be(ref->spr_count, f);
 	fwrite_uint16be(ref->spr_index * 16, f);  // * sizeof(spr_def)
-	fwrite_uint16be(ref->tile_index * TBYTES, f);  // Offset within tile data.
+	fwrite_uint16be(ref->tile_index, f);  // Tile offset within tile data.
 	fwrite_uint16be(ref->tile_count * (TBYTES / 2), f);  // DMA size in words.
 }
 

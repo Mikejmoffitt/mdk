@@ -87,11 +87,14 @@ sprite_count_ok:
 
 cspr_put_no_dma:
 	/* Just offset vram base */
+	lsr.w	#5, d1
 	add.w	REF_TILE_SRC_OFFSET(a2), d1
+	bra	cspr_put_attributes_set
 
 cspr_put_after_dma:
 # d1 := base attributes for sprite
 	lsr.w	#5, d1
+cspr_put_attributes_set:
 	or.w	PRM_ATTR(a0), d1
 
 # a1 := spr (CSprSprite)
@@ -165,28 +168,4 @@ cspr_draw_finished:
 0:
 	movem.l	(sp)+, d2-d3/d7
 	movem.l	(sp)+, a2-a3
-	rts
-	
-
-cspr_dma_setup_sub:
-	move.w	d1, -(sp)
-	movem.l	a0-a1, -(sp)
-	moveq	#2, d0
-	move.l	d0, -(sp)  /* stride */
-
-	move.w	REF_TILE_WORDS(a2), d0
-	move.l	d0, -(sp)  /* words */
-
-	adda.l	CSPR_TILE_DATA_OFFSET(a1), a1
-	adda.w	REF_TILE_SRC_OFFSET(a2), a1
-	move.l	a1, -(sp)  /* source data */
-
-	moveq	#0, d0
-	move.w	d1, d0
-	move.l	d0, -(sp)  /* dest vram */
-
-	bsr	md_dma_transfer_vram
-	lea	0x10(sp), sp
-	movem.l	(sp)+, a0-a1
-	move.w	(sp)+, d1
 	rts

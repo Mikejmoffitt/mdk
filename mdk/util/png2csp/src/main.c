@@ -37,7 +37,7 @@ ref def - a single metasprite frame
 -----------------------------------
 2   spr quantity used
 2   spr list index * sizeof(spr def)
-2   tile data start offset (within tile data block)
+2   tile data start offset (as tile indices, within tile data block)
 2   tile count * 16 (words, for DMA, pre-multiplied by VDP tile size)
 
 
