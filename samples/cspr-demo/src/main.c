@@ -55,7 +55,7 @@ void main(void)
 	cspr_param[0].use_dma = true;
 	// Second is sonic.
 	cspr_param[1].cspr_data = res_sonic_csp;
-	cspr_param[1].vram_base = 0x2000;
+	cspr_param[1].vram_base = 0x1800;
 	cspr_param[1].x = 32;
 	cspr_param[1].y = 128;
 	cspr_param[1].attr = SPR_ATTR(0, 0, 0, 3, 0);
@@ -66,7 +66,7 @@ void main(void)
 	for (uint16_t i = 2; i < ARRAYSIZE(cspr_param); i++)
 	{
 		cspr_param[i].cspr_data = res_cirno_csp;
-		cspr_param[i].vram_base = 0x4000;
+		cspr_param[i].vram_base = 0x1C00;
 		cspr_param[i].x = (18 * i);
 		cspr_param[i].y = 10+(12 * i);
 		cspr_param[i].attr = SPR_ATTR(0, 0, 0, 2, 0);
@@ -76,7 +76,7 @@ void main(void)
 	}
 
 	// Cirno isn't using DMA, so tiles should be uploaded prior to drawing.
-	md_cspr_upload_tiles(res_cirno_csp, 0x4000);
+	md_cspr_upload_tiles(res_cirno_csp, 0x1C00);
 
 	uint16_t frame = 0;
 	uint16_t selected_spr = 0;

@@ -39,6 +39,9 @@ void md_vdp_init(void)
 	// BG color 0
 	md_vdp_set_bg_color(0);
 
+	// Clear VRAM
+	md_vdp_vram_clear();
+
 	// Standard 1-word auto inc
 	md_vdp_set_autoinc(2);
 
