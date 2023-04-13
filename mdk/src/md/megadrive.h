@@ -16,6 +16,7 @@ extern "C"
 #include "md/io.h"          // Controller port I/O
 #include "md/ioc.h"         // System C/C2 I/O
 #include "md/spr.h"         // Sprite support
+#include "md/cspr.h"        // Composite sprite functions
 #include "md/dma.h"         // DMA control and scheduling
 #include "md/pal.h"         // Palette read/write via ports or DMA
 #include "md/opn.h"         // YM2610 FM sound chip

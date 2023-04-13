@@ -14,6 +14,6 @@
 
 # bus wait
 	.macro	zbuswt
-9:	btst	#0, Z80_BS_LOC
+9:	btst	#0, Z80_BUS_LOC
 	bne	9b
 	.endm

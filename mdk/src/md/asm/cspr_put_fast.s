@@ -3,9 +3,9 @@
 .set	SPR_MAX, 80
 
 #
-# void md_cspr_put_st(const CSprParam *s);
+# void md_cspr_put_st_fast(const CSprParam *s);
 #
-	.global	md_cspr_put_st
+	.global	md_cspr_put_st_fast
 .set	SPID, 4
 
 # SP - pushed args
@@ -45,7 +45,7 @@
 .set	SPR_RESERVED2, 12
 .set	SPR_FDX, 14
 
-md_cspr_put_st:
+md_cspr_put_st_fast:
 # a0 := draw params (CSprParam)
 	movea.l	ARG_CSPR_STRUCT(sp), a0
 
@@ -58,8 +58,8 @@ md_cspr_put_st:
 # a2 := frame ref
 	lea	CSPR_REFS(a1), a2
 	move.w	PRM_FRAME(a0), d0
-	cmp.w	CSPR_REF_COUNT(a1), d0
-	bcc	0f
+
+
 	lsl.w	#3, d0  /* index by 8, sizeof(CSprRef) */
 	adda.w	d0, a2  /* a1 now points to the ref */
 
@@ -110,6 +110,7 @@ cspr_put_after_dma:
 	lsl.w	#3, d0
 	adda.w	d0, a3
 
+	add.w	d7, g_sprite_count
 	subq.w	#1, d7  /* for dbf loop */
 
 	btst	#11, d1  /* H flip? */
@@ -117,19 +118,7 @@ cspr_put_after_dma:
 	btst	#12, d1  /* V flip? */
 	bne	cspr_draw_top_vflip
 
-	.macro	cspr_draw_body_safe
-	/* X pos checks */
-	cmpi.w	#128+320, d2
-	bcc	1f  /* skip sprite */
-	cmpi.w	#128-32, d2
-	bls	1f  /* skip sprite */
-	/* Y pos checks */
-	cmpi.w	#128+240, d3
-	bcc	1f  /* skip sprite */
-	cmpi.w	#128-32, d3
-	bls	1f  /* skip sprite */
-
-	/* With bounds checks done we can now write to the sprite. */
+	.macro	cspr_draw_body
 	move.w	d3, (a3)+  /* Y */
 	move.b	SPR_SIZE(a1), (a3)+  /* leave link field alone */
 	addq	#1, a3
@@ -137,22 +126,20 @@ cspr_put_after_dma:
 	add.w	SPR_TILE(a1), d0
 	move.w	d0, (a3)+  /* Attr */
 	move.w	d2, (a3)+  /* X */
-	addq	#1, g_sprite_count
-1:
 	lea	0x10(a1), a1
 	.endm
 
 cspr_draw_top_normal:
 	add.w	SPR_DX(a1), d2
 	add.w	SPR_DY(a1), d3
-	cspr_draw_body_safe
+	cspr_draw_body
 	dbf	d7, cspr_draw_top_normal
 	bra	cspr_draw_finished
 
 cspr_draw_top_vflip:
 	add.w	SPR_DX(a1), d2
 	add.w	SPR_FDY(a1), d3
-	cspr_draw_body_safe
+	cspr_draw_body
 	dbf	d7, cspr_draw_top_vflip
 	bra	cspr_draw_finished
 
@@ -163,14 +150,14 @@ cspr_hflip:
 cspr_draw_top_hflip:
 	add.w	SPR_FDX(a1), d2
 	add.w	SPR_DY(a1), d3
-	cspr_draw_body_safe
+	cspr_draw_body
 	dbf	d7, cspr_draw_top_hflip
 	bra	cspr_draw_finished
 
 cspr_draw_top_hvflip:
 	add.w	SPR_FDX(a1), d2
 	add.w	SPR_FDY(a1), d3
-	cspr_draw_body_safe
+	cspr_draw_body
 	dbf	d7, cspr_draw_top_hvflip
 	bra	cspr_draw_finished
 
