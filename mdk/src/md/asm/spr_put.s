@@ -1,3 +1,5 @@
+	.section	.text
+
 # Sprite placement functions.
 
 	.extern	g_sprite_count
