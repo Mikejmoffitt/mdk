@@ -146,10 +146,23 @@ start:
 
 .no_copy:
 	move.l	(0x000000).l, sp
+
+	/* Clear VRAM */
+	lea	0xC00000, a0  /* VDP */
+	move.l	#0x40000000, 4(a0)  /* VRAM address 0, write */
+	move.w	#(0x10000/16) - 1, d7  /* VRAM bytes / (sizeof(longword) * 4) */
+	moveq	#0, d0
+.clear_top:
+	move.l	d0, (a0)
+	move.l	d0, (a0)
+	move.l	d0, (a0)
+	move.l	d0, (a0)
+	dbra	d7, .clear_top
 	jmp	main
 
 	.global	softreset
 softreset:
+
 	jmp	start
 
 /* Code is included here explicitly so it is always in low ROM. */
