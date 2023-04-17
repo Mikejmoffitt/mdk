@@ -150,6 +150,7 @@ start:
 
 	.global	softreset
 softreset:
+
 	jmp	start
 
 /* Code is included here explicitly so it is always in low ROM. */

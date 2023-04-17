@@ -48,6 +48,7 @@ BIN2H := $(UTILDIR)/core/bin2h
 BINPAD := $(UTILDIR)/core/binpad
 BSPLIT := $(UTILDIR)/core/bsplit
 PNGTO := $(UTILDIR)/image/pngto/pngto
+PNG2CSP := $(UTILDIR)/png2csp/png2csp
 # Sik's tools
 MDTOOLS := $(UTILDIR)/mdtools
 MDTILER := $(UTILDIR)/mdtools/mdtiler/tool/mdtiler
@@ -169,6 +170,9 @@ $(BINPAD): $(UTILDIR)/core/binpad.c
 
 $(BSPLIT): $(UTILDIR)/core/bsplit.c
 	@$(CC_HOST) $^ -o $@ $(HOSTCFLAGS)
+
+$(PNG2CSP):
+	$(MAKE) -C $(UTILDIR)/png2csp/
 
 $(PNGTO): $(UTILDIR)/image/pngto/pngto.c $(UTILDIR)/image/pngto/musl_getopt.c $(UTILDIR)/image/pngto/lodepng.c $(UTILDIR)/image/pngto/indexedimage.c
 	@$(CC_HOST) $^ -I $(UTILDIR)/image/pngto -o $@ -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
