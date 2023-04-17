@@ -9,11 +9,15 @@
 typedef int32_t fix32_t;
 typedef int16_t fix16_t;
 
+#ifndef MD_FIXED_BITS
+#define MD_FIXED_BITS 4
+#endif  // MD_FIXED_BITS
+
 // Precision configuration
-#define FIX32_PRECISION_BITS 8
+#define FIX32_PRECISION_BITS MD_FIXED_BITS
 #define FIX32_COEF (1 << FIX32_PRECISION_BITS)
 
-#define FIX16_PRECISION_BITS 8
+#define FIX16_PRECISION_BITS MD_FIXED_BITS
 #define FIX16_COEF (1 << FIX16_PRECISION_BITS)
 
 // TODO: Unify these into storage-ambiguous macros.

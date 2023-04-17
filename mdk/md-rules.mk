@@ -61,8 +61,12 @@ BLASTEM := $(UTILDIR)/emu/blastem/blastem64-*/blastem
 endif
 MEGALOADER := $(UTILDIR)/debug/megaloader/megaloader
 
+# FLags passed in.
+FLAGS ?=
+
 # Flags shared by both C and C++.
-COMMON_FLAGS := -mcpu=68000
+COMMON_FLAGS := $(FLAGS)
+COMMON_FLAGS += -mcpu=68000
 COMMON_FLAGS += -O3
 COMMON_FLAGS += -fomit-frame-pointer -fno-defer-pop -frename-registers -fshort-enums
 COMMON_FLAGS += -Wall -Wextra -Wno-unused-function
@@ -70,6 +74,7 @@ COMMON_FLAGS += -ffreestanding
 COMMON_FLAGS += -ffunction-sections -fdata-sections -fconserve-stack
 COMMON_FLAGS += -I$(SRCDIR) -I$(MDKSRCDIR) -I.
 COMMON_FLAGS += -D$(TARGET_SYSTEM)
+COMMON_FLAGS += 
 
 # For C.
 CFLAGS := $(COMMON_FLAGS)
