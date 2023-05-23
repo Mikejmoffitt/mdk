@@ -41,6 +41,7 @@
 
 #define VDP_LOC_BASE      (0xC00000)
 #define VDPPORT_DATA      (*(volatile uint16_t*)(VDP_LOC_BASE))
+#define VDPPORT_DATA32    (*(volatile uint32_t*)(VDP_LOC_BASE))
 #define VDPPORT_CTRL      (*(volatile uint16_t*)(VDP_LOC_BASE + 4))
 #define VDPPORT_CTRL32    (*(volatile uint32_t*)(VDP_LOC_BASE + 4))
 #define VDPPORT_HVCOUNT   (*(volatile uint16_t*)(VDP_LOC_BASE + 8))
