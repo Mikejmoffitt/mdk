@@ -56,6 +56,9 @@ md_cspr_put_st:
 	movem.l	a2-a3, -(sp)
 	movem.l	d2-d3/d7, -(sp)
 
+# a3 := MD hardware sprite slot
+	movea.l	g_sprite_next, a3
+
 # a1 := cspr blob
 	move.l	PRM_CSPR_DATA(a0), a1
 
@@ -110,9 +113,6 @@ cspr_put_attributes_set:
 
 # d3 := sprite Y
 	move.w	PRM_Y(a0), d3
-
-# a3 := MD hardware sprite slot
-	movea.l	g_sprite_next, a3
 
 	subq.w	#1, d7  /* for dbf loop */
 

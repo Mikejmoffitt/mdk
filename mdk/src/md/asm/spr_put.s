@@ -48,8 +48,8 @@ md_spr_put:
 	swap	d0  /* d0 how has attr in high word and x in low word. */
 	addq	#2, a1
 	move.l	d0, (a1)+
-0:
 	move.l	a1, g_sprite_next
+0:
 	rts
 
 #
@@ -93,8 +93,8 @@ md_spr_put_st:
 	swap	d0  /* d0 how has attr in high word and x in low word. */
 	addq	#2, a1
 	move.l	d0, (a1)+
-0:
 	move.l	a1, g_sprite_next
+0:
 	rts
 
 #
@@ -135,6 +135,6 @@ md_spr_put_st_fast_direct:
 	swap	d0  /* d0 how has attr in high word and x in low word. */
 	addq	#2, a1
 	move.l	d0, (a1)+
-0:
 	move.l	a1, g_sprite_next
+0:
 	rts
