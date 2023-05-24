@@ -85,6 +85,11 @@ void md_spr_put(int16_t x, int16_t y, uint16_t attr, uint16_t size);
 // (Parameter struct reference version).
 void md_spr_put_st(const SprParam *s);
 
+// Same as put_st, except it is a tiny bit faster by virtue of the following:
+// * Sprites are not automatically offset by 128px
+// * Bounds checks are not performed on sprite coordinates
+void md_spr_put_st_fast(const SprParam *s);
+
 // Masks off any sprites on scanlines that span between y and the height.
 void md_spr_mask_line_full(int16_t y, uint8_t size);
 
@@ -142,6 +147,7 @@ void md_spr_mask_line_comb(int16_t y1, uint8_t size1,
 // It is used by both SIMPLE and DIRECT mode, but user modification is only
 // recommended when using DIRECT mode.
 extern SprSlot g_sprite_table[SPR_MAX];
+extern SprSlot *g_sprite_next;
 
 // In SIMPLE mode, this is used by the md_spr_put() functions as a counter.
 // In DIRECT mode, it controls how many sprite slots are transferred via DMA.

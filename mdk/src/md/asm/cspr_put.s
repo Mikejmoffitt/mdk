@@ -1,5 +1,9 @@
 	.section	.text
 
+	.extern	g_sprite_count
+	.extern	g_sprite_table
+	.extern	g_sprite_next
+
 .set	SPR_MAX, 80
 
 #
@@ -61,7 +65,7 @@ md_cspr_put_st:
 	cmp.w	CSPR_REF_COUNT(a1), d0
 	bcc	0f
 	lsl.w	#3, d0  /* index by 8, sizeof(CSprRef) */
-	adda.w	d0, a2  /* a1 now points to the ref */
+	adda.w	d0, a2  /* a2 now points to the ref */
 
 # Sprite count checks
 	move.w	REF_SPR_COUNT(a2), d7
@@ -108,10 +112,7 @@ cspr_put_attributes_set:
 	move.w	PRM_Y(a0), d3
 
 # a3 := MD hardware sprite slot
-	lea	g_sprite_table, a3
-	move.w	g_sprite_count, d0
-	lsl.w	#3, d0
-	adda.w	d0, a3
+	movea.l	g_sprite_next, a3
 
 	subq.w	#1, d7  /* for dbf loop */
 
@@ -140,7 +141,7 @@ cspr_put_attributes_set:
 	add.w	SPR_TILE(a1), d0
 	move.w	d0, (a3)+  /* Attr */
 	move.w	d2, (a3)+  /* X */
-	addq	#1, g_sprite_count
+	add.w	#1, g_sprite_count
 1:
 	lea	0x10(a1), a1
 	.endm
@@ -179,6 +180,7 @@ cspr_draw_top_hvflip:
 
 cspr_draw_finished:
 0:
+	move.l	a3, g_sprite_next
 	movem.l	(sp)+, d2-d3/d7
 	movem.l	(sp)+, a2-a3
 	rts

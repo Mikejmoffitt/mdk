@@ -4,6 +4,7 @@ Michael Moffitt */
 #include "md/dma.h"
 
 SprSlot g_sprite_table[SPR_MAX];
+SprSlot *g_sprite_next;
 uint16_t g_sprite_count;
 static SprMode s_mode;
 
@@ -16,6 +17,8 @@ void md_spr_init(SprMode mode)
 		g_sprite_table[i].link = i + 1;
 		g_sprite_table[i].xpos = 2;  // Avoid triggering line mask.
 	}
+
+	g_sprite_next = &g_sprite_table[0];
 
 	switch (s_mode)
 	{
@@ -39,6 +42,7 @@ void md_spr_start(void)
 		g_sprite_table[g_sprite_count - 1].link = g_sprite_count;
 		g_sprite_count = 0;
 	}
+	g_sprite_next = &g_sprite_table[0];
 }
 
 void md_spr_finish(void)
@@ -65,6 +69,7 @@ void md_spr_finish(void)
 	// Schedule a transfer for the sprite table.
 	md_dma_transfer_spr_vram(md_vdp_get_sprite_base(), (void *)g_sprite_table,
 	                         sizeof(SprSlot) * transfer_count / 2, 2);
+	g_sprite_next = &g_sprite_table[0];
 }
 
 void md_spr_mask_line_full(int16_t y, uint8_t size)
@@ -76,6 +81,7 @@ void md_spr_mask_line_full(int16_t y, uint8_t size)
 	spr->xpos = 0;
 	spr->attr = 0;
 	g_sprite_count++;
+	g_sprite_next++;
 }
 
 void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
@@ -93,4 +99,6 @@ void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
 	spr->xpos = 1;
 	spr->attr = 0;
 	g_sprite_count += 2;
+	g_sprite_next++;
+	g_sprite_next++;
 }
