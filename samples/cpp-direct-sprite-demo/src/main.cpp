@@ -30,7 +30,7 @@ static constexpr uint16_t kPalette[16] =
 	PALRGB(0, 0, 0),
 };
 
-void main(void)
+int main(void)
 {
 	megadrive_init();
 
@@ -52,5 +52,5 @@ void main(void)
 		}
 		megadrive_finish();
 	}
-
+	return 0;
 }
