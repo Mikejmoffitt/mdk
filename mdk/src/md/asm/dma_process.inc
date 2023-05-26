@@ -5,6 +5,7 @@
 # void md_dma_process_cmd(DmaCmd *cmd)
 #
 	.global	md_dma_process_cmd
+
 .set	SPID, 4
 .set	ARG_CMD, SPID  /* pointer to DmaCmd */
 # Parameters in DmaCmd struct
@@ -72,6 +73,10 @@ run_dma_fill:
 	move.b	d1, d0
 	move.w	d0, VDPPORT_DATA
 	zbusrel
+	/* Wait for DMA to complete */
+dma_fill_vdp_wait:
+	btst	#1,VDPPORT_CTRL+1
+	bne	dma_fill_vdp_wait
 	rts
 
 
