@@ -3,9 +3,12 @@ Michael Moffitt */
 #include "md/spr.h"
 #include "md/dma.h"
 
-SprSlot g_sprite_table[SPR_MAX];
+#define SPR_STATIC_OFFS 128
+
+SprSlot g_sprite_table[MD_SPR_MAX];
 SprSlot *g_sprite_next;
 uint16_t g_sprite_count;
+
 static SprMode s_mode;
 
 void md_spr_init(SprMode mode)
@@ -80,6 +83,7 @@ void md_spr_mask_line_full(int16_t y, uint8_t size)
 	spr->size = size;
 	spr->xpos = 0;
 	spr->attr = 0;
+	spr->link = 7;
 	g_sprite_count++;
 	g_sprite_next++;
 }
@@ -93,12 +97,16 @@ void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
 	spr->size = size1;
 	spr->xpos = 0;
 	spr->attr = 0;
+	spr->link = 7;
 	spr++;
 	spr->ypos = y2 + SPR_STATIC_OFFS;
 	spr->size = size2;
 	spr->xpos = 1;
 	spr->attr = 0;
+	spr->link = 7;
 	g_sprite_count += 2;
 	g_sprite_next++;
 	g_sprite_next++;
 }
+
+#undef SPR_STATIC_OFFS

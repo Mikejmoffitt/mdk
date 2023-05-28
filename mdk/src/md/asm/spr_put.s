@@ -7,7 +7,7 @@
 	.extern	g_sprite_next
 
 .set	SPR_STATIC_OFFS, 128
-.set	SPR_MAX, 80
+.set	MD_SPR_MAX, 80
 
 #
 # void md_spr_put(int16_t x, int16_t y, uint16_t attr, uint16_t size)
@@ -24,7 +24,7 @@
 md_spr_put:
 # Check if sprite count hasn't been exceeded.
 	move.w	g_sprite_count, d1
-	cmpi.w	#SPR_MAX, d1
+	cmpi.w	#MD_SPR_MAX, d1
 	bcc	0f
 # Check if X coordinates are out of frame.
 	move.w	ARG_X(sp), d0              /* X position argument. */
@@ -67,7 +67,7 @@ md_spr_put:
 
 md_spr_put_st:
 	move.w	g_sprite_count, d1
-	cmpi.w	#SPR_MAX, d1
+	cmpi.w	#MD_SPR_MAX, d1
 	bcc	0f
 	movea.l	ARG_PARAM(sp), a0
 # Check if X coordinates are out of frame.
@@ -115,7 +115,7 @@ md_spr_put_st_fast:
 	movea.l	ARG_PARAM(sp), a0
 md_spr_put_st_fast_direct:
 	move.w	g_sprite_count, d1
-	cmpi.w	#SPR_MAX, d1
+	cmpi.w	#MD_SPR_MAX, d1
 	bcc	0f
 # Check if X coordinates are out of frame.
 	move.w	PRM_X(a0), d0              /* X position argument. */

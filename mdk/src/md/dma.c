@@ -180,7 +180,6 @@ void md_dma_process(void)
 {
 	md_vdp_wait_dma();
 	MD_SYS_BARRIER();
-	md_sys_z80_bus_req(/*wait=*/false);
 
 	const bool ints_enabled = md_sys_di();
 

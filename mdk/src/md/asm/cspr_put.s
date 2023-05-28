@@ -4,7 +4,7 @@
 	.extern	g_sprite_table
 	.extern	g_sprite_next
 
-.set	SPR_MAX, 80
+.set	MD_SPR_MAX, 80
 
 #
 # void md_cspr_put_st(const CSprParam *s);
@@ -22,8 +22,7 @@
 .set	PRM_X, 8
 .set	PRM_Y, 10
 .set	PRM_ATTR, 12
-.set	PRM_PRIO, 14
-.set	PRM_USE_DMA, 16
+.set	PRM_USE_DMA, 14
 
 # A1 - CSPR blob
 .set	CSPR_NAME, 0x00
@@ -76,10 +75,10 @@ md_cspr_put_st:
 
 	move.w	d7, d0
 	add.w	g_sprite_count, d0  /* d0 := final sprite index */
-	cmpi.w	#SPR_MAX, d0  /* compare d0 to max sprites */
+	cmpi.w	#MD_SPR_MAX, d0  /* compare d0 to max sprites */
 	bls	sprite_count_ok
 	/* Too many sprites; limit amount in d7. */
-	move.w	#SPR_MAX, d7  /* d7 takes max */
+	move.w	#MD_SPR_MAX, d7  /* d7 takes max */
 	sub.w	g_sprite_count, d7  /* d7 takes available slots */
 	ble	0f
 sprite_count_ok:

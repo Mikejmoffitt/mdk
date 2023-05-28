@@ -14,12 +14,11 @@ typedef struct CSprParam
 	uint16_t frame;         // Frame within cspr struct to display.
 	int16_t x, y;           // Screen coordinates.
 	uint16_t attr;          // Use SPR_ATTR macro with tile parameter set to 0.
-	uint16_t prio;          // Sorting priority. TODO (unimplemented)
-	int16_t use_dma;        // 
+	uint16_t use_dma;
 } CSprParam;
 
 // Draws a composite sprite using screen position coordinates.
-// `attr` should only have flip flags, priority, and palette set.
+// `attr` should only have flip flags and palette set.
 // You may use the SPR_ATTR macro with the tile set to 0.
 void md_cspr_put_st(const CSprParam *s);
 
