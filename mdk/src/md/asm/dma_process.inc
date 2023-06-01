@@ -52,9 +52,9 @@ md_dma_process_cmd:
 # The final source and destination addr writes set off the DMA.
 	move.b	PRM_SRC3(a0), d0
 	move.w	d0, VDPPORT_CTRL
-#	zbusreq
+	zbusreq
 	move.l	PRM_CTRL32(a0), VDPPORT_CTRL
-#	zbusrel
+	zbusrel
 # Disable DMA.
 	move.w	#VDP_REGST_MODESET2, d0
 	move.b	d1, d0  /* Restore MODE2 from before. */
@@ -70,9 +70,9 @@ run_dma_fill:
 	move.b	d0, d1
 	lsl.w	#8, d0
 	move.b	d1, d0
-#	zbusreq
+	zbusreq
 	move.w	d0, VDPPORT_DATA
-#	zbusrel
+	zbusrel
 	/* Wait for DMA to complete */
 dma_fill_vdp_wait:
 	btst	#1,VDPPORT_CTRL+1
