@@ -4,6 +4,8 @@
 	.extern	g_sprite_table
 	.extern	g_sprite_next
 
+	.include	"md/asm/cspr_types.inc"
+
 .set	MD_SPR_MAX, 80
 
 #
@@ -23,30 +25,6 @@
 .set	PRM_Y, 10
 .set	PRM_ATTR, 12
 .set	PRM_USE_DMA, 14
-
-# A1 - CSPR blob
-.set	CSPR_NAME, 0x00
-.set	CSPR_PALETTE, 0x10
-.set	CSPR_REF_COUNT, 0x30
-.set	CSPR_SPR_LIST_OFFSET, 0x32
-.set	CSPR_TILE_DATA_OFFSET, 0x36
-.set	CSPR_REFS, 0x40
-
-# A2 - Frame ref
-.set	REF_SPR_COUNT, 0
-.set	REF_SPR_LIST_OFFSET, 2
-.set	REF_TILE_SRC_OFFSET, 4
-.set	REF_TILE_WORDS, 6
-
-# A1 - Sprite data
-.set	SPR_DY, 0
-.set	SPR_SIZE, 2
-.set	SPR_TILE, 4
-.set	SPR_DX, 6
-.set	SPR_FDY, 8
-.set	SPR_RESERVED1, 10
-.set	SPR_RESERVED2, 12
-.set	SPR_FDX, 14
 
 md_cspr_put_st:
 # a0 := draw params (CSprParam)
@@ -182,31 +160,4 @@ cspr_draw_finished:
 	move.l	a3, g_sprite_next
 	movem.l	(sp)+, d2-d3/d7
 	movem.l	(sp)+, a2-a3
-	rts
-
-	.global	cspr_dma_setup_sub
-cspr_dma_setup_sub:
-	move.w	d1, -(sp)
-	movem.l	a0-a1, -(sp)
-	moveq	#2, d0
-	move.l	d0, -(sp)  /* stride */
-
-	move.w	REF_TILE_WORDS(a2), d0
-	move.l	d0, -(sp)  /* words */
-
-	adda.l	CSPR_TILE_DATA_OFFSET(a1), a1
-	moveq	#0, d0
-	move.w	REF_TILE_SRC_OFFSET(a2), d0
-	lsl.l	#5, d0  /* 32 bytes per tile */
-	adda.l	d0, a1
-	move.l	a1, -(sp)  /* source data */
-
-	moveq	#0, d0
-	move.w	d1, d0
-	move.l	d0, -(sp)  /* dest vram */
-
-	bsr	md_dma_transfer_vram
-	lea	0x10(sp), sp
-	movem.l	(sp)+, a0-a1
-	move.w	(sp)+, d1
 	rts

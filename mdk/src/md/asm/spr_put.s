@@ -41,11 +41,10 @@ md_spr_put:
 	move.w	ARG_Y(sp), d1
 	addi.w	#SPR_STATIC_OFFS, d1
 	move.w	d1, (a1)+
-	move.w	ARG_SIZE(sp), d1  /* only lower byte is actually used */
-	move.b	d1, (a1)         /* to avoid overwriting link field. */
+	move.w	ARG_SIZE(sp), (a1)  /* no increment to avoid touching link */
 # Attribute, X position.
 	move.w	ARG_ATTR(sp), d0
-	swap	d0  /* d0 how has attr in high word and x in low word. */
+	swap	d0  /* d0 now has attr in high word and x in low word. */
 	addq	#2, a1
 	move.l	d0, (a1)+
 	move.l	a1, g_sprite_next
@@ -63,7 +62,6 @@ md_spr_put:
 .set	PRM_Y, 2
 .set	PRM_ATTR, 4
 .set	PRM_SIZE, 6
-.set	PRM_PRIO, 7
 
 md_spr_put_st:
 	move.w	g_sprite_count, d1
@@ -85,12 +83,10 @@ md_spr_put_st:
 	move.w	PRM_Y(a0), d1
 	addi.w	#SPR_STATIC_OFFS, d1
 	move.w	d1, (a1)+
-	move.b	PRM_SIZE(a0), d1
-	move.b	d1, (a1)         /* to avoid overwriting link field. */
-	/* TODO: Use PRM_PRIO */
+	move.b	PRM_SIZE(a0), (a1)  /* no increment to avoid touching link */
 # Attribute, X position.
 	move.w	PRM_ATTR(a0), d0
-	swap	d0  /* d0 how has attr in high word and x in low word. */
+	swap	d0  /* d0 now has attr in high word and x in low word. */
 	addq	#2, a1
 	move.l	d0, (a1)+
 	move.l	a1, g_sprite_next
@@ -117,24 +113,17 @@ md_spr_put_st_fast_direct:
 	move.w	g_sprite_count, d1
 	cmpi.w	#MD_SPR_MAX, d1
 	bcc	0f
-# Check if X coordinates are out of frame.
-	move.w	PRM_X(a0), d0              /* X position argument. */
-	swap	d0
 # Set A1 to point at sprite slot and store updated sprite count.
 	addq.w	#1, d1
 	move.w	d1, g_sprite_count
 	movea.l	g_sprite_next, a1
 # Y position and link.
-	move.w	PRM_Y(a0), d1
-	move.w	d1, (a1)+
-	move.b	PRM_SIZE(a0), d1
-	move.b	d1, (a1)         /* to avoid overwriting link field. */
-	/* TODO: Use PRM_PRIO */
+	move.w	PRM_Y(a0), (a1)+
+	move.b	PRM_SIZE(a0), (a1)  /* no increment to avoid touching link */
 # Attribute, X position.
-	move.w	PRM_ATTR(a0), d0
-	swap	d0  /* d0 how has attr in high word and x in low word. */
 	addq	#2, a1
-	move.l	d0, (a1)+
+	move.w	PRM_ATTR(a0), (a1)+
+	move.w	PRM_X(a0), (a1)+
 	move.l	a1, g_sprite_next
 0:
 	rts
