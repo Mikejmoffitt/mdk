@@ -41,7 +41,7 @@ md_spr_put:
 	move.w	ARG_Y(sp), d1
 	addi.w	#SPR_STATIC_OFFS, d1
 	move.w	d1, (a1)+
-	move.w	ARG_SIZE(sp), (a1)  /* no increment to avoid touching link */
+	move.b	ARG_SIZE+1(sp), (a1)  /* no increment to avoid touching link */
 # Attribute, X position.
 	move.w	ARG_ATTR(sp), d0
 	swap	d0  /* d0 now has attr in high word and x in low word. */
