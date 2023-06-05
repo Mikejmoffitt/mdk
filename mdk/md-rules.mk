@@ -77,7 +77,8 @@ COMMON_FLAGS += -ffunction-sections -fdata-sections -fconserve-stack
 COMMON_FLAGS += -fwrapv
 COMMON_FLAGS += -fno-gcse
 COMMON_FLAGS += -fms-extensions
-COMMON_FLAGS += -fno-web -fno-unit-at-a-time -flto
+COMMON_FLAGS += -fno-web -fno-unit-at-a-time
+#COMMON_FLAGS += -flto
 COMMON_FLAGS += -I$(SRCDIR) -I$(MDKSRCDIR) -I.
 COMMON_FLAGS += -D$(TARGET_SYSTEM)
 
