@@ -257,8 +257,6 @@ Interrupts and Exceptions
 
 They are called safely from an interrupt context, with register clobber protection.
 
-If you are a geek and wrote an interrupt handler in assembly, and know how to safely treat registers, you may call `md_irq_register_unsafe()` instead.
-
 The vertical blank ISR clears a flag related to frame timing, and then calls the callback if it is there. Registering a callback will not interfere with normal operation.
 
 Sound

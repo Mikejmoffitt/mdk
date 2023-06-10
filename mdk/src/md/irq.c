@@ -32,14 +32,3 @@ void md_irq_register(MdIrqType type, void (*function_ptr)(void))
 
 	if (ints_were_enabled) md_sys_ei();
 }
-
-void md_irq_register_unsafe(MdIrqType type, void (*function_ptr)(void))
-{
-	// Don't set the magic no-clobber bit if the intent is to unregister.
-	if (function_ptr != NULL)
-	{
-		uint32_t *ptr_as_uint32 = (uint32_t *)function_ptr;
-		*ptr_as_uint32 |= IRQ_NO_CLOBBER_FLAG_MASK;
-	}
-	md_irq_register(type, function_ptr);
-}
