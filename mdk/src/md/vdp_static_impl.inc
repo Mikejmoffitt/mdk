@@ -323,6 +323,11 @@ static inline void md_vdp_set_interlace_mode(VdpInterlaceMode mode)
 	VDP_SET(VDP_MODESET4, VDP_MODESET4_LSM1, mode == VDP_INTERLACE_DOUBLE);
 }
 
+static inline void md_vdp_set_128k_vram_mode(bool enabled)
+{
+	VDP_SET(VDP_MODESET2, VDP_MODESET2_VR128, enabled);
+}
+
 static inline void md_vdp_set_vs_clk_output(bool enabled)
 {
 	VDP_SET(VDP_MODESET4, VDP_MODESET4_VSCLK, enabled);

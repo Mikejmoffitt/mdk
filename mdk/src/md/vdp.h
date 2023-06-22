@@ -202,6 +202,9 @@ static inline void md_vdp_set_left_column_blank(bool enabled);
 // Enable or disable one of the interlaced modes.
 static inline void md_vdp_set_interlace_mode(VdpInterlaceMode mode);
 
+// Enables 128K VRAM mode. Not advised for stock MD / Genesis / C2 systems.
+static inline void md_vdp_set_128k_vram_mode(bool enabled);
+
 // Output a dot clock signal on the VDP's vertical sync pin. This is used as a
 // pixel data latch on System 18 and System C/C2.
 static inline void md_vdp_set_vs_clk_output(bool enabled);
