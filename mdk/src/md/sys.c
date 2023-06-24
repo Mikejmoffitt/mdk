@@ -9,8 +9,6 @@ bool g_md_sys_ints_enabled __attribute__ ((aligned(2)));
 void md_sys_init(void)
 {
 #ifndef MDK_TARGET_C2
-	md_tmss_init();
-
 	static const uint8_t s_z80_stub_program[] =
 	{
 		0xF3,       // di

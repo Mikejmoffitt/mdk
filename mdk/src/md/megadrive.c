@@ -6,7 +6,6 @@ Michael Moffitt */
 #include "md/io.h"
 #include "md/spr.h"
 #include "md/sysc_vctrl.h"
-#include "md/tmss.h"
 #include <stdlib.h>
 
 void megadrive_init(void)

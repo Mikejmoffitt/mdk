@@ -25,14 +25,14 @@ _v_table:
 	.long	0x1000000
 	/* reset vector; entry point */
 	.long	start
-	/* access fault */
-	.long	_v_access_fault
-	/* access error */
-	.long	_v_access_error
+	/* bus error */
+	.long	_v_bus_error
+	/* address error */
+	.long	_v_address_error
 	/* illegal instruction */
 	.long	_v_illegal_instruction
 	/* divide by zero error */
-	.long	_v_di_v_zero
+	.long	_v_div_zero
 	/* CHK out of bounds */
 	.long	_v_chk
 	/* TRAPV with overflow set */
@@ -114,57 +114,85 @@ _v_table:
 
 _start:
 start:
+	move.l	(0x000000).l, sp
 	/* disable ints */
 	move.w	#0x2700, sr
 
-	/* set up SP */
-	move.l	(0x000000).l, sp
+	/* Shut up PSG - On my VA0 units it defaults to a loud noise. */
+	lea	0xC00011, a0
+	move.b	#0x9F, d0  /* Channel 0 att 15 */
+	move.b	#0x20, d1  /* Channel offset */
+	move.b	d0, (a0)
+	add.b	d1, d0
+	move.b	d0, (a0)
+	add.b	d1, d0
+	move.b	d0, (a0)
+	add.b	d1, d0
+	move.b	d0, (a0)
 
+	/* Initialize TMSS, if relevant */
+.ifndef MDK_SYSTEM_C2
+	move.b	0xA10001, d0
+	andi.b	#0x0F, d0
+	beq	2f
+	move.l	#0x53454741, 0xA14000
+2:
+.endif
+
+	/* Test RAM */
 	/* clear WRAM */
 	move.l	#0x00FF0000, a4
-	move.w	#0x3FFF, d7
-	moveq	#0, d0
-.clr_loop:
-	move.l	d0, (a4)+
-	dbra	d7, .clr_loop
+	move.w	#0x8000 - 1, d7
+	move.w	#0x5555, d0
+wram_test_loop1:
+	move.w	d0, (a4)
+	cmp.w	(a4)+, d0
+	bne	wram_failed
+	dbra	d7, wram_test_loop1
 
-	/* copy data to work RAM */
-	lea	_stext, a0
-	lea	0x00FF0000, a1
-	move.l	#_sdata, d7
+	move.l	#0x00FF0000, a4
+	move.w	#0x8000 - 1, d7
+	move.w	#0xAAAA, d0
+wram_test_loop2:
+	move.w	d0, (a4)
+	cmp.w	(a4)+, d0
+	bne	wram_failed
+	dbra	d7, wram_test_loop2
+	bra	softreset
 
-	/* last byte init fix */
-	addq.l	#1, d7
-	lsr.l	#1, d7
-	beq	.no_copy
+wram_failed:
+	moveq	#7, d0
+	jmp	md_error_display
 
-	subq.w	#1, d7
-
-.copy_var:
-	move.w	(a0)+, (a1)+
-	dbra	d7, .copy_var
-
-.no_copy:
-	move.l	(0x000000).l, sp
-	jmp	main
-
-	.global	softreset
 softreset:
+	bra	md_crt0_begin
 
-	jmp	start
 
-/* Code is included here explicitly so it is always in low ROM. */
+.include	"md/asm/crt0.inc"
 .include	"md/asm/dma_process.inc"
 .include	"md/asm/sram.inc"
 
-_v_access_fault:
-_v_access_error:
+_v_bus_error:
+	moveq	#0, d0
+	jmp	md_error_display
+_v_address_error:
+	moveq	#1, d0
+	jmp	md_error_display
 _v_illegal_instruction:
-_v_di_v_zero:
+	moveq	#2, d0
+	jmp	md_error_display
+_v_div_zero:
+	moveq	#3, d0
+	jmp	md_error_display
 _v_chk:
+	moveq	#4, d0
+	jmp	md_error_display
 _v_trapv:
+	moveq	#5, d0
+	jmp	md_error_display
 _v_privelege:
-	jmp	softreset
+	moveq	#6, d0
+	jmp	md_error_display
 
 _v_trace:
 _v_unused_irq:

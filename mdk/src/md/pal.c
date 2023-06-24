@@ -70,72 +70,72 @@ void md_pal_poll(void)
 	// consecutive palette lines can be uploaded in one DMA transfer.
 	switch (s_dirty)
 	{
-		case 0x0:
+		case 0x0:  // ....
 			break;
 
-		case 0x1:
+		case 0x1:  // 0...
 			md_dma_transfer_cram(0, &g_palette[0], 16, 2);
 			break;
 
-		case 0x2:
+		case 0x2:  // .1..
 			md_dma_transfer_cram(32, &g_palette[16], 16, 2);
 			break;
 
-		case 0x3:
+		case 0x3:  // 01..
 			md_dma_transfer_cram(0, &g_palette[0], 32, 2);
 			break;
 
-		case 0x4:
+		case 0x4:  // ..2.
 			md_dma_transfer_cram(64, &g_palette[32], 16, 2);
 			break;
 
-		case 0x5:
+		case 0x5:  // 0.2.
 			md_dma_transfer_cram(0, &g_palette[0], 16, 2);
 			md_dma_transfer_cram(64, &g_palette[32], 16, 2);
 			break;
 
-		case 0x6:
+		case 0x6:  // .12.
 			md_dma_transfer_cram(32, &g_palette[16], 16, 2);
 			md_dma_transfer_cram(64, &g_palette[32], 16, 2);
 			break;
 
-		case 0x7:
+		case 0x7:  // 012.
 			md_dma_transfer_cram(0, &g_palette[0], 48, 2);
 			break;
 
-		case 0x8:
+		case 0x8:  // ...3
 			md_dma_transfer_cram(96, &g_palette[48], 16, 2);
 			break;
 
-		case 0x9:
+		case 0x9:  // 0..3
 			md_dma_transfer_cram(96, &g_palette[48], 16, 2);
 			md_dma_transfer_cram(0, &g_palette[0], 16, 2);
 			break;
 
-		case 0xA:
+		case 0xA:  // .1.3
 			md_dma_transfer_cram(96, &g_palette[48], 16, 2);
 			md_dma_transfer_cram(32, &g_palette[16], 16, 2);
 			break;
 
-		case 0xB:
+		case 0xB:  // 01.3
 			md_dma_transfer_cram(96, &g_palette[48], 16, 2);
 			md_dma_transfer_cram(0, &g_palette[0], 32, 2);
 			break;
 
-		case 0xC:
+		case 0xC:  // ..23
 			md_dma_transfer_cram(64, &g_palette[48], 32, 2);
 			break;
 
-		case 0xD:
+		case 0xD:  // 0.23
 			md_dma_transfer_cram(64, &g_palette[48], 32, 2);
 			md_dma_transfer_cram(0, &g_palette[0], 16, 2);
 			break;
 
-		case 0xE:
+		case 0xE:  // .123
 			md_dma_transfer_cram(32, &g_palette[48], 48, 2);
 			break;
 
-		case 0xF:
+		case 0xF:  // 0123
 			md_dma_transfer_cram(0, &g_palette[0], 64, 2);
 			break;
 	}

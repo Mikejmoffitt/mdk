@@ -1,12 +1,18 @@
 .extern	g_md_vdp_regs  /* uint8_t [0x18] */
 .extern	g_md_vdp_debug_regs  /* uint16_t [0x10] */
 
+# VDP MMIO
 .set	VDP_LOC_BASE, 0xC00000
 .set	VDPPORT_DATA, VDP_LOC_BASE
 .set	VDPPORT_CTRL, VDP_LOC_BASE + 4
 .set	VDPPORT_HVCOUNT, VDP_LOC_BASE + 8
 .set	VDPPORT_DBG_SEL, VDP_LOC_BASE + 0x18
 .set	VDPPORT_DBG_DATA, VDP_LOC_BASE + 0x1C
+
+# VDP command constants
+.set	VRAM_ADDR_CMD,  0x40000000
+.set	CRAM_ADDR_CMD,  0xC0000000
+.set	VSRAM_ADDR_CMD, 0x40000010
 
 # OR these with an 8-bit value and write to the control port.
 .set	VDP_REGST_MODESET1,  0x8000
@@ -34,7 +40,7 @@
 .set	VDP_REGST_DMASRC2,   0x9600
 .set	VDP_REGST_DMASRC3,   0x9700
 
-# Indices into the VDP regisetr array.
+# Indices into the VDP register array.
 .set	VDP_MODESET1,  0x00
 .set	VDP_MODESET2,  0x01
 .set	VDP_SCRABASE,  0x02
@@ -67,4 +73,22 @@
 	.macro	dma_wait
 9:	btst	#1, VDPPORT_DATA+1
 	bne	9b
+	.endm
+
+# Macro for VDP address calculation (https://plutiedef.com/writing-video)
+
+	.macro	md_set_xram_addr	addr, cmd
+	move.l	#(((\addr)&0x3FFF)<<16) | (((\addr)&0xC000)>>14) | (\cmd), (VDPPORT_CTRL)
+	.endm
+
+	.macro	md_set_vram_addr	addr
+	md_set_xram_addr	\addr, VRAM_ADDR_CMD
+	.endm
+
+	.macro	md_set_cram_addr	addr
+	md_set_xram_addr	\addr, CRAM_ADDR_CMD
+	.endm
+
+	.macro	md_set_vsram_addr	addr
+	md_set_xram_addr	\addr, VSRAM_ADDR_CMD
 	.endm

@@ -95,6 +95,10 @@ CPPFLAGS += -std=gnu++2b
 ASFLAGS := -m68000 --bitwise-or -I$(SRCDIR) -I$(OBJDIR) -I$(MDKSRCDIR)
 ASFLAGS += --register-prefix-optional
 
+ifeq ($(TARGET_SYSTEM),MDK_TARGET_C2)
+ASFLAGS += --defsym MDK_TARGET_C2=1
+endif
+
 # Linker.
 GCC_VER := $(shell $(CC) -dumpversion)
 LDFLAGS += -nostartfiles
