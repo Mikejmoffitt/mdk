@@ -275,6 +275,154 @@ vdp_init_reg_tbl:
 	dc.w	VDP_REGST_HINTC | 0xFF
 	dc.w	0  /* end marker */
 
+# TODO: Checksum
+
+
+#
+# Vectors
+#
+
+startup_error_display:
+	lea	startup_error_display_init_post, a6
+	bra	startup_vdp_init
+startup_error_display_init_post:
+	jsr	md_error_exception_display
+	lea	startup_forever, a6
+	jmp	md_error_startup_start_display
+
+_v_bus_error:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#0, d0
+	bra	startup_error_display
+_v_address_error:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#1, d0
+	bra	startup_error_display
+_v_illegal_instruction:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#2, d0
+	bra	startup_error_display
+_v_div_zero:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#3, d0
+	bra	startup_error_display
+_v_chk:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#4, d0
+	bra	startup_error_display
+_v_trapv:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#5, d0
+	bra	startup_error_display
+_v_privelege:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#6, d0
+	bra	startup_error_display
+_v_trace:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#7, d0
+	bra	startup_error_display
+_v_unused_irq:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#8, d0
+	bra	startup_error_display
+_v_aline_emu:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#9, d0
+	bra	startup_error_display
+_v_fline_emu:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#10, d0
+	bra	startup_error_display
+_v_reserved:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#11, d0
+	bra	startup_error_display
+_v_coproc_violation:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#12, d0
+	bra	startup_error_display
+_v_format:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#13, d0
+	bra	startup_error_display
+_v_uninit:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#14, d0
+	bra	startup_error_display
+_v_spurious:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#15, d0
+	bra	startup_error_display
+_v_trap0x0:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#16, d0
+	bra	startup_error_display
+_v_trap0x1:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#17, d0
+	bra	startup_error_display
+_v_trap0x2:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#18, d0
+	bra	startup_error_display
+_v_trap0x3:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#19, d0
+	bra	startup_error_display
+_v_trap0x4:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#20, d0
+	bra	startup_error_display
+_v_trap0x5:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#21, d0
+	bra	startup_error_display
+_v_trap0x6:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#22, d0
+	bra	startup_error_display
+_v_trap0x7:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#23, d0
+	bra	startup_error_display
+_v_trap0x8:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#24, d0
+	bra	startup_error_display
+_v_trap0x9:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#25, d0
+	bra	startup_error_display
+_v_trap0xa:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#26, d0
+	bra	startup_error_display
+_v_trap0xb:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#27, d0
+	bra	startup_error_display
+_v_trap0xc:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#28, d0
+	bra	startup_error_display
+_v_trap0xd:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#29, d0
+	bra	startup_error_display
+_v_trap0xe:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#30, d0
+	bra	startup_error_display
+_v_trap0xf:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#31, d0
+	bra	startup_error_display
+_v_unimp:
+	movem.l	d0-d7/a0-a7, -(sp)
+	moveq	#32, d0
+	bra	startup_error_display
+
 #
 # Graphics
 #
@@ -351,121 +499,6 @@ md_error_palette:
 
 md_error_font:
 	.incbin	"md/asm/font.bin"
-
-# TODO: Checksum
-
-
-#
-# Vectors
-#
-
-_v_bus_error:
-	moveq	#0, d0
-	bra	startup_error_display
-_v_address_error:
-	moveq	#1, d0
-	bra	startup_error_display
-_v_illegal_instruction:
-	moveq	#2, d0
-	bra	startup_error_display
-_v_div_zero:
-	moveq	#3, d0
-	bra	startup_error_display
-_v_chk:
-	moveq	#4, d0
-	bra	startup_error_display
-_v_trapv:
-	moveq	#5, d0
-	bra	startup_error_display
-_v_privelege:
-	moveq	#6, d0
-	bra	startup_error_display
-_v_trace:
-	moveq	#7, d0
-	bra	startup_error_display
-_v_unused_irq:
-	moveq	#8, d0
-	bra	startup_error_display
-_v_aline_emu:
-	moveq	#9, d0
-	bra	startup_error_display
-_v_fline_emu:
-	moveq	#10, d0
-	bra	startup_error_display
-_v_reserved:
-	moveq	#11, d0
-	bra	startup_error_display
-_v_coproc_violation:
-	moveq	#12, d0
-	bra	startup_error_display
-_v_format:
-	moveq	#13, d0
-	bra	startup_error_display
-_v_uninit:
-	moveq	#14, d0
-	bra	startup_error_display
-_v_spurious:
-	moveq	#15, d0
-	bra	startup_error_display
-_v_trap0x0:
-	moveq	#16, d0
-	bra	startup_error_display
-_v_trap0x1:
-	moveq	#17, d0
-	bra	startup_error_display
-_v_trap0x2:
-	moveq	#18, d0
-	bra	startup_error_display
-_v_trap0x3:
-	moveq	#19, d0
-	bra	startup_error_display
-_v_trap0x4:
-	moveq	#20, d0
-	bra	startup_error_display
-_v_trap0x5:
-	moveq	#21, d0
-	bra	startup_error_display
-_v_trap0x6:
-	moveq	#22, d0
-	bra	startup_error_display
-_v_trap0x7:
-	moveq	#23, d0
-	bra	startup_error_display
-_v_trap0x8:
-	moveq	#24, d0
-	bra	startup_error_display
-_v_trap0x9:
-	moveq	#25, d0
-	bra	startup_error_display
-_v_trap0xa:
-	moveq	#26, d0
-	bra	startup_error_display
-_v_trap0xb:
-	moveq	#27, d0
-	bra	startup_error_display
-_v_trap0xc:
-	moveq	#28, d0
-	bra	startup_error_display
-_v_trap0xd:
-	moveq	#29, d0
-	bra	startup_error_display
-_v_trap0xe:
-	moveq	#30, d0
-	bra	startup_error_display
-_v_trap0xf:
-	moveq	#31, d0
-	bra	startup_error_display
-_v_unimp:
-	moveq	#32, d0
-	bra	startup_error_display
-
-startup_error_display:
-	lea	startup_error_display_init_post, a6
-	bra	startup_vdp_init
-startup_error_display_init_post:
-	jsr	md_error_exception_display
-	lea	startup_forever, a6
-	jmp	md_error_startup_start_display
 
 #
 # Other routines kept explicitly in low ROM
