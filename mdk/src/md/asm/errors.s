@@ -1,74 +1,97 @@
-	.global	md_error_display
+#
+# Error and exception handling routines.
+#
+#
+# VDP initialization and work RAM error display routines do not use any RAM, so
+# as to be suitable for a situation where work RAM is not operational.
+#
+
+.set	MD_ERROR_ATTR_ADDR,  0x0000
+.set	MD_ERROR_ATTR_OK,    0x1000
+.set	MD_ERROR_ATTR_TITLE, 0x2000
+.set	MD_ERROR_ATTR_NG,    0x3000
+.set	MD_ERROR_VRAM_TITLE, 0x3082
+.set	MD_ERROR_VRAM_START, 0x3082+0xC00
+.set	MD_ERROR_VRAM_REGS,  0x3082+0x300
+
+	.global	md_error_startup_wram_check_display
+	.global	md_error_startup_wram_ok_display
+	.global	md_error_startup_wram_ng_display
+	.global	md_error_startup_start_display
+	.global	md_error_exception_display
+
 	.include	"md/asm/vdp_defs.inc"
 
-vdp_init_reg_tbl:
-	dc.w	VDP_REGST_MODESET1 | 0x04
-	dc.w	VDP_REGST_MODESET2 | 0x04
-	dc.w	VDP_REGST_MODESET3 | 0x00
-.ifdef MDK_SYSTEM_C2
-	dc.w	VDP_REGST_MODESET4 | 0x51
-.else
-	dc.w	VDP_REGST_MODESET4 | 0x81
-.endif	
-	dc.w	VDP_REGST_SCRABASE | (0x2000 >> 10)
-	dc.w	VDP_REGST_SCRBBASE | (0x4000 >> 13)
-	dc.w	VDP_REGST_SPRBASE  | 0x78
-	dc.w	VDP_REGST_SCRWBASE | (0x3000 >> 10)
-	dc.w	VDP_REGST_HSCRBASE | 0x3D
+#
+# Error display entry points
+#
 
-	dc.w	VDP_REGST_PLANESIZE | 0x01
-	dc.w	VDP_REGST_WINHORI | 0x1F
-	dc.w	VDP_REGST_WINVERT | 0x1F
-	dc.w	VDP_REGST_AUTOINC | 0x02
-	dc.w	VDP_REGST_BGCOL | 0x00
-	dc.w	VDP_REGST_HINTC | 0xFF
-	dc.w	0  /* end marker */
-	
-
-# d0 = error type
-md_error_display:
-	movem.l	d0-d7/a0-a7, -(sp)
+# a6 = return point
+md_error_startup_wram_check_display:
 	lea	VDPPORT_DATA, a4
 	lea	VDPPORT_CTRL, a5
+	/* Enable display prematurely as this function returns */
+	move.w	#VDP_REGST_MODESET2 | 0x44, (a5)
+	lea	str_wram_check, a0
+	move.w	#MD_ERROR_ATTR_TITLE, d0
+	move.w	#MD_ERROR_VRAM_TITLE, d1
+	bra	string_print_a0
+str_wram_check:
+	.ascii	"Testing Work RAM...\0"
+	.align	2
 
-	/* Basic VDP Init */
-	lea	vdp_init_reg_tbl, a0
-reg_init_copy_top:
-	move.w	(a0)+, d1
-	bpl	reg_init_done
-	move.w	d1, (a5)
-	bra	reg_init_copy_top
-reg_init_done:
+# a6 = return
+md_error_startup_wram_ok_display:
+	lea	VDPPORT_DATA, a4
+	lea	VDPPORT_CTRL, a5
+	lea	str_wram_ok, a0
+	move.w	#MD_ERROR_ATTR_OK, d0
+	move.w	#MD_ERROR_VRAM_TITLE+(20*2), d1
+	bra	string_print_a0
+str_wram_ok:
+	.ascii	"OK\0"
+	.align	2
 
-	/* Clear VRAM */
-	md_set_vram_addr 0x0000
-	moveq	#0, d1
-	move.w	#(0x10000/4) - 1, d7
-vdp_mem_clear_top:
-	move.l	d1, (a4)
-	dbf	d7, vdp_mem_clear_top
+# a6 = return
+md_error_startup_wram_ng_display:
+	lea	VDPPORT_DATA, a4
+	lea	VDPPORT_CTRL, a5
+	lea	str_wram_ng, a0
+	move.w	#MD_ERROR_ATTR_NG, d0
+	move.w	#MD_ERROR_VRAM_TITLE+(20*2), d1
+	bra	string_print_a0
+str_wram_ng:
+	.ascii	"NG\0"
+	.align	2
 
-	/* Write palette for font */
-	md_set_cram_addr 0x0000
-	moveq	#(128 / (4 * 4)) - 1, d7
-	lea	md_error_palette, a0
-pal_copy_top:
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	dbf	d7, pal_copy_top
+# a6 = return
+md_error_startup_checksum_error_display:
+	lea	VDPPORT_DATA, a4
+	lea	VDPPORT_CTRL, a5
+	lea	str_checksum_error, a0
+	move.w	#MD_ERROR_ATTR_TITLE, d0
+	move.w	#MD_ERROR_VRAM_TITLE, d1
+	bra	string_print_a0
+str_checksum_error:
+	.ascii	"ROM Checksum Error\0"
+	.align	2
 
-	/* Copy font into VRAM */
-	md_set_vram_addr 0x0000
-	lea	md_error_font, a0
-	move.w	#((12 * 16 * 32) / (4 * 4)) - 1, d7
-vram_copy_top:
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	dbf	d7, vram_copy_top
+# a6 = return
+md_error_startup_start_display:
+	lea	VDPPORT_DATA, a4
+	lea	VDPPORT_CTRL, a5
+	lea	str_press_start, a0
+	move.w	#MD_ERROR_ATTR_ADDR, d0
+	move.w	#MD_ERROR_VRAM_START, d1
+	bra	string_print_a0
+str_press_start:
+	.ascii	"Press START to reset.\0"
+	.align	2
+
+# d0 = error type
+md_error_exception_display:
+	lea	VDPPORT_DATA, a4
+	lea	VDPPORT_CTRL, a5
 
 	/* Write error message using d0 as index */
 	add.w	d0, d0
@@ -84,29 +107,47 @@ str_tbl:
 	dc.l	str_chk
 	dc.l	str_trapv
 	dc.l	str_privelege
-	dc.l	str_wram_error
-	dc.l	str_checksum_error
+	dc.l	str_trace
+	dc.l	str_unused_irq
+	dc.l	str_aline_emu
+	dc.l	str_fline_emu
+	dc.l	str_reserved
+	dc.l	str_coproc_violation
+	dc.l	str_format
+	dc.l	str_uninit
+	dc.l	str_spurious
+	dc.l	str_trap0x0
+	dc.l	str_trap0x1
+	dc.l	str_trap0x2
+	dc.l	str_trap0x3
+	dc.l	str_trap0x4
+	dc.l	str_trap0x5
+	dc.l	str_trap0x6
+	dc.l	str_trap0x7
+	dc.l	str_trap0x8
+	dc.l	str_trap0x9
+	dc.l	str_trap0xa
+	dc.l	str_trap0xb
+	dc.l	str_trap0xc
+	dc.l	str_trap0xd
+	dc.l	str_trap0xe
+	dc.l	str_trap0xf
+	dc.l	str_unimp
 
 prmsg:
-	cmpi.w	#7*4, d0
-	bcs	full_regdump
+	bsr	md_error_print_reg_label_sub
+	move.w	#VDP_REGST_MODESET2 | 0x44, (a5)
+	rts
 
-	/* just print the message */
-	move.l	(a0), a0
-	move.w	#0x2000, d0
-	move.w	#0x3082, d1
-	lea	enable_display, a6
-	bra	string_print_a0
-
-full_regdump:
+md_error_print_reg_label_sub:
 	/* print message */
 	move.l	(a0), a0
-	move.w	#0x2000, d0
-	move.w	#0x3082, d1
+	move.w	#MD_ERROR_ATTR_TITLE, d0
+	move.w	#MD_ERROR_VRAM_TITLE, d1
 	bsr	string_print_a0_safe
 	/* Draw registers listing */
-	moveq	#0, d0
-	move.w	#0x3482, d1
+	move.w	#MD_ERROR_ATTR_OK, d0
+	move.w	#MD_ERROR_VRAM_REGS, d1
 	lea	str_reg_d0, a0
 	bsr	string_print_a0_safe
 	add.w	#0x0100, d1
@@ -130,7 +171,8 @@ full_regdump:
 	add.w	#0x0100, d1
 	lea	str_reg_d7, a0
 	bsr	string_print_a0_safe
-	move.w	#0x3482+0x24, d1
+
+	move.w	#MD_ERROR_VRAM_REGS+0x24, d1
 	lea	str_reg_a0, a0
 	bsr	string_print_a0_safe
 	add.w	#0x0100, d1
@@ -154,15 +196,10 @@ full_regdump:
 	add.w	#0x0100, d1
 	lea	str_reg_a7, a0
 	bsr	string_print_a0_safe
-post_reglabels:
 
-enable_display:
-
-	/* Enable display */
-	move.w	#VDP_REGST_MODESET2 | 0x44, (a5)
-
-forever:
-	bra	forever
+#
+# Printing routines
+#
 
 # Wrapper for string_print_a0 that protects registers and uses the stack.
 string_print_a0_safe:
@@ -172,12 +209,13 @@ string_print_a0_safe:
 a0_safe_ret:
 	movem.l	(sp)+, d0-d3/a0-a2
 	rts
-	
 
 # String print requiring no RAM.
 # a0 = C string (null terminated)
 # d0 = attr (palette, etc)
 # d1 = vram address
+# a4 = VDPPORT_DATA
+# a5 = VDPPORT_CTRL
 # a6 = return address
 string_print_a0:
 	/* Set VRAM address */
@@ -190,7 +228,7 @@ string_print_a0:
 	move.w	d1, d2
 	ori.l	#VRAM_ADDR_CMD, d2
 	move.l	d2, d3
-	move.l	d2, (VDPPORT_CTRL)
+	move.l	d2, (a5)
 	move.l	a0, a2
 str_print1:
 	move.b	(a0)+, d0
@@ -206,7 +244,7 @@ str_print1_done:
 	swap	d2
 	addi.w	#0x80, d2  /* Next row */
 	swap	d2
-	move.l	d2, (VDPPORT_CTRL)
+	move.l	d2, (a5)
 str_print2:
 	move.b	(a2)+, d0
 	beq	str_print2_done
@@ -219,7 +257,10 @@ str_print2:
 	bra	str_print2
 str_print2_done:
 	jmp	(a6)
-	
+
+#
+# String data
+#
 
 str_bus_error:
 	.ascii	"Bus Error\0"
@@ -235,12 +276,60 @@ str_trapv:
 	.ascii	"TrapV Exception\0"
 str_privelege:
 	.ascii	"Priveleged Instruction\0"
-str_wram_error:
-	.ascii	"Work RAM Error\0"
 str_vram_error:
 	.ascii	"Video RAM Error\0"
-str_checksum_error:
-	.ascii	"ROM Checksum Error\0"
+str_trace:
+	.ascii	"Trace (Unimplemented)\0"
+str_unused_irq:
+	.ascii	"Unused IRQ\0"
+str_aline_emu:
+	.ascii	"A Line Emu\0"
+str_fline_emu:
+	.ascii	"F Line Emu\0"
+str_reserved:
+	.ascii	"Reserved\0"
+str_coproc_violation:
+	.ascii	"Coproc Violation\0"
+str_format:
+	.ascii	"Format\0"
+str_uninit:
+	.ascii	"Uninit\0"
+str_spurious:
+	.ascii	"Spurious Interrupt\0"
+str_trap0x0:
+	.ascii	"Trap $0\0"
+str_trap0x1:
+	.ascii	"Trap $1\0"
+str_trap0x2:
+	.ascii	"Trap $2\0"
+str_trap0x3:
+	.ascii	"Trap $3\0"
+str_trap0x4:
+	.ascii	"Trap $4\0"
+str_trap0x5:
+	.ascii	"Trap $5\0"
+str_trap0x6:
+	.ascii	"Trap $6\0"
+str_trap0x7:
+	.ascii	"Trap $7\0"
+str_trap0x8:
+	.ascii	"Trap $8\0"
+str_trap0x9:
+	.ascii	"Trap $9\0"
+str_trap0xa:
+	.ascii	"Trap $A\0"
+str_trap0xb:
+	.ascii	"Trap $B\0"
+str_trap0xc:
+	.ascii	"Trap $C\0"
+str_trap0xd:
+	.ascii	"Trap $D\0"
+str_trap0xe:
+	.ascii	"Trap $E\0"
+str_trap0xf:
+	.ascii	"Trap $f\0"
+str_unimp:
+	.ascii	"Unimplemented\0"
 
 str_reg_d0:
 	.ascii	"D0\0"
@@ -276,76 +365,3 @@ str_reg_a7:
 	.ascii	"A7\0"
 
 	.align	2
-
-md_error_palette:
-# white-cyan
-	dc.w	0x0000
-	dc.w	0x0EEE
-	dc.w	0x0EEC
-	dc.w	0x0EEA
-	dc.w	0x0EE8
-	dc.w	0x0EE6
-	dc.w	0x0EE4
-	dc.w	0x0EE2
-	dc.w	0x0EE0
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
-# yellow-green
-	dc.w	0x0000
-	dc.w	0x0EE0
-	dc.w	0x0CE2
-	dc.w	0x0AE4
-	dc.w	0x08E6
-	dc.w	0x06E8
-	dc.w	0x04EA
-	dc.w	0x02EC
-	dc.w	0x00EE
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
-# cyan-blue
-	dc.w	0x0000
-	dc.w	0x00EE
-	dc.w	0x00CE
-	dc.w	0x00AE
-	dc.w	0x008E
-	dc.w	0x006E
-	dc.w	0x004E
-	dc.w	0x002E
-	dc.w	0x000E
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
-# pink-blue
-	dc.w	0x0000
-	dc.w	0x0E2E
-	dc.w	0x0C2E
-	dc.w	0x0A2E
-	dc.w	0x082E
-	dc.w	0x062E
-	dc.w	0x042E
-	dc.w	0x022E
-	dc.w	0x002E
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
-
-md_error_font:
-	.incbin	"md/asm/font.bin"

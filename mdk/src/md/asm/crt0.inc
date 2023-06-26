@@ -1,8 +1,5 @@
 
 md_crt0_begin:
-	/* set up SP */
-	move.l	(0x000000).l, sp
-
 	/* clear WRAM */
 	move.l	#0x00FF0000, a4
 	move.w	#0x07FF, d7
@@ -19,21 +16,20 @@ md_crt0_begin:
 	dbra	d7, .clr_loop
 
 	/* copy data to work RAM */
-	lea	_stext, a0
+	lea	_stext, a0  /* Data follows text section */
 	lea	0x00FF0000, a1
-	move.l	#_sdata, d7
+	move.w	#_sdata, d7
+	beq	.no_data_copy
+	lsr.w	#1, d7
+	subq	#1, d7
 
-	/* last byte init fix */
-	addq.l	#1, d7
-	lsr.l	#1, d7
-	beq	1f
-
-	subq.w	#1, d7
-
-.copy_var:
+.copy_data:
 	move.w	(a0)+, (a1)+
-	dbra	d7, .copy_var
+	dbra	d7, .copy_data
 
-1:
+.no_data_copy:
+
+	/* set up SP */
+	move.l	(0x01000000).l, sp
 
 	jmp	main

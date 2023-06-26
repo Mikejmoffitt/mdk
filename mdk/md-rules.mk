@@ -186,7 +186,7 @@ $(PNG2CSP):
 $(PNGTO): $(UTILDIR)/image/pngto/pngto.c $(UTILDIR)/image/pngto/musl_getopt.c $(UTILDIR)/image/pngto/lodepng.c $(UTILDIR)/image/pngto/indexedimage.c
 	@$(CC_HOST) $^ -I $(UTILDIR)/image/pngto -o $@ -DLODEPNG_NO_COMPILE_ENCODER $(HOSTCFLAGS)
 
-$(OUTPUT_GEN): $(OUTPUT_ELF) $(BINPAD)
+$(OUTPUT_GEN): $(OUTPUT_ELF) $(BINPAD) $(MDKHEAD)
 	@bash -c 'printf " \e[36m[ PAD ]\e[0m ... --> $@\n"'
 	$(OBJCOPY) -O binary $< $@
 ifeq ($(TARGET_SYSTEM),MDK_TARGET_C2)

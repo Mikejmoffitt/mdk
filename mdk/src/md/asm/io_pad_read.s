@@ -14,7 +14,8 @@
 
 /* a0 points to pad cache in RAM we are updating.
    a1 points to the pad data port (byte address). */
-read_pad:
+	.global	md_io_read_pad
+md_io_read_pad:
 	/* First step - x1CBRLDU into d0 */
 	move.b	#0x40, (a1)  /* TH hi */
 	nop
@@ -114,10 +115,10 @@ md_io_poll:
 
 	lea	g_md_pad, a0
 	lea	IO_LOC_DATA, a1
-	bsr	read_pad
+	bsr	md_io_read_pad
 	lea	g_md_pad + 2, a0
 	lea	IO_LOC_DATA + 2, a1
-	bsr	read_pad
+	bsr	md_io_read_pad
 
 	/* Done with the ports, so release the Z80. */
 	move.w	#0x0000, (SYS_Z80_PORT_BUS).l  /* Z80 Bus Release */

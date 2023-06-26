@@ -1,5 +1,3 @@
-.include	"md/asm/vdp_defs.inc"
-.include	"md/asm/z80_defs.inc"
 
 #
 # void md_dma_process_cmd(DmaCmd *cmd)
