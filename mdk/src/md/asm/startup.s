@@ -151,7 +151,7 @@ softreset:
 	move.b	#0x00, (0xA10003).l  /* TH low */
 
 	/* Turn off display output */
-	move.w	#VDP_REGST_MODESET2 | 0x04, (VDPPORT_CTRL)
+	move.w	#VDP_REGST_MODESET2 | 0x14, (VDPPORT_CTRL)
 
 	/* Check for start button */
 	btst	#5, (0xA10003).l  /* Check start button */
@@ -254,7 +254,7 @@ vram_copy_top:
 
 vdp_init_reg_tbl:
 	dc.w	VDP_REGST_MODESET1 | 0x04
-	dc.w	VDP_REGST_MODESET2 | 0x04
+	dc.w	VDP_REGST_MODESET2 | 0x14
 	dc.w	VDP_REGST_MODESET3 | 0x00
 .ifdef MDK_SYSTEM_C2
 	dc.w	VDP_REGST_MODESET4 | 0x51

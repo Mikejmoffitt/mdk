@@ -19,12 +19,16 @@
 md_dma_process_cmd:
 # A0 holds the DMA command.
 	movea.l	ARG_CMD(sp), a0
+
+# NOTE(2023-06-29): Repeatedly enabling and disabling the DMA bit does not
+#                   appear to be necessary.
 # Turn on DMA bit.
-	move.b	g_md_vdp_regs+VDP_MODESET2, d1  /* storage of original MODE2 */
-	move.w	#VDP_REGST_MODESET2, d0
-	move.b	d1, d0
-	bset	#4, d0  /* DMA enable */
-	move.w	d0, VDPPORT_CTRL
+#	move.b	g_md_vdp_regs+VDP_MODESET2, d1  /* storage of original MODE2 */
+#	move.w	#VDP_REGST_MODESET2, d0
+#	move.b	d1, d0
+#	bset	#4, d0  /* DMA enable */
+#	move.w	d0, VDPPORT_CTRL
+
 # Set auto inc.
 	move.w	#VDP_REGST_AUTOINC, d0
 	move.b	PRM_STRIDE(a0), d0
@@ -53,10 +57,15 @@ md_dma_process_cmd:
 	zbusreq
 	move.l	PRM_CTRL32(a0), VDPPORT_CTRL
 	zbusrel
+
+# NOTE(2023-06-29): Repeatedly enabling and disabling the DMA bit does not
+#                   appear to be necessary.
 # Disable DMA.
-	move.w	#VDP_REGST_MODESET2, d0
-	move.b	d1, d0  /* Restore MODE2 from before. */
-	move.w	d0, VDPPORT_CTRL
+#	move.w	#VDP_REGST_MODESET2, d0
+#	move.b	d1, d0  /* Restore MODE2 from before. */
+#	move.w	d0, VDPPORT_CTRL
+
+
 # Mark the DMA command slot as inactive.
 	clr.w	PRM_OP(a0)
 	rts

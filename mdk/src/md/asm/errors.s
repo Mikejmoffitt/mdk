@@ -33,7 +33,7 @@ md_error_startup_wram_check_display:
 	lea	VDPPORT_DATA, a4
 	lea	VDPPORT_CTRL, a5
 	/* Enable display prematurely as this function returns */
-	move.w	#VDP_REGST_MODESET2 | 0x44, (a5)
+	move.w	#VDP_REGST_MODESET2 | 0x54, (a5)
 	lea	str_wram_check, a0
 	move.w	#MD_ERROR_ATTR_TITLE, d0
 	move.w	#MD_ERROR_VRAM_TITLE, d1
@@ -143,13 +143,13 @@ md_error_format_a:
 	bsr	md_error_print_ad_regs_sub
 	bsr	md_error_print_access_sub
 	bsr	md_error_print_srpc_sub
-	move.w	#VDP_REGST_MODESET2 | 0x44, (a5)
+	move.w	#VDP_REGST_MODESET2 | 0x54, (a5)
 	rts
 
 md_error_format_b:
 	bsr	md_error_print_ad_regs_sub
 	bsr	md_error_print_srpc_sub
-	move.w	#VDP_REGST_MODESET2 | 0x44, (a5)
+	move.w	#VDP_REGST_MODESET2 | 0x54, (a5)
 	rts
 	
 

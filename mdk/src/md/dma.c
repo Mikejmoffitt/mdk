@@ -176,6 +176,28 @@ void md_dma_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stri
 
 void md_dma_process_cmd(DmaCmd *cmd);  // dma_impl.s
 
+#ifdef MDK_FAKE_DMA_TEST_HACK
+static void dma_fake(DmaCmd *cmd)
+{
+	if (cmd->op != DMA_OP_TRANSFER && cmd->op != DMA_OP_SPR_TRANSFER)
+	{
+		md_dma_process_cmd(cmd);
+		return;
+	}
+	const uint32_t src_addr = (cmd->src_3 << 17) | (cmd->src_2 << 9) | (cmd->src_1 << 1);
+	const uint16_t *data = (const uint16_t *)src_addr;
+	const uint32_t ctrl = cmd->ctrl & ~(VDP_CTRL_DMA_BIT);
+	md_vdp_set_autoinc(cmd->stride);
+	VDPPORT_CTRL32 = ctrl;
+	const uint16_t len = (cmd->len_2 << 8) | cmd->len_1;
+	for (uint16_t i = 0; i < len; i++)
+	{
+		md_vdp_write(*data++);
+	}
+	cmd->op = DMA_OP_NONE;
+}
+#endif
+
 void md_dma_process(void)
 {
 	md_vdp_wait_dma();
@@ -187,7 +209,11 @@ void md_dma_process(void)
 	for (uint16_t i = 0; i < ARRAYSIZE(s_dma_prio_q_cmd); i++)
 	{
 		if (s_dma_prio_q_cmd[i].op == DMA_OP_NONE) break;
+#ifdef MDK_FAKE_DMA_TEST_HACK
+		dma_fake(&s_dma_prio_q_cmd[i]);
+#else
 		md_dma_process_cmd(&s_dma_prio_q_cmd[i]);
+#endif
 	}
 	s_dma_prio_q_idx = 0;
 
@@ -196,7 +222,11 @@ void md_dma_process(void)
 	{
 		DmaCmd *cmd = &s_dma_q[s_dma_q_read_idx];
 		s_dma_q_read_idx = (s_dma_q_read_idx + 1) % DMA_QUEUE_DEPTH;
+#ifdef MDK_FAKE_DMA_TEST_HACK
+		dma_fake(cmd);
+#else
 		md_dma_process_cmd(cmd);
+#endif
 	}
 
 	if (ints_enabled) md_sys_ei();
