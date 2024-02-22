@@ -39,7 +39,7 @@ int main(void)
 	md_dma_transfer_vram(32, res_ball_bin, sizeof(res_ball_bin) / 2, 2);
 	md_pal_upload(0, kPalette, 16);
 
-	Dot dots[SPR_MAX];
+	Dot dots[MD_SPR_MAX];
 
 	bg_gradient_init();
 

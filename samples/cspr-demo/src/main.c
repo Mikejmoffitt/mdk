@@ -29,7 +29,7 @@ void main(void)
 		"BUTTON A: Select Sprite",
 		"BUTTON B: Toggle V flip",
 		"BUTTON C: Toggle H flip",
-		"BUTTON X: Toggle H priority",
+		"BUTTON X: Toggle priority",
 		"BUTTON Y: Change palette",
 		"BUTTON Z: Test \"fast\" routine",
 		"   D-PAD: Move Sprite",
@@ -50,7 +50,6 @@ void main(void)
 	cspr_param[0].x = 282;
 	cspr_param[0].y = 52;
 	cspr_param[0].attr = SPR_ATTR(0, 0, 0, 1, 0);
-	cspr_param[0].prio = 0;
 	cspr_param[0].frame = 0;
 	cspr_param[0].use_dma = true;
 	// Second is sonic.
@@ -59,7 +58,6 @@ void main(void)
 	cspr_param[1].x = 32;
 	cspr_param[1].y = 128;
 	cspr_param[1].attr = SPR_ATTR(0, 0, 0, 3, 0);
-	cspr_param[1].prio = 0;
 	cspr_param[1].frame = 0;
 	cspr_param[1].use_dma = true;
 	// Populate with data for the cirnos.
@@ -70,7 +68,6 @@ void main(void)
 		cspr_param[i].x = (18 * i);
 		cspr_param[i].y = 10+(12 * i);
 		cspr_param[i].attr = SPR_ATTR(0, 0, 0, 2, 0);
-		cspr_param[i].prio = 0;
 		cspr_param[i].frame = i % md_cspr_get_frame_count(res_cirno_csp);
 		cspr_param[i].use_dma = false;
 	}

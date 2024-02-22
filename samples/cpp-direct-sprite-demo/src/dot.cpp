@@ -19,7 +19,7 @@ namespace
 Dot::Dot()
 {
 	// The Dot objects use a static int to assign themselves sprite slots.
-	if (s_next_slot >= SPR_MAX) s_next_slot = 0;
+	if (s_next_slot >= MD_SPR_MAX) s_next_slot = 0;
 	m_spr = &g_sprite_table[s_next_slot];
 	s_next_slot++;
 
