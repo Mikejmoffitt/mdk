@@ -10,8 +10,10 @@ Michael Moffitt 2018-2022 */
 #include <string.h>
 
 #ifndef MDK_TARGET_C2
+
+#define MDK_PAL_DIRTY_MASK_FULL 0x000F
 uint16_t g_palette[16 * 4];
-static uint16_t s_dirty = 0x000F;
+static uint16_t s_dirty = MDK_PAL_DIRTY_MASK_FULL;
 #else
 // Two sets, between BG and Sprites of:
 //   Four banks of:
@@ -20,7 +22,8 @@ static uint16_t s_dirty = 0x000F;
 // Four global banks exist, but I do not feel they are particularly useful when
 // four banks already exist within each color section.
 uint16_t g_palette[16 * 4 * 4 * 2];
-static uint32_t s_dirty = 0x0001FFFF;
+#define MDK_PAL_DIRTY_MASK_FULL 0x1FFFF
+static uint32_t s_dirty = MDK_PAL_DIRTY_MASK_FULL;
 static uint8_t s_prot_reg_cache;
 #endif  // MDK_TARGET_C2
 
@@ -28,10 +31,16 @@ static uint8_t s_prot_reg_cache;
 // -----------------------------------------------------------------------------
 void md_pal_mark_dirty(uint16_t first_index, uint16_t count)
 {
-	const uint16_t pal_line = (first_index / 16) % (ARRAYSIZE(g_palette) / 16);
-	uint32_t dirty_mask = (1 << pal_line);
-	uint16_t line_span = 1 + ((count - 1) / 16);
-	while (line_span-- > 0)
+	const uint16_t first_line = (first_index / 16) % (ARRAYSIZE(g_palette) / 16);
+	const uint16_t last_line = (count / 16) % (ARRAYSIZE(g_palette) / 16);
+	if (last_line < first_line)
+	{
+		s_dirty |= MDK_PAL_DIRTY_MASK_FULL;
+		return;
+	}
+
+	uint32_t dirty_mask = (1 << first_line);
+	for (uint16_t i = 0; i <= last_line - first_line; i++)
 	{
 		s_dirty |= dirty_mask;
 		dirty_mask = dirty_mask << 1;
