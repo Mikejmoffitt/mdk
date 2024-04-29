@@ -83,7 +83,7 @@ run_dma_fill:
 	/* Wait for DMA to complete */
 dma_fill_vdp_wait:
 	btst	#1,VDPPORT_CTRL+1
-	bne	dma_fill_vdp_wait
+	bne.s	dma_fill_vdp_wait
 	rts
 
 
@@ -104,19 +104,10 @@ md_dma_process_wip:
 # Handle the two sprite slots first.
 
 
-
-
-
-
-
-
-
-
-
 # Restore int enablement and exit.
 	move.w	(sp)+, d0
 	move.b	d0, g_md_sys_ints_enabled
-	beq	reenable_ints
+	beq.s	reenable_ints
 	rts
 
 reenable_ints:

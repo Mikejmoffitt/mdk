@@ -1,7 +1,4 @@
-
-	
 	.include	"md/asm/cspr_types.inc"
-
 
 	.global	cspr_dma_setup_sub
 cspr_dma_setup_sub:
@@ -24,7 +21,7 @@ cspr_dma_setup_sub:
 	move.w	d1, d0
 	move.l	d0, -(sp)  /* dest vram */
 
-	bsr	md_dma_transfer_vram
+	jsr	(pc, md_dma_transfer_vram)
 	lea	0x10(sp), sp
 	movem.l	(sp)+, a0-a1
 	move.w	(sp)+, d1

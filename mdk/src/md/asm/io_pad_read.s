@@ -55,7 +55,7 @@ md_io_read_pad:
 	/* Seventh and final step - write TH high, read extra buttons */
 	move.b	#0x40, (a1)  /* TH hi */
 	andi.b	#0x0F, d1
-	bne	store_pad
+	bne.s	store_pad
 	move.b	(a1), d1
 	/* Shift buttons into place in upper byte and mask off other bits */
 	lsl.w	#8, d1
@@ -63,7 +63,7 @@ md_io_read_pad:
 	and.w	d1, d0
 	/* Mark highest bit to indicate a 6-button controller. */
 	bclr	#15, d0
-	bra	store_pad
+	bra.s	store_pad
 
 store_pad_unplugged:
 	/* Mark second-highest bit for "unplugged/maybe sms" status. */
@@ -74,22 +74,6 @@ store_pad:
 	not.w	d0
 	move.w	d0, (a0)
 	move.b	#0x00, (a1)  /* TH back to low */
-	rts
-
-	.global	md_io_generate_edges
-md_io_generate_edges:
-	/* Generate pos and neg edge data. */
-	move.l	g_md_pad, d0
-	move.l	g_md_pad_prev, d1
-	eori.l	#0xFFFFFFFF, d1
-	and.l	d1, d0
-	move.l	d0, g_md_pad_pos
-
-	move.l	g_md_pad_prev, d0
-	move.l	g_md_pad, d1
-	eori.l	#0xFFFFFFFF, d1
-	and.l	d1, d0
-	move.l	d0, g_md_pad_neg
 	rts
 
 	.global	md_io_init
@@ -111,18 +95,32 @@ md_io_poll:
 	move.w	#0x0100, (SYS_Z80_PORT_BUS).l  /* Z80 Bus Request */
 .bus_req_wait:
 	btst.b	#0, (SYS_Z80_PORT_BUS).l
-	bne	.bus_req_wait
+	bne.s	.bus_req_wait
 
 	lea	g_md_pad, a0
 	lea	IO_LOC_DATA, a1
-	bsr	md_io_read_pad
+	bsr.w	md_io_read_pad
 	lea	g_md_pad + 2, a0
 	lea	IO_LOC_DATA + 2, a1
-	bsr	md_io_read_pad
+	bsr.w	md_io_read_pad
 
 	/* Done with the ports, so release the Z80. */
 	move.w	#0x0000, (SYS_Z80_PORT_BUS).l  /* Z80 Bus Release */
 
-	bsr	md_io_generate_edges
+	/* Fall-through to md_io_generate_edges */
 
+	.global	md_io_generate_edges
+md_io_generate_edges:
+	/* Generate pos and neg edge data. */
+	move.l	g_md_pad, d0
+	move.l	g_md_pad_prev, d1
+	eori.l	#0xFFFFFFFF, d1
+	and.l	d1, d0
+	move.l	d0, g_md_pad_pos
+
+	move.l	g_md_pad_prev, d0
+	move.l	g_md_pad, d1
+	eori.l	#0xFFFFFFFF, d1
+	and.l	d1, d0
+	move.l	d0, g_md_pad_neg
 	rts

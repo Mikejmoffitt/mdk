@@ -25,7 +25,7 @@ Michael Moffitt 2018-2022
 	/* Load handler, and nope out if nothing has been registered. */
 	move.l	d0, -(sp)
 	move.l	\symbol_name, d0
-	beq	1f
+	beq.s	1f
 
 	movem.l	d1/a0-a1, -(sp)
 	move.l	d0, a0

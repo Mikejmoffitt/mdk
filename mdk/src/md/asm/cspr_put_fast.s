@@ -46,31 +46,31 @@ md_cspr_put_st_fast:
 
 # Sprite count checks
 	move.w	REF_SPR_COUNT(a2), d7
-	beq	0f  /* no sprites in this frame */
+	beq.w	0f  /* no sprites in this frame */
 
 	move.w	d7, d0
 	add.w	g_sprite_count, d0  /* d0 := final sprite index */
 	cmpi.w	#MD_SPR_MAX, d0  /* compare d0 to max sprites */
-	bls	sprite_count_ok
+	bls.s	sprite_count_ok
 	/* Too many sprites; limit amount in d7. */
 	move.w	#MD_SPR_MAX, d7  /* d7 takes max */
 	sub.w	g_sprite_count, d7  /* d7 takes available slots */
-	ble	0f
+	ble.w	0f
 sprite_count_ok:
 
 # Queue DMA if needed.
 	move.w	PRM_VRAM_BASE(a0), d1
 	tst.w	PRM_USE_DMA(a0)
-	beq	cspr_put_no_dma
+	beq.s	cspr_put_no_dma
 
-	bsr	cspr_dma_setup_sub
-	bra	cspr_put_after_dma
+	jsr	(pc, cspr_dma_setup_sub)
+	bra.s	cspr_put_after_dma
 
 cspr_put_no_dma:
 	/* Just offset vram base */
 	lsr.w	#5, d1
 	add.w	REF_TILE_SRC_OFFSET(a2), d1
-	bra	cspr_put_attributes_set
+	bra.s	cspr_put_attributes_set
 
 cspr_put_after_dma:
 # d1 := base attributes for sprite
@@ -94,9 +94,9 @@ cspr_put_attributes_set:
 	subq.w	#1, d7  /* for dbf loop */
 
 	btst	#11, d1  /* H flip? */
-	bne	cspr_hflip
+	bne.s	cspr_hflip
 	btst	#12, d1  /* V flip? */
-	bne	cspr_draw_top_vflip
+	bne.s	cspr_draw_top_vflip
 
 	.macro	cspr_draw_body
 	move.w	d3, (a3)+  /* Y */
@@ -114,32 +114,32 @@ cspr_draw_top_normal:
 	add.w	SPR_DY(a1), d3
 	cspr_draw_body
 	dbf	d7, cspr_draw_top_normal
-	bra	cspr_draw_finished
+	bra.s	cspr_draw_finished
 
 cspr_draw_top_vflip:
 	add.w	SPR_DX(a1), d2
 	add.w	SPR_FDY(a1), d3
 	cspr_draw_body
 	dbf	d7, cspr_draw_top_vflip
-	bra	cspr_draw_finished
+	bra.s	cspr_draw_finished
 
 cspr_hflip:
 	btst	#12, d1  /* V flip? */
-	bne	cspr_draw_top_hvflip
+	bne.s	cspr_draw_top_hvflip
 
 cspr_draw_top_hflip:
 	add.w	SPR_FDX(a1), d2
 	add.w	SPR_DY(a1), d3
 	cspr_draw_body
 	dbf	d7, cspr_draw_top_hflip
-	bra	cspr_draw_finished
+	bra.b	cspr_draw_finished
 
 cspr_draw_top_hvflip:
 	add.w	SPR_FDX(a1), d2
 	add.w	SPR_FDY(a1), d3
 	cspr_draw_body
 	dbf	d7, cspr_draw_top_hvflip
-	bra	cspr_draw_finished
+	/* fall-through to cspr_draw_finished */
 
 cspr_draw_finished:
 0:

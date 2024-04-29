@@ -25,13 +25,13 @@ md_spr_put:
 # Check if sprite count hasn't been exceeded.
 	move.w	g_sprite_count, d1
 	cmpi.w	#MD_SPR_MAX, d1
-	bcc	0f
+	bcc.s	0f
 # Check if X coordinates are out of frame.
 	move.w	ARG_X(sp), d0              /* X position argument. */
 	addi.w	#SPR_STATIC_OFFS, d0       /* Offset for screen space. */
 	andi.w	#0x01FF, d0                /* Mask 9 bits valid for VDP. */
 	cmpi.w	#SPR_STATIC_OFFS-32, d0    /* Check for sprites too far off */
-	bcs	0f                         /* screen to avoid line mask. */
+	bcs.s	0f                         /* screen to avoid line mask. */
 	swap	d0
 # Set A1 to point at sprite slot and store updated sprite count.
 	addq.w	#1, d1
@@ -66,14 +66,14 @@ md_spr_put:
 md_spr_put_st:
 	move.w	g_sprite_count, d1
 	cmpi.w	#MD_SPR_MAX, d1
-	bcc	0f
+	bcc.s	0f
 	movea.l	ARG_PARAM(sp), a0
 # Check if X coordinates are out of frame.
 	move.w	PRM_X(a0), d0              /* X position argument. */
 	addi.w	#SPR_STATIC_OFFS, d0       /* Offset for screen space. */
 	andi.w	#0x01FF, d0                /* Mask 9 bits valid for VDP. */
 	cmpi.w	#SPR_STATIC_OFFS-32, d0    /* Check for sprites too far off */
-	bcs	0f                         /* screen to avoid line mask. */
+	bcs.s	0f                         /* screen to avoid line mask. */
 	swap	d0
 # Set A1 to point at sprite slot and store updated sprite count.
 	addq.w	#1, d1
@@ -87,7 +87,7 @@ md_spr_put_st:
 # Attribute, X position.
 	move.w	PRM_ATTR(a0), d0
 	swap	d0  /* d0 now has attr in high word and x in low word. */
-	addq	#2, a1
+	addq.l	#2, a1
 	move.l	d0, (a1)+
 	move.l	a1, g_sprite_next
 0:
@@ -112,7 +112,7 @@ md_spr_put_st_fast:
 md_spr_put_st_fast_direct:
 	move.w	g_sprite_count, d1
 	cmpi.w	#MD_SPR_MAX, d1
-	bcc	0f
+	bcc.s	0f
 # Set A1 to point at sprite slot and store updated sprite count.
 	addq.w	#1, d1
 	move.w	d1, g_sprite_count
@@ -121,7 +121,7 @@ md_spr_put_st_fast_direct:
 	move.w	PRM_Y(a0), (a1)+
 	move.b	PRM_SIZE(a0), (a1)  /* no increment to avoid touching link */
 # Attribute, X position.
-	addq	#2, a1
+	addq.l	#2, a1
 	move.w	PRM_ATTR(a0), (a1)+
 	move.w	PRM_X(a0), (a1)+
 	move.l	a1, g_sprite_next

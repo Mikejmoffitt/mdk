@@ -24,7 +24,7 @@ Michael Moffitt 2018-2022 */
 	.org	0x00000000
 _v_table:
 	/* initial sp */
-	.long	0x1000000
+	.long	0x00000000
 	/* reset vector; entry point */
 	.long	start
 	/* bus error */
@@ -117,7 +117,7 @@ _v_table:
 _start:
 start:
 	move.w	#0x2700, sr  /* Ints off */
-	move.l	(0x01000000).l, sp
+	move.l	(0).l, sp
 
 	/* Halt Z80 */
 	move.w	#0x0100, (Z80_BUS_LOC).l
@@ -126,7 +126,7 @@ start:
 .ifndef MDK_SYSTEM_C2
 	move.b	0xA10001, d0
 	andi.b	#0x0F, d0
-	beq	2f
+	beq.s	2f
 	move.l	#0x53454741, 0xA14000
 2:
 .endif
@@ -143,7 +143,7 @@ start:
 	move.b	d0, (a0)
 
 	lea	softreset, a6
-	bra	startup_vdp_init
+	bra.w	startup_vdp_init
 
 softreset:
 	/* Prepare controller read */
@@ -155,7 +155,11 @@ softreset:
 
 	/* Check for start button */
 	btst	#5, (0xA10003).l  /* Check start button */
-	bne	md_crt0_begin
+	bne.w	md_crt0_begin
+
+#
+# Self Test
+#
 
 	lea	wram_test_begin, a6
 	jmp	md_error_startup_wram_check_display
@@ -164,15 +168,15 @@ wram_test_begin:
 	/* Test RAM if Start is held */
 	move.l	#0x5555, d0
 	lea	wram_test_pass1, a6
-	bra	startup_wram_test_sub
+	bra.w	startup_wram_test_sub
 wram_test_pass1:
 	move.l	#0xAAAA, d0
 	lea	wram_test_pass2, a6
-	bra	startup_wram_test_sub
+	bra.w	startup_wram_test_sub
 wram_test_pass2:
 	lea	startup_forever, a6
 	jmp	md_error_startup_wram_ok_display
-	bra	md_crt0_begin
+	bra.w	md_crt0_begin
 
 # d0 = test word
 # a6 = return
@@ -182,7 +186,7 @@ startup_wram_test_sub:
 wram_test_loop:
 	move.w	d0, (a4)
 	cmp.w	(a4)+, d0
-	bne	wram_test_failed
+	bne.s	wram_test_failed
 	dbra	d7, wram_test_loop
 	jmp	(a6)
 wram_test_failed:
@@ -192,12 +196,12 @@ wram_test_failed:
 startup_forever:
 	move.b	#0x00, (0xA10003).l  /* TH low */
 	btst	#5, (0xA10003).l  /* Check start button */
-	bne	startup_forever
+	bne.s	startup_forever
 
 startup_forever_wait_start_release:
 	btst	#5, (0xA10003).l  /* Check start button */
-	beq	startup_forever_wait_start_release
-	bra	start
+	beq.s	startup_forever_wait_start_release
+	bra.w	start
 
 
 #
@@ -208,15 +212,14 @@ startup_forever_wait_start_release:
 #
 startup_vdp_init:
 	lea	VDPPORT_DATA, a4
-	lea	VDPPORT_CTRL, a5
 
 	/* Basic VDP Init */
 	lea	vdp_init_reg_tbl, a0
 reg_init_copy_top:
 	move.w	(a0)+, d1
-	bpl	reg_init_done
-	move.w	d1, (a5)
-	bra	reg_init_copy_top
+	bpl.s	reg_init_done
+	move.w	d1, 4(a4)  /* VDPPORT_CTRL */
+	bra.s	reg_init_copy_top
 
 reg_init_done:
 	/* Clear VRAM */
@@ -284,7 +287,8 @@ vdp_init_reg_tbl:
 
 startup_error_display:
 	lea	startup_error_display_init_post, a6
-	bra	startup_vdp_init
+	bra.w	startup_vdp_init
+
 startup_error_display_init_post:
 	jsr	md_error_exception_display
 	lea	startup_forever, a6
@@ -293,135 +297,135 @@ startup_error_display_init_post:
 _v_bus_error:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#0, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_address_error:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#1, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_illegal_instruction:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#2, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_div_zero:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#3, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_chk:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#4, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trapv:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#5, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_privelege:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#6, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trace:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#7, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_unused_irq:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#8, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_aline_emu:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#9, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_fline_emu:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#10, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_reserved:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#11, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_coproc_violation:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#12, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_format:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#13, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_uninit:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#14, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_spurious:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#15, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x0:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#16, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x1:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#17, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x2:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#18, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x3:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#19, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x4:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#20, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x5:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#21, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x6:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#22, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x7:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#23, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x8:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#24, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0x9:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#25, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0xa:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#26, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0xb:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#27, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0xc:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#28, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0xd:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#29, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0xe:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#30, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_trap0xf:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#31, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 _v_unimp:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#32, d0
-	bra	startup_error_display
+	jmp	(pc, startup_error_display)
 
 #
 # Graphics
