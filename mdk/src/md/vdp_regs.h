@@ -32,6 +32,8 @@
 #define VDP_DMASRC2   0x16
 #define VDP_DMASRC3   0x17
 
+#define VDP_REGST(regno, value) (((regno << 8) | 0x8000) | (value & 0xFF))
+
 #define VDP_DBG_LAYER 0x0000
 #define VDP_DBG_CLKST 0x0100
 

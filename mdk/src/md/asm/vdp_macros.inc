@@ -1,8 +1,6 @@
 #pragma once
 #include	"md/vdp_regs.h"
 
-#define VDP_REGST(regno, value) (((regno << 8) | 0x8000) | (value & 0xFF))
-
 /* Macro for VDP address calculation (https://plutiedef.com/writing-video) */
 	.macro	md_set_xram_addr	addr, cmd
 	move.l	#(((\addr)&0x3FFF)<<16) | (((\addr)&0xC000)>>14) | (\cmd), (VDP_LOC_BASE+VDP_OFFS_CTRL)
