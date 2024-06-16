@@ -1,20 +1,22 @@
-#
-# Error and exception handling routines.
-#
-#
-# VDP initialization and work RAM error display routines do not use any RAM, so
-# as to be suitable for a situation where work RAM is not operational.
-#
+;
+; Error and exception handling routines.
+;
+;
+; VDP initialization and work RAM error display routines do not use any RAM, so
+; as to be suitable for a situation where work RAM is not operational.
+;
 
-.set	MD_ERROR_ATTR_ADDR,   0x0000
-.set	MD_ERROR_ATTR_OK,     0x1000
-.set	MD_ERROR_ATTR_TITLE,  0x2000
-.set	MD_ERROR_ATTR_NG,     0x3000
-.set	MD_ERROR_VRAM_TITLE,  0x3002
-.set	MD_ERROR_VRAM_START,  0x3002+0xD00
-.set	MD_ERROR_VRAM_REGS,   0x3002+0x500
-.set	MD_ERROR_VRAM_SRPC,   0x3002+0x380
-.set	MD_ERROR_VRAM_ACCESS, 0x3002+0x200
+#include	"md/asm/top.inc"
+
+#define MD_ERROR_ATTR_ADDR   $0000
+#define MD_ERROR_ATTR_OK     $1000
+#define MD_ERROR_ATTR_TITLE  $2000
+#define MD_ERROR_ATTR_NG     $3000
+#define MD_ERROR_VRAM_TITLE ( VRAM_SCRW_BASE_DEFAULT + 2)
+#define MD_ERROR_VRAM_START  (VRAM_SCRW_BASE_DEFAULT + 2 + $D00)
+#define MD_ERROR_VRAM_REGS   (VRAM_SCRW_BASE_DEFAULT + 2 + $500)
+#define MD_ERROR_VRAM_SRPC   (VRAM_SCRW_BASE_DEFAULT + 2 + $380)
+#define MD_ERROR_VRAM_ACCESS (VRAM_SCRW_BASE_DEFAULT + 2 + $200)
 
 	.global	md_error_startup_wram_check_display
 	.global	md_error_startup_wram_ok_display
@@ -22,17 +24,16 @@
 	.global	md_error_startup_start_display
 	.global	md_error_exception_display
 
-	.include	"md/asm/vdp_defs.inc"
 
-#
-# Error display entry points
-#
+;
+; Error display entry points
+;
 
-# a6 = return point
+; a6 = return point
 md_error_startup_wram_check_display:
-	lea	VDPPORT_DATA, a4
+	lea	VDP_LOC_BASE, a4
 	/* Enable display prematurely as this function returns */
-	move.w	#VDP_REGST_MODESET2 | 0x54, 4(a4)
+	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	lea	str_wram_check, a0
 	move.w	#MD_ERROR_ATTR_TITLE, d0
 	move.w	#MD_ERROR_VRAM_TITLE, d1
@@ -41,9 +42,9 @@ str_wram_check:
 	.ascii	"Testing Work RAM...\0"
 	.align	2
 
-# a6 = return
+; a6 = return
 md_error_startup_wram_ok_display:
-	lea	VDPPORT_DATA, a4
+	lea	VDP_LOC_BASE, a4
 	lea	str_wram_ok, a0
 	move.w	#MD_ERROR_ATTR_OK, d0
 	move.w	#MD_ERROR_VRAM_TITLE+(20*2), d1
@@ -52,9 +53,9 @@ str_wram_ok:
 	.ascii	"OK\0"
 	.align	2
 
-# a6 = return
+; a6 = return
 md_error_startup_wram_ng_display:
-	lea	VDPPORT_DATA, a4
+	lea	VDP_LOC_BASE, a4
 	lea	str_wram_ng, a0
 	move.w	#MD_ERROR_ATTR_NG, d0
 	move.w	#MD_ERROR_VRAM_TITLE+(20*2), d1
@@ -63,9 +64,9 @@ str_wram_ng:
 	.ascii	"NG\0"
 	.align	2
 
-# a6 = return
+; a6 = return
 md_error_startup_checksum_error_display:
-	lea	VDPPORT_DATA, a4
+	lea	VDP_LOC_BASE, a4
 	lea	str_checksum_error, a0
 	move.w	#MD_ERROR_ATTR_TITLE, d0
 	move.w	#MD_ERROR_VRAM_TITLE, d1
@@ -74,9 +75,9 @@ str_checksum_error:
 	.ascii	"ROM Checksum Error\0"
 	.align	2
 
-# a6 = return
+; a6 = return
 md_error_startup_start_display:
-	lea	VDPPORT_DATA, a4
+	lea	VDP_LOC_BASE, a4
 	lea	str_press_start, a0
 	move.w	#MD_ERROR_ATTR_NG, d0
 	move.w	#MD_ERROR_VRAM_START, d1
@@ -85,9 +86,9 @@ str_press_start:
 	.ascii	"Press START to reset.\0"
 	.align	2
 
-# d0 = error type
+; d0 = error type
 md_error_exception_display:
-	lea	VDPPORT_DATA, a4
+	lea	VDP_LOC_BASE, a4
 
 	/* Write error message using d0 as index */
 	add.w	d0, d0
@@ -137,101 +138,101 @@ md_error_format_a:
 	bsr.w	md_error_print_ad_regs_sub
 	bsr.w	md_error_print_access_sub
 	bsr.w	md_error_print_srpc_sub
-	move.w	#VDP_REGST_MODESET2 | 0x54, 4(a4)
+	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	rts
 
 md_error_format_b:
 	bsr.w	md_error_print_ad_regs_sub
 	bsr.w	md_error_print_srpc_sub
-	move.w	#VDP_REGST_MODESET2 | 0x54, 4(a4)
+	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	rts
 	
 
-/* Walks the stack and prints registers */
+; Walks the stack and prints registers
 md_error_print_ad_regs_sub:
-	/* print message */
+	; print message
 	move.l	(a0), a0
 	move.w	#MD_ERROR_ATTR_TITLE, d0
 	move.w	#MD_ERROR_VRAM_TITLE, d1
 	bsr.w	string_print_sub_safe
-	/* Draw registers listing */
+	; Draw registers listing
 	move.w	#MD_ERROR_ATTR_OK, d0
 	move.w	#MD_ERROR_VRAM_REGS, d1
 	lea	str_reg_d0, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_d1, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_d2, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_d3, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_d4, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_d5, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_d6, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_d7, a0
 	bsr.w	string_print_sub_safe
 
-	move.w	#MD_ERROR_VRAM_REGS+0x24, d1
+	move.w	#MD_ERROR_VRAM_REGS+$24, d1
 	lea	str_reg_a0, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_a1, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_a2, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_a3, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_a4, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_a5, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_a6, a0
 	bsr.w	string_print_sub_safe
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	lea	str_reg_a7, a0
 	bsr.w	string_print_sub_safe
-	/* Print data register contents */
+	; Print data register contents
 	move.l	sp, a0
 	addq	#8, a0
 	move.w	#MD_ERROR_ATTR_ADDR, d0
-	move.w	#MD_ERROR_VRAM_REGS+0x08, d1
+	move.w	#MD_ERROR_VRAM_REGS+$08, d1
 	move.l	(a0)+, d3
 	bsr.w	hex_print_long_sub_safe
 	.rept	7
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	move.l	(a0)+, d3
 	bsr.w	hex_print_long_sub_safe
 	.endr
-	/* And address registers */
+	; And address registers
 	move.w	#MD_ERROR_ATTR_ADDR, d0
-	move.w	#MD_ERROR_VRAM_REGS+0x24+0x08, d1
+	move.w	#MD_ERROR_VRAM_REGS+$24+$08, d1
 	move.l	(a0)+, d3
 	bsr.w	hex_print_long_sub_safe
 	.rept	7
-	add.w	#0x0100, d1
+	add.w	#$0100, d1
 	move.l	(a0)+, d3
 	bsr.w	hex_print_long_sub_safe
 	.endr
 	rts
 
-# a0 = pointer to sstart of format b stack frame
+; a0 = pointer to sstart of format b stack frame
 md_error_print_srpc_sub:
-	/* SR */
+	; SR
 	move.l	a0, -(sp)
 	move.w	#MD_ERROR_ATTR_OK, d0
 	move.w	#MD_ERROR_VRAM_SRPC, d1
@@ -243,10 +244,10 @@ md_error_print_srpc_sub:
 	moveq	#0, d3
 	move.w	(a0)+, d3
 	bsr.w	hex_print_word_sub_safe
-	/* PC */
+	; PC
 	move.l	a0, -(sp)
 	move.w	#MD_ERROR_ATTR_OK, d0
-	move.w	#MD_ERROR_VRAM_SRPC+0x24, d1
+	move.w	#MD_ERROR_VRAM_SRPC+$24, d1
 	lea	str_reg_pc, a0
 	bsr.w	string_print_sub_safe
 	move.l	(sp)+, a0
@@ -257,9 +258,9 @@ md_error_print_srpc_sub:
 	bsr.w	hex_print_long_sub_safe
 	rts
 
-# a0 = pointer to sstart of format b stack frame
+; a0 = pointer to sstart of format b stack frame
 md_error_print_access_sub:
-	/* flags */
+	; flags
 	move.l	a0, -(sp)
 	move.w	#MD_ERROR_ATTR_NG, d0
 	move.w	#MD_ERROR_VRAM_ACCESS, d1
@@ -271,7 +272,7 @@ md_error_print_access_sub:
 	moveq	#0, d3
 	move.w	(a0)+, d3
 	bsr.w	hex_print_byte_sub_safe
-	/* address */
+	; address
 	add.w	#6, d1
 	move.l	a0, -(sp)
 	move.w	#MD_ERROR_ATTR_NG, d0
@@ -283,7 +284,7 @@ md_error_print_access_sub:
 	moveq	#0, d3
 	move.l	(a0)+, d3
 	bsr.w	hex_print_long_sub_safe
-	/* IR */
+	; IR
 	add.w	#18, d1
 	move.l	a0, -(sp)
 	move.w	#MD_ERROR_ATTR_NG, d0
@@ -297,81 +298,81 @@ md_error_print_access_sub:
 	bsr.w	hex_print_word_sub_safe
 	rts
 
-#
-# Printing routines
-#
-# String print requiring no RAM.
-# d0 = attr (palette, etc)
-# d1 = vram address
-# d2 = clobbered
-# d3 = data
-# a4 = VDPPORT_DATA
-# a6 = return address
+;
+; Printing routines
+;
+; String print requiring no RAM.
+; d0 = attr (palette, etc)
+; d1 = vram address
+; d2 = clobbered
+; d3 = data
+; a4 = VDP_LOC_BASE
+; a6 = return address
 hex_print_long_sub:
-	/* Move VRAM to end of number */
+	; Move VRAM to end of number
 	add.w	#(8-1)*2, d1
-	/* Loop for eight digits */
+	; Loop for eight digits
 	move.w	#8-1, d7
 hex_print_sub_main:
-	move.w	#VDP_REGST_AUTOINC | 0x80, 4(a4)
-	/* Set up d0 to hold attr data in upper word */
+	move.w	#VDP_REGST(VDP_AUTOINC, $80), VDP_OFFS_CTRL(a4)
+	; Set up d0 to hold attr data in upper word
 	swap	d0
 	clr.w	d0
 hex_print_sub_loop:
 	move.w	d1, -(sp)
-	/* VRAM set */
+	; VRAM set
 	moveq	#0, d2
 	move.w	d1, d2
-	andi.w	#0x3FFF, d2
+	andi.w	#$3FFF, d2
 	swap	d2
-	andi.w	#0xC000, d1
+	andi.w	#$C000, d1
 	lsr.w	#8, d1
 	lsr.w	#6, d1
 	move.w	d1, d2
-	ori.l	#VRAM_ADDR_CMD, d2
-	move.l	d2, 4(a4)
+	ori.l	#VDP_CTRL_VRAM_WRITE, d2
+	move.l	d2, VDP_OFFS_CTRL(a4)
 	move.w	(sp)+, d1
 	subi.w	#2, d1
-	/* Number print */
+	;  Number print
 	move.b	d3, d2
-	andi.w	#0x000F, d2
+	andi.w	#$000F, d2
 	move.b	hex_digit_tbl(pc, d2.w), d0
-	move.w	d0, (a4)
-	addi.w	#0x10, d0
-	move.w	d0, (a4)
+	move.w	d0, VDP_OFFS_DATA(a4)
+	addi.w	#$10, d0
+	move.w	d0, VDP_OFFS_DATA(a4)
 	lsr.l	#4, d3
 	dbf	d7, hex_print_sub_loop
 	jmp	(a6)
 
 hex_digit_tbl:
-	dc.b	0x20
-	dc.b	0x21
-	dc.b	0x22
-	dc.b	0x23
-	dc.b	0x24
-	dc.b	0x25
-	dc.b	0x26
-	dc.b	0x27
-	dc.b	0x28
-	dc.b	0x29
-	dc.b	0x41
-	dc.b	0x42
-	dc.b	0x43
-	dc.b	0x44
-	dc.b	0x45
-	dc.b	0x46
+	dc.b	$20
+	dc.b	$21
+	dc.b	$22
+	dc.b	$23
+	dc.b	$24
+	dc.b	$25
+	dc.b	$26
+	dc.b	$27
+	dc.b	$28
+	dc.b	$29
+	dc.b	$41
+	dc.b	$42
+	dc.b	$43
+	dc.b	$44
+	dc.b	$45
+	dc.b	$46
 
 hex_print_word_sub:
-	/* Move VRAM to end of number */
+	; Move VRAM to end of number
 	add.w	#(4-1)*2, d1
-	/* Loop for eight digits */
+	; Loop for eight digits
 	move.w	#4-1, d7
 	bra.w	hex_print_sub_main
 
 hex_print_byte_sub:
-	/* Move VRAM to end of number */
+	; Move VRAM to end of number
 	add.w	#(2-1)*2, d1
-	/* Loop for eight digits */
+	; Loop for eight digits
 	move.w	#2-1, d7
 	bra.w	hex_print_sub_main
 
@@ -391,9 +392,9 @@ hex_print_byte_sub_safe:
 	movem.l	d0-d3/a0-a2, -(sp)
 	bra.w	hex_print_byte_sub
 
-# Prints a longword in hexidecimal.
+; Prints a longword in hexidecimal.
 
-# Wrapper for string_print_sub that protects registers and uses the stack.
+; Wrapper for string_print_sub that protects registers and uses the stack.
 string_print_sub_safe:
 	lea	str_safe_ret, a6
 	movem.l	d0-d3/a0-a2, -(sp)
@@ -402,57 +403,57 @@ str_safe_ret:
 	movem.l	(sp)+, d0-d3/a0-a2
 	rts
 
-# String print requiring no RAM.
-# a0 = C string (null terminated)
-# d0 = attr (palette, etc)
-# d1 = vram address
-# a4 = VDPPORT_DATA
-# a6 = return address
+; String print requiring no RAM.
+; a0 = C string (null terminated)
+; d0 = attr (palette, etc)
+; d1 = vram address
+; a4 = VDP_LOC_BASE+VDP_OFFS_DATA
+; a6 = return address
 string_print_sub:
-	move.w	#VDP_REGST_AUTOINC | 0x02, 4(a4)
-	/* Set VRAM address */
+	move.w	#VDP_REGST(VDP_AUTOINC, $02), VDP_OFFS_CTRL(a4)
+	; Set VRAM address
 	move.l	d1, d2
-	andi.w	#0x3FFF, d2
+	andi.w	#$3FFF, d2
 	swap	d2
-	andi.w	#0xC000, d1
+	andi.w	#$C000, d1
 	lsr.w	#8, d1
 	lsr.w	#6, d1
 	move.w	d1, d2
-	ori.l	#VRAM_ADDR_CMD, d2
+	ori.l	#VDP_CTRL_VRAM_WRITE, d2
 	move.l	d2, d3
-	move.l	d2, 4(a4)
+	move.l	d2, VDP_OFFS_CTRL(a4)
 	move.l	a0, a2
 str_print1:
 	move.b	(a0)+, d0
 	beq	str_print1_done
-	sub.b	#0x20, d0
+	sub.b	#$20, d0
 	move.w	d0, d1
-	andi.w	#0xFFF0, d1
+	andi.w	#$FFF0, d1
 	add.w	d0, d1
-	move.w	d1, (a4)
+	move.w	d1, VDP_OFFS_DATA(a4)
 	bra.w	str_print1
 str_print1_done:
-	/* Set VRAM address again */
+	; Set VRAM address again
 	swap	d2
-	addi.w	#0x80, d2  /* Next row */
+	addi.w	#$80, d2  /* Next row */
 	swap	d2
-	move.l	d2, 4(a4)
+	move.l	d2, VDP_OFFS_CTRL(a4)
 str_print2:
 	move.b	(a2)+, d0
 	beq	str_print2_done
-	sub.b	#0x20, d0
+	sub.b	#$20, d0
 	move.w	d0, d1
-	andi.w	#0xFFF0, d1
+	andi.w	#$FFF0, d1
 	add.w	d0, d1
-	add.b	#0x10, d1
-	move.w	d1, (a4)
+	add.b	#$10, d1
+	move.w	d1, VDP_OFFS_DATA(a4)
 	bra.w	str_print2
 str_print2_done:
 	jmp	(a6)
 
-#
-# String data
-#
+;
+; String data
+;
 
 str_bus_error:
 	.ascii	"Bus Error\0"
@@ -519,7 +520,7 @@ str_trap0xd:
 str_trap0xe:
 	.ascii	"Trap $E\0"
 str_trap0xf:
-	.ascii	"Trap $f\0"
+	.ascii	"Trap $F\0"
 str_unimp:
 	.ascii	"Unimplemented\0"
 

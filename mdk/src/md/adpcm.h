@@ -1,7 +1,6 @@
 /* mdk uPD7759 support (for System C2)
 Michael Moffitt 2022 */
-#ifndef MD_UPD7759_H
-#define MD_UPD7759_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -34,5 +33,3 @@ bool md_adpcm_busy(void);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif

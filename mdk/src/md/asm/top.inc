@@ -1,0 +1,6 @@
+#include	"md/mmio.h"
+#include	"md/vdp_regs.h"
+#include	"md/vdp_default_vram_map.h"
+#include	"md/asm/vdp_defs.inc"
+#include	"md/asm/vdp_macros.inc"
+#include	"md/asm/z80_macros.inc"

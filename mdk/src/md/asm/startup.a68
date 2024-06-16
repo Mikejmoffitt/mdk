@@ -1,7 +1,6 @@
-/* mdk header, interrupts, and C runtime startup
-Michael Moffitt 2018-2022 */
-	.include	"md/asm/vdp_defs.inc"
-	.include	"md/asm/z80_defs.inc"
+; mdk header, interrupts, and C runtime startup
+; Michael Moffitt 2018-2022
+#include	"md/asm/top.inc"
 
 	.section	.text.keepboot
 
@@ -21,53 +20,33 @@ Michael Moffitt 2018-2022 */
 
 	.global	_v_table
 	.global	_start
-	.org	0x00000000
+	.org	$00000000
 _v_table:
-	/* initial sp */
-	.long	0x00000000
-	/* reset vector; entry point */
+	.long	$00000000
 	.long	start
-	/* bus error */
 	.long	_v_bus_error
-	/* address error */
 	.long	_v_address_error
-	/* illegal instruction */
 	.long	_v_illegal_instruction
-	/* divide by zero error */
 	.long	_v_div_zero
-	/* CHK out of bounds */
 	.long	_v_chk
-	/* TRAPV with overflow set */
 	.long	_v_trapv
-	/* Privelege violation */
 	.long	_v_privelege
-	/* Trace */
 	.long	_v_trace
-	/* A-line */
 	.long	_v_aline_emu
-	/* F-line */
 	.long	_v_fline_emu
-	/* reserved */
 	.long	_v_reserved
-	/* coproc violation? */
 	.long	_v_coproc_violation
-	/* format error */
 	.long	_v_format
-	/* uninitialized interrupt vector */
 	.long	_v_uninit
-	/* reserved on 68000 */
 	.long	_v_reserved
 	.long	_v_reserved
 	.long	_v_reserved
 	.long	_v_reserved
 	.long	_v_reserved
-	/* reserved; used on Neo Geo CD */
 	.long	_v_reserved
 	.long	_v_reserved
 	.long	_v_reserved
-	/* spurious interrupt */
 	.long	_v_spurious
-	/* L1-7 interrupts interrupt */
 	.long	_v_irq1
 	.long	_v_irq2
 	.long	_v_irq3
@@ -75,7 +54,6 @@ _v_table:
 	.long	_v_irq5
 	.long	_v_irq6
 	.long	_v_irq7
-	/* Trap instructions */
 	.long	_v_trap0x0
 	.long	_v_trap0x1
 	.long	_v_trap0x2
@@ -92,7 +70,7 @@ _v_table:
 	.long	_v_trap0xd
 	.long	_v_trap0xe
 	.long	_v_trap0xf
-	/* Unimplemented (FPU) */
+	; Unimplemented (FPU)
 	.long	_v_unimp
 	.long	_v_unimp
 	.long	_v_unimp
@@ -101,11 +79,11 @@ _v_table:
 	.long	_v_unimp
 	.long	_v_unimp
 	.long	_v_unimp
-	/* Unimplemented (MMU) */
+	; Unimplemented (MMU)
 	.long	_v_unimp
 	.long	_v_unimp
 	.long	_v_unimp
-	/* Unimplemented (reserved) */
+	; Unimplemented (reserved)
 	.long	_v_unimp
 	.long	_v_unimp
 	.long	_v_unimp
@@ -114,26 +92,24 @@ _v_table:
 
 .include	"header.inc"
 
+;
+; Entry point
+;
+
 _start:
 start:
-	move.w	#0x2700, sr  /* Ints off */
+	move.w	#$2700, sr
 	move.l	(0).l, sp
 
-	/* Halt Z80 */
-	move.w	#0x0100, (Z80_BUS_LOC).l
+#ifndef MDK_TARGET_C2
+	; Halt Z80
+	move.w	#$0100, (SYS_Z80_PORT_BUS_LOC).l
+#endif
 
-	/* Initialize TMSS, if relevant */
-.ifndef MDK_SYSTEM_C2
-	move.b	0xA10001, d0
-	andi.b	#0x0F, d0
-	beq.s	2f
-	move.l	#0x53454741, 0xA14000
-2:
-.endif
-	/* Shut up PSG - On my VA0 units it defaults to a loud noise. */
-	lea	0xC00011, a0
-	move.b	#0x9F, d0  /* Channel 0 att 15 */
-	move.b	#0x20, d1  /* Channel offset */
+	; Shut up PSG - On my VA0 units it defaults to a loud noise.
+	lea	PSG_LOC_BASE, a0
+	move.b	#$9F, d0  ; Channel 0 att 15
+	move.b	#$20, d1  ; Channel offset
 	move.b	d0, (a0)
 	add.b	d1, d0
 	move.b	d0, (a0)
@@ -146,43 +122,46 @@ start:
 	bra.w	startup_vdp_init
 
 softreset:
-	/* Prepare controller read */
-	move.l	#0x00400040, (0xA10008).l  /* Set TH pin as an output */
-	move.b	#0x00, (0xA10003).l  /* TH low */
+	; Turn off display output
+	move.w	#VDP_REGST(VDP_MODESET2, $14), (VDP_LOC_BASE+VDP_OFFS_CTRL)
 
-	/* Turn off display output */
-	move.w	#VDP_REGST_MODESET2 | 0x14, (VDPPORT_CTRL)
+#ifndef MDK_TARGET_C2
+	; Prepare controller read
+	move.l	#$00400040, (IO_LOC_BASE + 8).l  ; Set TH pin as an output
+	move.b	#$00, (IO_LOC_BASE + 3).l  ; TH low
+	.rept	20
+	nop
+	.endr
+	; If start is held, run the memory test.
+	btst	#5, (IO_LOC_BASE + 3).l
+	beq.s	selftest
+	jmp	md_crt0_begin
+#endif
 
-	/* Check for start button */
-	btst	#5, (0xA10003).l  /* Check start button */
-	bne.w	md_crt0_begin
-
-#
-# Self Test
-#
-
+;
+; Self Test
+;
+selftest:
 	lea	wram_test_begin, a6
 	jmp	md_error_startup_wram_check_display
 
 wram_test_begin:
-	/* Test RAM if Start is held */
-	move.l	#0x5555, d0
+	move.l	#$5555, d0
 	lea	wram_test_pass1, a6
 	bra.w	startup_wram_test_sub
 wram_test_pass1:
-	move.l	#0xAAAA, d0
+	move.l	#$AAAA, d0
 	lea	wram_test_pass2, a6
 	bra.w	startup_wram_test_sub
 wram_test_pass2:
-	lea	startup_forever, a6
+	lea	md_crt0_begin, a6
 	jmp	md_error_startup_wram_ok_display
-	bra.w	md_crt0_begin
 
-# d0 = test word
-# a6 = return
+; d0 = test word
+; a6 = return
 startup_wram_test_sub:
-	move.l	#0x00FF0000, a4
-	move.w	#(0x8000/2) - 1, d7
+	lea	WRAM_BASE, a4
+	move.w	#(WRAM_SIZE/2) - 1, d7
 wram_test_loop:
 	move.w	d0, (a4)
 	cmp.w	(a4)+, d0
@@ -194,96 +173,106 @@ wram_test_failed:
 	jmp	md_error_startup_wram_ng_display
 
 startup_forever:
-	move.b	#0x00, (0xA10003).l  /* TH low */
-	btst	#5, (0xA10003).l  /* Check start button */
+#ifndef MDK_TARGET_C2
+	btst	#5, (IO_LOC_BASE + 3).l  ; Check start button
 	bne.s	startup_forever
 
 startup_forever_wait_start_release:
-	btst	#5, (0xA10003).l  /* Check start button */
+	btst	#5, (IO_LOC_BASE + 3).l  ; Check start button
 	beq.s	startup_forever_wait_start_release
+#else
+	; Arcade target hangs on the error indefinitely
+	bra.s	startup_forever
+#endif
 	bra.w	start
 
 
-#
-# Very basic VDP init and font install for the sake of diagnostics.
-# Does NOT clobber d0.
-#
-# a6 = return
-#
+;
+; Very basic VDP init and font install for the sake of diagnostics.
+; Does NOT clobber d0.
+;
+; a6 = return
+;
 startup_vdp_init:
-	lea	VDPPORT_DATA, a4
+	lea	VDP_LOC_BASE, a4
 
-	/* Basic VDP Init */
+	; Basic VDP Init
 	lea	vdp_init_reg_tbl, a0
 reg_init_copy_top:
 	move.w	(a0)+, d1
 	bpl.s	reg_init_done
-	move.w	d1, 4(a4)  /* VDPPORT_CTRL */
+	move.w	d1, VDP_OFFS_CTRL(a4)
 	bra.s	reg_init_copy_top
 
 reg_init_done:
-	/* Clear VRAM */
-	md_set_vram_addr 0x0000
+	; TODO: 128K VRAM flag
+	; Clear VRAM
+	md_set_vram_addr $0000
 	moveq	#0, d1
-	move.w	#(0x10000/4) - 1, d7
+	move.w	#(VRAM_SIZE/4) - 1, d7
 vdp_mem_clear_top:
-	move.l	d1, (a4)
+	move.l	d1, VDP_OFFS_DATA(a4)
 	dbf	d7, vdp_mem_clear_top
 
-	/* Write palette for font */
-	md_set_cram_addr 0x0000
+	; Write palette for font
+#ifndef MDK_TARGET_C2
+	md_set_cram_addr $0000
 	moveq	#(128 / (4 * 4)) - 1, d7
 	lea	md_error_palette, a0
 pal_copy_top:
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
+	.rept	4
+	move.l	(a0)+, VDP_OFFS_DATA(a4)
+	.endr
 	dbf	d7, pal_copy_top
+#else
+	lea	CRAM_SYSTEMC_LOC_BASE, a1
+	moveq	#(128 / (4 * 4)) - 1, d7
+	lea	md_error_palette, a0
+pal_copy_top:
+	.rept	4
+	move.l	(a0), (a1)
+	move.l	(a0)+, 128(a1)
+	.endr
+	dbf	d7, pal_copy_top
+#endif
 
-	/* Copy font into VRAM */
-	md_set_vram_addr 0x0000
+	; Copy font into VRAM
+	md_set_vram_addr $0000
 	lea	md_error_font, a0
 	move.w	#((12 * 16 * 32) / (4 * 4)) - 1, d7
 vram_copy_top:
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
-	move.l	(a0)+, (a4)
+	.rept	4
+	move.l	(a0)+, VDP_OFFS_DATA(a4)
+	.endr
 	dbf	d7, vram_copy_top
 
-	/* Return handled with a6 */
+	; Return handled with a6
 	jmp	(a6)
 
 vdp_init_reg_tbl:
-	dc.w	VDP_REGST_MODESET1 | 0x04
-	dc.w	VDP_REGST_MODESET2 | 0x14
-	dc.w	VDP_REGST_MODESET3 | 0x00
-.ifdef MDK_SYSTEM_C2
-	dc.w	VDP_REGST_MODESET4 | 0x51
-.else
-	dc.w	VDP_REGST_MODESET4 | 0x81
-.endif	
-	dc.w	VDP_REGST_SCRABASE | (0x2000 >> 10)
-	dc.w	VDP_REGST_SCRBBASE | (0x4000 >> 13)
-	dc.w	VDP_REGST_SPRBASE  | 0x78
-	dc.w	VDP_REGST_SCRWBASE | (0x3000 >> 10)
-	dc.w	VDP_REGST_HSCRBASE | 0x3D
+	dc.w	VDP_REGST(VDP_MODESET1, $04)
+	dc.w	VDP_REGST(VDP_MODESET2, $14)
+	dc.w	VDP_REGST(VDP_MODESET3, $00)
+	dc.w	VDP_REGST(VDP_MODESET4, $51)
+	dc.w	VDP_REGST(VDP_SCRABASE, (VRAM_SCRA_BASE_DEFAULT >> 10))
+	dc.w	VDP_REGST(VDP_SCRBBASE, (VRAM_SCRB_BASE_DEFAULT >> 13))
+	dc.w	VDP_REGST(VDP_SPRBASE, $78)
+	dc.w	VDP_REGST(VDP_SCRWBASE, (VRAM_SCRW_BASE_DEFAULT >> 10))
+	dc.w	VDP_REGST(VDP_HSCRBASE, $3D)
+	dc.w	VDP_REGST(VDP_PLANESIZE, $01)
+	dc.w	VDP_REGST(VDP_WINHORI, $1F)
+	dc.w	VDP_REGST(VDP_WINVERT, $1F)
+	dc.w	VDP_REGST(VDP_AUTOINC, $02)
+	dc.w	VDP_REGST(VDP_BGCOL, $00)
+	dc.w	VDP_REGST(VDP_HINTC, $FF)
+	dc.w	0  ; end marker
 
-	dc.w	VDP_REGST_PLANESIZE | 0x01
-	dc.w	VDP_REGST_WINHORI | 0x1F
-	dc.w	VDP_REGST_WINVERT | 0x1F
-	dc.w	VDP_REGST_AUTOINC | 0x02
-	dc.w	VDP_REGST_BGCOL | 0x00
-	dc.w	VDP_REGST_HINTC | 0xFF
-	dc.w	0  /* end marker */
-
-# TODO: Checksum
+; TODO: Checksum
 
 
-#
-# Vectors
-#
+;
+; Vectors
+;
 
 startup_error_display:
 	lea	startup_error_display_init_post, a6
@@ -427,87 +416,125 @@ _v_unimp:
 	moveq	#32, d0
 	jmp	(pc, startup_error_display)
 
-#
-# Graphics
-#
+;
+; Graphics
+;
 
 md_error_palette:
-#
-	dc.w	0x0000
-	dc.w	0x0EEE
-	dc.w	0x0EEC
-	dc.w	0x0EEA
-	dc.w	0x0EE8
-	dc.w	0x0EE6
-	dc.w	0x0EE4
-	dc.w	0x0EE2
-	dc.w	0x0EE0
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
-#
-	dc.w	0x0000
-	dc.w	0x0EE0
-	dc.w	0x0CE2
-	dc.w	0x0AE4
-	dc.w	0x08E6
-	dc.w	0x06E8
-	dc.w	0x04EA
-	dc.w	0x02EC
-	dc.w	0x00EE
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
-#
-	dc.w	0x0000
-	dc.w	0x00EE
-	dc.w	0x00CE
-	dc.w	0x00AE
-	dc.w	0x008E
-	dc.w	0x006E
-	dc.w	0x004E
-	dc.w	0x002E
-	dc.w	0x000E
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
-#
-	dc.w	0x0000
-	dc.w	0x0E2E
-	dc.w	0x0C2E
-	dc.w	0x0A2E
-	dc.w	0x082E
-	dc.w	0x062E
-	dc.w	0x042E
-	dc.w	0x022E
-	dc.w	0x002E
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0000
-	dc.w	0x0222
-	dc.w	0x0000
+;
+	dc.w	$0000
+	dc.w	$0EEE
+	dc.w	$0EEC
+	dc.w	$0EEA
+	dc.w	$0EE8
+	dc.w	$0EE6
+	dc.w	$0EE4
+	dc.w	$0EE2
+	dc.w	$0EE0
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
+;
+	dc.w	$0000
+	dc.w	$0EE0
+	dc.w	$0CE2
+	dc.w	$0AE4
+	dc.w	$08E6
+	dc.w	$06E8
+	dc.w	$04EA
+	dc.w	$02EC
+	dc.w	$00EE
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
+;
+	dc.w	$0000
+	dc.w	$00EE
+	dc.w	$00CE
+	dc.w	$00AE
+	dc.w	$008E
+	dc.w	$006E
+	dc.w	$004E
+	dc.w	$002E
+	dc.w	$000E
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
+;
+	dc.w	$0000
+	dc.w	$0E2E
+	dc.w	$0C2E
+	dc.w	$0A2E
+	dc.w	$082E
+	dc.w	$062E
+	dc.w	$042E
+	dc.w	$022E
+	dc.w	$002E
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
 
 md_error_font:
 	.incbin	"md/asm/font.bin"
 
-#
-# Other routines kept explicitly in low ROM
-#
+;
+; Other routines kept explicitly in low ROM
+;
 
-.include	"md/asm/crt0.inc"
-.include	"md/asm/dma_process.inc"
-.include	"md/asm/sram.inc"
+md_crt0_begin:
+	; clear WRAM
+	lea	WRAM_BASE, a0
+	move.w	#(WRAM_SIZE/(4*4))-1, d7
+	moveq	#0, d0
+.clr_loop:
+	.rept	4
+	move.l	d0, (a0)+
+	.endr
+	dbra	d7, .clr_loop
+
+	; copy data to work RAM
+	lea	_stext, a0  ; Data follows text section
+	lea	WRAM_BASE, a1  ; .data is at start of WRAM
+	move.w	#_sdata, d0
+	beq.s	.no_data_copy
+	lsr.w	#1, d0
+	subq.w	#1, d0
+
+.copy_data:
+	move.w	(a0)+, (a1)+
+	dbra	d0, .copy_data
+
+.no_data_copy:
+
+	moveq	#0, d0
+	move.l	d0, d1
+	move.l	d0, d2
+	move.l	d0, d3
+	move.l	d0, d4
+	move.l	d0, d5
+	move.l	d0, d6
+	move.l	d0, d7
+	move.l	d0, a0
+	move.l	d0, a1
+	move.l	d0, a2
+	move.l	d0, a3
+	move.l	d0, a4
+	move.l	d0, a5
+	move.l	d0, a6
+	jmp	(main).l
