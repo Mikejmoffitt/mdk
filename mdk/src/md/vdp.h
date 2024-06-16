@@ -55,21 +55,6 @@ extern "C"
 #define VDP_CTRL_ADDR(_addr) ((((uint32_t)(_addr) & 0x3FFF) << 16) | \
                                (((uint32_t)(_addr) & 0xC000) >> 14))
 
-// -----------------------------------------------------------------------------
-// VRAM control words.
-// -----------------------------------------------------------------------------
-#define VDP_CTRL_DMA_BIT     0x00000080
-#define VDP_CTRL_VRAM_READ   0x00000000
-#define VDP_CTRL_VRAM_WRITE  0x40000000
-#define VDP_CTRL_VSRAM_READ  0x00000010
-#define VDP_CTRL_VSRAM_WRITE 0x40000010
-#define VDP_CTRL_CRAM_READ   0x00000020
-#define VDP_CTRL_CRAM_WRITE  0xC0000000
-
-// DMA operations
-#define VDP_DMA_SRC_FILL 0x80
-#define VDP_DMA_SRC_COPY 0xC0
-
 // The register cache.
 extern uint8_t g_md_vdp_regs[0x18];
 extern uint16_t g_md_vdp_debug_regs[0x10];

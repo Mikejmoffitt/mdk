@@ -13,26 +13,25 @@ _Static_assert(NUM_IS_POW2(DMA_QUEUE_DEPTH), "DMA queue depth != power of 2!");
 typedef enum DmaOp DmaOp;
 enum DmaOp
 {
-	DMA_OP_NONE         = 0x0000,
-	DMA_OP_TRANSFER     = 0x0001,
-	DMA_OP_SPR_TRANSFER = 0x0002,
-	DMA_OP_COPY         = 0x0003,
-	DMA_OP_FILL         = 0x8000,
-} __attribute__ ((__packed__));
+	DMA_OP_NONE,
+	DMA_OP_TRANSFER,
+	DMA_OP_SPR_TRANSFER,
+	DMA_OP_COPY,
+	DMA_OP_FILL
+};
 
 // Struct representing pre-calculated register values for the VDP's DMA.
 typedef struct DmaCmd DmaCmd;
 struct DmaCmd
 {
-	uint16_t /*DmaOp*/ op;
-	uint8_t stride;
-	uint8_t src_1;  // Used as data for DMA fill.
-	uint8_t src_2;
-	uint8_t src_3;
-	uint8_t len_1;
-	uint8_t len_2;
+	uint16_t stride;
+	uint16_t len_1;
+	uint16_t len_2;
+	uint16_t src_1;  // Used as data for DMA fill.
+	uint16_t src_2;
+	uint16_t src_3;
 	uint32_t ctrl;
-} __attribute__ ((aligned (0x08)));
+} __attribute__ ((aligned (0x10)));
 
 // DMA queue ring buffer.
 static uint8_t s_dma_q_write_idx;
@@ -72,10 +71,9 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 
 	// DMA register values are calculated ahead of time to be consumed during
 	// VBlank faster.
-	cmd->op = op;
-	cmd->stride = stride;
-	cmd->len_1 = n & 0xFF;
-	cmd->len_2 = (n >> 8) & 0xFF;
+	cmd->stride = VDP_REGST(VDP_AUTOINC, stride);
+	cmd->len_1 = VDP_REGST(VDP_DMALEN1, n & 0xFF);
+	cmd->len_2 = VDP_REGST(VDP_DMALEN2, (n >> 8) & 0xFF);
 
 	switch (op)
 	{
@@ -85,22 +83,22 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 		case DMA_OP_TRANSFER:
 		case DMA_OP_SPR_TRANSFER:
 			src = src >> 1;
-			cmd->src_1 = src & 0xFF;
+			cmd->src_1 = VDP_REGST(VDP_DMASRC1, src & 0xFF);
 			src = src >> 8;
-			cmd->src_2 = src & 0xFF;
+			cmd->src_2 = VDP_REGST(VDP_DMASRC2, src & 0xFF);
 			src = src >> 8;
-			cmd->src_3 = src & 0x7F;
+			cmd->src_3 = VDP_REGST(VDP_DMASRC3, src & 0x7F);
 			break;
 
 		case DMA_OP_FILL:
-			cmd->src_1 = src & 0xFF;
-			cmd->src_3 = VDP_DMA_SRC_FILL;
+			cmd->src_1 = (src & 0xFF) << 8;  // fill byte.
+			cmd->src_3 = VDP_REGST(VDP_DMASRC3, VDP_DMA_SRC_FILL);
 			break;
 
 		case DMA_OP_COPY:
-			cmd->src_1 = src & 0xFF;
-			cmd->src_2 = (src >> 8) & 0xFF;
-			cmd->src_3 = VDP_DMA_SRC_COPY;
+			cmd->src_1 = VDP_REGST(VDP_DMASRC1, src & 0xFF);
+			cmd->src_2 = VDP_REGST(VDP_DMASRC2, (src >> 8) & 0xFF);
+			cmd->src_3 = VDP_REGST(VDP_DMASRC3, VDP_DMA_SRC_COPY);
 			break;
 	}
 
@@ -174,16 +172,17 @@ void md_dma_copy_vram(uint16_t dest, uint16_t src, uint16_t bytes, uint16_t stri
 	md_dma_enqueue(DMA_OP_COPY, VDP_CTRL_VRAM_WRITE, dest, src, bytes, stride);
 }
 
-void md_dma_process_cmd(DmaCmd *cmd);  // dma_impl.s
+void md_dma_process_cmd(DmaCmd *cmd);  // dma_process.a68
 
 #ifdef MDK_FAKE_DMA_TEST_HACK
 static void dma_fake(DmaCmd *cmd)
 {
-	if (cmd->op != DMA_OP_TRANSFER && cmd->op != DMA_OP_SPR_TRANSFER)
-	{
-		md_dma_process_cmd(cmd);
-		return;
-	}
+//	if (cmd->op != DMA_OP_TRANSFER && cmd->op != DMA_OP_SPR_TRANSFER)
+//	{
+//		md_dma_process_cmd(cmd);
+//		return;
+//	}
+	// TODO: support software fill
 	const uint32_t src_addr = (cmd->src_3 << 17) | (cmd->src_2 << 9) | (cmd->src_1 << 1);
 	const uint16_t *data = (const uint16_t *)src_addr;
 	const uint32_t ctrl = cmd->ctrl & ~(VDP_CTRL_DMA_BIT);
@@ -194,7 +193,6 @@ static void dma_fake(DmaCmd *cmd)
 	{
 		md_vdp_write(*data++);
 	}
-	cmd->op = DMA_OP_NONE;
 }
 #endif
 
@@ -208,7 +206,7 @@ void md_dma_process(void)
 	// Process high-priority slots first.
 	for (uint16_t i = 0; i < ARRAYSIZE(s_dma_prio_q_cmd); i++)
 	{
-		if (s_dma_prio_q_cmd[i].op == DMA_OP_NONE) break;
+		if (s_dma_prio_q_cmd[i].stride == 0) break;
 #ifdef MDK_FAKE_DMA_TEST_HACK
 		dma_fake(&s_dma_prio_q_cmd[i]);
 #else

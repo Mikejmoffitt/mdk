@@ -1,5 +1,4 @@
-#ifndef MD_VDP_ENUMS_H
-#define MD_VDP_ENUMS_H
+#pragma once
 
 #define MD_VDP_WIDTH_H40_PX 320
 #define MD_VDP_WIDTH_H32_PX 256
@@ -79,5 +78,3 @@ typedef enum VdpDebugLayerSel
 	VDP_DEBUG_LYSEL_PLANE_A = 0x2,
 	VDP_DEBUG_LYSEL_PLANE_B = 0x3
 } VdpDebugLayerSel;
-
-#endif  // MD_VDP_ENUMS_H

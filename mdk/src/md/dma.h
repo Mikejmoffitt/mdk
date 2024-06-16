@@ -19,8 +19,7 @@ bus, while fill and copy operations do not. Try to ensure that your queued VRAM
 transfer operations complete within the blanking period.
 
 */
-#ifndef MD_DMA_H
-#define MD_DMA_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -57,5 +56,3 @@ void md_dma_process(void);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif // MD_DMA_H

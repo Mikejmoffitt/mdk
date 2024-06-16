@@ -1,0 +1,74 @@
+#include	"md/top.inc"
+;
+; void md_dma_process_cmd(DmaCmd *cmd)
+;
+	.global	md_dma_process_cmd
+
+.set	SPID, 4
+.set	ARG_CMD, SPID  ; pointer to DmaCmd
+; Parameters in DmaCmd struct
+.set	PRM_STRIDE, 0   ; uint16_t
+.set	PRM_LEN1,   2   ; uint16_t
+.set	PRM_LEN2,   4   ; uint16_t
+.set	PRM_SRC1,   6   ; uint16_t
+.set	PRM_SRC2,   8   ; uint16_t
+.set	PRM_SRC3,   10  ; uint16_t
+.set	PRM_CTRL32, 12  ; uint32_t, cache of ctrl longword for dest addr
+
+md_dma_process_cmd:
+	lea	VDP_LOC_BASE+VDP_OFFS_CTRL, a1
+; A0 holds the DMA command, with precalculated register values.
+	movea.l	ARG_CMD(sp), a0
+	move.w	PRM_SRC3(a0), d0
+	move.w	(a0)+, (a1)  ; PRM_STRIDE
+	move.w	(a0)+, (a1)  ; PRM_LEN1
+	move.w	(a0)+, (a1)  ; PRM_LEN2
+	tst.b	d0
+	bmi.s	dma_fill
+	move.w	(a0)+, (a1)  ; PRM_SRC1
+	move.w	(a0)+, (a1)  ; PRM_SRC2
+	addq.w	#2, a0
+	move.w	d0, (a1)  ; PRM_SRC3
+	zbusreq
+	move.l	(a0), (a1)   ; PRM_CTRL32
+	zbusrel
+	rts
+dma_fill:
+	subq	#6, a0
+	move.w	d0, (a1)  ; PRM_SRC3
+	zbusreq
+	move.l	PRM_CTRL32(a0), (a1)  ; PRM_CTRL32
+	move.w	PRM_SRC1(a0), -4(a1)  ; data
+	zbusrel
+dma_fill_vdp_wait:
+	btst	#1, 1(a1)
+	bne.s	dma_fill_vdp_wait
+	rts
+
+
+;
+; void md_dma_process(void)
+;
+	.global	md_dma_process
+
+	.extern	g_md_sys_ints_enabled  ; bool
+md_dma_process_wip:
+	dma_wait
+; Disable ints, storing previous enablement status to restore later.
+	move.b	g_md_sys_ints_enabled, d0
+	move.w	d0, -(sp)
+	clr.b	g_md_sys_ints_enabled
+	andi.w	#$F8FF, sr
+
+; Handle the two sprite slots first.
+
+
+; Restore int enablement and exit.
+	move.w	(sp)+, d0
+	move.b	d0, g_md_sys_ints_enabled
+	beq.s	reenable_ints
+	rts
+
+reenable_ints:
+	ori.w	#$0700, sr
+	rts

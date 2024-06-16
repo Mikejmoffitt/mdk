@@ -7,6 +7,10 @@
 #define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif  // ARRAYSIZE
 
+#ifndef BITVAL
+#define BITVAL(x) (1 << x)
+#endif  // BITVAL
+
 #ifndef MAX
 #define MAX(a, b) \
     ({ __typeof__ (a) _a = (a); \
