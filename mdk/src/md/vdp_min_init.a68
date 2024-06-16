@@ -1,0 +1,158 @@
+#include	"md/top.inc"
+	.global	md_vdp_min_init
+;
+; Very basic VDP init and font install for the sake of diagnostics.
+; Does NOT clobber d0.
+;
+; a6 = return
+;
+md_vdp_min_init:
+	lea	VDP_LOC_BASE, a4
+
+	; Basic VDP Init
+	lea	vdp_init_reg_tbl, a0
+reg_init_copy_top:
+	move.w	(a0)+, d1
+	bpl.s	reg_init_done
+	move.w	d1, VDP_OFFS_CTRL(a4)
+	bra.s	reg_init_copy_top
+
+reg_init_done:
+	; TODO: 128K VRAM flag
+	; Clear VRAM
+	md_set_vram_addr $0000
+	moveq	#0, d1
+	move.w	#(VRAM_SIZE/4) - 1, d7
+vdp_mem_clear_top:
+	move.l	d1, VDP_OFFS_DATA(a4)
+	dbf	d7, vdp_mem_clear_top
+
+	; Write palette for font
+#ifndef MDK_TARGET_C2
+	md_set_cram_addr $0000
+	moveq	#(128 / (4 * 4)) - 1, d7
+	lea	md_min_palette, a0
+pal_copy_top:
+	.rept	4
+	move.l	(a0)+, VDP_OFFS_DATA(a4)
+	.endr
+	dbf	d7, pal_copy_top
+#else
+	lea	CRAM_SYSTEMC_LOC_BASE, a1
+	moveq	#(128 / (4 * 4)) - 1, d7
+	lea	md_min_palette, a0
+pal_copy_top:
+	.rept	4
+	move.l	(a0), (a1)
+	move.l	(a0)+, 128(a1)
+	.endr
+	dbf	d7, pal_copy_top
+#endif
+
+	; Copy font into VRAM
+	md_set_vram_addr $0000
+	lea	md_error_font, a0
+	move.w	#((12 * 16 * 32) / (4 * 4)) - 1, d7
+vram_copy_top:
+	.rept	4
+	move.l	(a0)+, VDP_OFFS_DATA(a4)
+	.endr
+	dbf	d7, vram_copy_top
+
+	; Return handled with a6
+	jmp	(a6)
+
+vdp_init_reg_tbl:
+	dc.w	VDP_REGST(VDP_MODESET1, $04)
+	dc.w	VDP_REGST(VDP_MODESET2, $14)
+	dc.w	VDP_REGST(VDP_MODESET3, $00)
+	dc.w	VDP_REGST(VDP_MODESET4, $51)
+	dc.w	VDP_REGST(VDP_SCRABASE, (VRAM_SCRA_BASE_DEFAULT >> 10))
+	dc.w	VDP_REGST(VDP_SCRBBASE, (VRAM_SCRB_BASE_DEFAULT >> 13))
+	dc.w	VDP_REGST(VDP_SPRBASE, $78)
+	dc.w	VDP_REGST(VDP_SCRWBASE, (VRAM_SCRW_BASE_DEFAULT >> 10))
+	dc.w	VDP_REGST(VDP_HSCRBASE, $3D)
+	dc.w	VDP_REGST(VDP_PLANESIZE, $01)
+	dc.w	VDP_REGST(VDP_WINHORI, $1F)
+	dc.w	VDP_REGST(VDP_WINVERT, $1F)
+	dc.w	VDP_REGST(VDP_AUTOINC, $02)
+	dc.w	VDP_REGST(VDP_BGCOL, $00)
+	dc.w	VDP_REGST(VDP_HINTC, $FF)
+	dc.w	0  ; end marker
+
+;
+; Graphics
+;
+
+md_min_palette:
+;
+	dc.w	$0000
+	dc.w	$0EEE
+	dc.w	$0EEC
+	dc.w	$0EEA
+	dc.w	$0EE8
+	dc.w	$0EE6
+	dc.w	$0EE4
+	dc.w	$0EE2
+	dc.w	$0EE0
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
+;
+	dc.w	$0000
+	dc.w	$0EE0
+	dc.w	$0CE2
+	dc.w	$0AE4
+	dc.w	$08E6
+	dc.w	$06E8
+	dc.w	$04EA
+	dc.w	$02EC
+	dc.w	$00EE
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
+;
+	dc.w	$0000
+	dc.w	$00EE
+	dc.w	$00CE
+	dc.w	$00AE
+	dc.w	$008E
+	dc.w	$006E
+	dc.w	$004E
+	dc.w	$002E
+	dc.w	$000E
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
+;
+	dc.w	$0000
+	dc.w	$0E2E
+	dc.w	$0C2E
+	dc.w	$0A2E
+	dc.w	$082E
+	dc.w	$062E
+	dc.w	$042E
+	dc.w	$022E
+	dc.w	$002E
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0000
+	dc.w	$0222
+	dc.w	$0000
+
+md_error_font:
+	.incbin	"md/font.bin"

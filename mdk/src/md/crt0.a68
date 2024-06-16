@@ -1,0 +1,47 @@
+#include	"md/top.inc"
+	.global	md_crt0_begin
+	.extern	main
+;
+; Other routines kept explicitly in low ROM
+;
+
+md_crt0_begin:
+	; clear WRAM
+	lea	WRAM_BASE, a0
+	move.w	#(WRAM_SIZE/(4*4))-1, d7
+	moveq	#0, d0
+.clr_loop:
+	.rept	4
+	move.l	d0, (a0)+
+	.endr
+	dbra	d7, .clr_loop
+
+	; copy data to work RAM
+	lea	_stext, a0  ; Data follows text section
+	lea	WRAM_BASE, a1  ; .data is at start of WRAM
+	move.w	#_sdata, d0
+	beq.s	.no_data_copy
+	lsr.w	#1, d0
+	subq.w	#1, d0
+
+.copy_data:
+	move.w	(a0)+, (a1)+
+	dbra	d0, .copy_data
+
+.no_data_copy:
+	moveq	#0, d0
+	move.l	d0, d1
+	move.l	d0, d2
+	move.l	d0, d3
+	move.l	d0, d4
+	move.l	d0, d5
+	move.l	d0, d6
+	move.l	d0, d7
+	move.l	d0, a0
+	move.l	d0, a1
+	move.l	d0, a2
+	move.l	d0, a3
+	move.l	d0, a4
+	move.l	d0, a5
+	move.l	d0, a6
+	jmp	(main).l

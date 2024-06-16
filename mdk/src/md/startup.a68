@@ -10,16 +10,11 @@
 	.extern	_sdata
 	.extern	main
 
-	.extern	_v_irq1
-	.extern	_v_irq2
-	.extern	_v_irq3
-	.extern	_v_irq4
-	.extern	_v_irq5
-	.extern	_v_irq6
-	.extern	_v_irq7
+	.extern	md_vdp_min_init
 
 	.global	_v_table
 	.global	_start
+	.global	startup_forever
 	.org	$00000000
 _v_table:
 	.long	$00000000
@@ -107,11 +102,10 @@ start:
 	; TMSS
 	move.b	IO_LOC_VERSION, d0
 	andi.b	#$0F, d0
-	beq.s	tmss_version_0
+	beq.s	0f
 	move.l	#$53454741, TMSS_PORT  ; "SEGA"
-tmss_version_0:
+0:
 #endif
-
 	; Shut up PSG - On my VA0 units it defaults to a loud noise.
 	lea	PSG_LOC_BASE, a0
 	move.b	#$9F, d0  ; Channel 0 att 15
@@ -125,7 +119,7 @@ tmss_version_0:
 	move.b	d0, (a0)
 
 	lea	softreset, a6
-	bra.w	startup_vdp_init
+	jmp	md_vdp_min_init
 
 softreset:
 	; Turn off display output
@@ -140,10 +134,31 @@ softreset:
 	.endr
 	; If start is held, run the memory test.
 	btst	#5, (IO_LOC_BASE + 3).l
-	beq.s	selftest
-	jmp	md_crt0_begin
+	beq.w	selftest
 #endif
 
+checksum:
+#ifndef MDK_WANT_CHECKSUM
+	jmp	md_crt0_begin
+#endif
+	lea	start, a0
+	lea	_stext, a1
+	moveq	#0, d0
+checksum_loop:
+	.rept	15
+	add.w	(a0)+, d0
+	cmp.l	a0, a1
+	beq.s	checksum_done
+	.endr
+	bra.s	checksum_loop
+
+checksum_done:
+	sub.w	($18E).w, d0
+	bne.s	checksum_bad
+	jmp	md_crt0_begin
+checksum_bad:
+	lea	startup_forever, a6
+	jmp	md_error_startup_checksum_error_display
 ;
 ; Self Test
 ;
@@ -160,7 +175,7 @@ wram_test_pass1:
 	lea	wram_test_pass2, a6
 	bra.w	startup_wram_test_sub
 wram_test_pass2:
-	lea	md_crt0_begin, a6
+	lea	checksum, a6
 	jmp	md_error_startup_wram_ok_display
 
 ; d0 = test word
@@ -179,368 +194,148 @@ wram_test_failed:
 	jmp	md_error_startup_wram_ng_display
 
 startup_forever:
-#ifndef MDK_TARGET_C2
+#ifdef MDK_TARGET_C2
+	; Arcade target hangs on the error indefinitely
+	bra.s	startup_forever
+#else
 	btst	#5, (IO_LOC_BASE + 3).l  ; Check start button
 	bne.s	startup_forever
-
 startup_forever_wait_start_release:
 	btst	#5, (IO_LOC_BASE + 3).l  ; Check start button
 	beq.s	startup_forever_wait_start_release
-#else
-	; Arcade target hangs on the error indefinitely
-	bra.s	startup_forever
 #endif
 	bra.w	start
 
 
-;
-; Very basic VDP init and font install for the sake of diagnostics.
-; Does NOT clobber d0.
-;
-; a6 = return
-;
-startup_vdp_init:
-	lea	VDP_LOC_BASE, a4
-
-	; Basic VDP Init
-	lea	vdp_init_reg_tbl, a0
-reg_init_copy_top:
-	move.w	(a0)+, d1
-	bpl.s	reg_init_done
-	move.w	d1, VDP_OFFS_CTRL(a4)
-	bra.s	reg_init_copy_top
-
-reg_init_done:
-	; TODO: 128K VRAM flag
-	; Clear VRAM
-	md_set_vram_addr $0000
-	moveq	#0, d1
-	move.w	#(VRAM_SIZE/4) - 1, d7
-vdp_mem_clear_top:
-	move.l	d1, VDP_OFFS_DATA(a4)
-	dbf	d7, vdp_mem_clear_top
-
-	; Write palette for font
-#ifndef MDK_TARGET_C2
-	md_set_cram_addr $0000
-	moveq	#(128 / (4 * 4)) - 1, d7
-	lea	md_error_palette, a0
-pal_copy_top:
-	.rept	4
-	move.l	(a0)+, VDP_OFFS_DATA(a4)
-	.endr
-	dbf	d7, pal_copy_top
-#else
-	lea	CRAM_SYSTEMC_LOC_BASE, a1
-	moveq	#(128 / (4 * 4)) - 1, d7
-	lea	md_error_palette, a0
-pal_copy_top:
-	.rept	4
-	move.l	(a0), (a1)
-	move.l	(a0)+, 128(a1)
-	.endr
-	dbf	d7, pal_copy_top
-#endif
-
-	; Copy font into VRAM
-	md_set_vram_addr $0000
-	lea	md_error_font, a0
-	move.w	#((12 * 16 * 32) / (4 * 4)) - 1, d7
-vram_copy_top:
-	.rept	4
-	move.l	(a0)+, VDP_OFFS_DATA(a4)
-	.endr
-	dbf	d7, vram_copy_top
-
-	; Return handled with a6
-	jmp	(a6)
-
-vdp_init_reg_tbl:
-	dc.w	VDP_REGST(VDP_MODESET1, $04)
-	dc.w	VDP_REGST(VDP_MODESET2, $14)
-	dc.w	VDP_REGST(VDP_MODESET3, $00)
-	dc.w	VDP_REGST(VDP_MODESET4, $51)
-	dc.w	VDP_REGST(VDP_SCRABASE, (VRAM_SCRA_BASE_DEFAULT >> 10))
-	dc.w	VDP_REGST(VDP_SCRBBASE, (VRAM_SCRB_BASE_DEFAULT >> 13))
-	dc.w	VDP_REGST(VDP_SPRBASE, $78)
-	dc.w	VDP_REGST(VDP_SCRWBASE, (VRAM_SCRW_BASE_DEFAULT >> 10))
-	dc.w	VDP_REGST(VDP_HSCRBASE, $3D)
-	dc.w	VDP_REGST(VDP_PLANESIZE, $01)
-	dc.w	VDP_REGST(VDP_WINHORI, $1F)
-	dc.w	VDP_REGST(VDP_WINVERT, $1F)
-	dc.w	VDP_REGST(VDP_AUTOINC, $02)
-	dc.w	VDP_REGST(VDP_BGCOL, $00)
-	dc.w	VDP_REGST(VDP_HINTC, $FF)
-	dc.w	0  ; end marker
-
-; TODO: Checksum
-
-
-;
-; Vectors
-;
-
-startup_error_display:
-	lea	startup_error_display_init_post, a6
-	bra.w	startup_vdp_init
-
-startup_error_display_init_post:
-	jsr	md_error_exception_display
-	lea	startup_forever, a6
-	jmp	md_error_startup_start_display
-
 _v_bus_error:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#0, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_address_error:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#1, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_illegal_instruction:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#2, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_div_zero:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#3, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_chk:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#4, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trapv:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#5, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_privelege:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#6, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trace:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#7, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_unused_irq:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#8, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_aline_emu:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#9, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_fline_emu:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#10, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_reserved:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#11, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_coproc_violation:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#12, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_format:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#13, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_uninit:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#14, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_spurious:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#15, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x0:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#16, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x1:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#17, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x2:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#18, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x3:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#19, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x4:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#20, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x5:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#21, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x6:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#22, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x7:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#23, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x8:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#24, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0x9:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#25, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0xa:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#26, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0xb:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#27, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0xc:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#28, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0xd:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#29, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0xe:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#30, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_trap0xf:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#31, d0
-	jmp	(pc, startup_error_display)
+	jmp	(md_error_dispatch)
 _v_unimp:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#32, d0
-	jmp	(pc, startup_error_display)
-
-;
-; Graphics
-;
-
-md_error_palette:
-;
-	dc.w	$0000
-	dc.w	$0EEE
-	dc.w	$0EEC
-	dc.w	$0EEA
-	dc.w	$0EE8
-	dc.w	$0EE6
-	dc.w	$0EE4
-	dc.w	$0EE2
-	dc.w	$0EE0
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0222
-	dc.w	$0000
-;
-	dc.w	$0000
-	dc.w	$0EE0
-	dc.w	$0CE2
-	dc.w	$0AE4
-	dc.w	$08E6
-	dc.w	$06E8
-	dc.w	$04EA
-	dc.w	$02EC
-	dc.w	$00EE
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0222
-	dc.w	$0000
-;
-	dc.w	$0000
-	dc.w	$00EE
-	dc.w	$00CE
-	dc.w	$00AE
-	dc.w	$008E
-	dc.w	$006E
-	dc.w	$004E
-	dc.w	$002E
-	dc.w	$000E
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0222
-	dc.w	$0000
-;
-	dc.w	$0000
-	dc.w	$0E2E
-	dc.w	$0C2E
-	dc.w	$0A2E
-	dc.w	$082E
-	dc.w	$062E
-	dc.w	$042E
-	dc.w	$022E
-	dc.w	$002E
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0000
-	dc.w	$0222
-	dc.w	$0000
-
-md_error_font:
-	.incbin	"md/font.bin"
-
-;
-; Other routines kept explicitly in low ROM
-;
-
-md_crt0_begin:
-	; clear WRAM
-	lea	WRAM_BASE, a0
-	move.w	#(WRAM_SIZE/(4*4))-1, d7
-	moveq	#0, d0
-.clr_loop:
-	.rept	4
-	move.l	d0, (a0)+
-	.endr
-	dbra	d7, .clr_loop
-
-	; copy data to work RAM
-	lea	_stext, a0  ; Data follows text section
-	lea	WRAM_BASE, a1  ; .data is at start of WRAM
-	move.w	#_sdata, d0
-	beq.s	.no_data_copy
-	lsr.w	#1, d0
-	subq.w	#1, d0
-
-.copy_data:
-	move.w	(a0)+, (a1)+
-	dbra	d0, .copy_data
-
-.no_data_copy:
-
-	moveq	#0, d0
-	move.l	d0, d1
-	move.l	d0, d2
-	move.l	d0, d3
-	move.l	d0, d4
-	move.l	d0, d5
-	move.l	d0, d6
-	move.l	d0, d7
-	move.l	d0, a0
-	move.l	d0, a1
-	move.l	d0, a2
-	move.l	d0, a3
-	move.l	d0, a4
-	move.l	d0, a5
-	move.l	d0, a6
-	jmp	(main).l
+	jmp	(md_error_dispatch)

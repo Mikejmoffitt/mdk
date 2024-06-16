@@ -12,17 +12,22 @@
 #define MD_ERROR_ATTR_OK     $1000
 #define MD_ERROR_ATTR_TITLE  $2000
 #define MD_ERROR_ATTR_NG     $3000
-#define MD_ERROR_VRAM_TITLE ( VRAM_SCRW_BASE_DEFAULT + 2)
+#define MD_ERROR_VRAM_TITLE  (VRAM_SCRW_BASE_DEFAULT + 2)
 #define MD_ERROR_VRAM_START  (VRAM_SCRW_BASE_DEFAULT + 2 + $D00)
 #define MD_ERROR_VRAM_REGS   (VRAM_SCRW_BASE_DEFAULT + 2 + $500)
 #define MD_ERROR_VRAM_SRPC   (VRAM_SCRW_BASE_DEFAULT + 2 + $380)
 #define MD_ERROR_VRAM_ACCESS (VRAM_SCRW_BASE_DEFAULT + 2 + $200)
 
+	.extern	md_vdp_min_init
+	.extern	startup_forever
+
+	.global	md_error_startup_checksum_error_display
 	.global	md_error_startup_wram_check_display
 	.global	md_error_startup_wram_ok_display
 	.global	md_error_startup_wram_ng_display
 	.global	md_error_startup_start_display
 	.global	md_error_exception_display
+	.global	md_error_dispatch
 
 
 ;
@@ -32,7 +37,6 @@
 ; a6 = return point
 md_error_startup_wram_check_display:
 	lea	VDP_LOC_BASE, a4
-	/* Enable display prematurely as this function returns */
 	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	lea	str_wram_check, a0
 	move.w	#MD_ERROR_ATTR_TITLE, d0
@@ -45,6 +49,7 @@ str_wram_check:
 ; a6 = return
 md_error_startup_wram_ok_display:
 	lea	VDP_LOC_BASE, a4
+	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	lea	str_wram_ok, a0
 	move.w	#MD_ERROR_ATTR_OK, d0
 	move.w	#MD_ERROR_VRAM_TITLE+(20*2), d1
@@ -56,6 +61,7 @@ str_wram_ok:
 ; a6 = return
 md_error_startup_wram_ng_display:
 	lea	VDP_LOC_BASE, a4
+	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	lea	str_wram_ng, a0
 	move.w	#MD_ERROR_ATTR_NG, d0
 	move.w	#MD_ERROR_VRAM_TITLE+(20*2), d1
@@ -67,17 +73,19 @@ str_wram_ng:
 ; a6 = return
 md_error_startup_checksum_error_display:
 	lea	VDP_LOC_BASE, a4
+	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	lea	str_checksum_error, a0
 	move.w	#MD_ERROR_ATTR_TITLE, d0
 	move.w	#MD_ERROR_VRAM_TITLE, d1
 	bra.w	string_print_sub
 str_checksum_error:
-	.ascii	"ROM Checksum Error\0"
+	.ascii	"ROM Checksum Error      \0"
 	.align	2
 
 ; a6 = return
 md_error_startup_start_display:
 	lea	VDP_LOC_BASE, a4
+	move.w	#VDP_REGST(VDP_MODESET2, $54), VDP_OFFS_CTRL(a4)
 	lea	str_press_start, a0
 	move.w	#MD_ERROR_ATTR_NG, d0
 	move.w	#MD_ERROR_VRAM_START, d1
@@ -450,6 +458,18 @@ str_print2:
 	bra.w	str_print2
 str_print2_done:
 	jmp	(a6)
+
+;
+;
+;
+md_error_dispatch:
+	lea	md_error_dispatch_init_post, a6
+	jmp	md_vdp_min_init
+
+md_error_dispatch_init_post:
+	jsr	md_error_exception_display
+	lea	startup_forever, a6
+	jmp	md_error_startup_start_display
 
 ;
 ; String data
