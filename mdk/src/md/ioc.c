@@ -18,7 +18,7 @@ uint8_t md_ioc_read_reg_raw(MdIoCIoPort port)
 	return reg_porta[port << 1];
 }
 
-void md_ioc_set_watchdog_ctrl(int16_t jp15_pin3)
+void md_ioc_set_watchdog_ctrl(bool jp15_pin3)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x80;
@@ -26,7 +26,7 @@ void md_ioc_set_watchdog_ctrl(int16_t jp15_pin3)
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 }
 
-void md_ioc_set_tda1518bq_mute(int16_t mute)
+void md_ioc_set_tda1518bq_mute(bool mute)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x40;
@@ -34,7 +34,7 @@ void md_ioc_set_tda1518bq_mute(int16_t mute)
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 }
 
-void md_ioc_set_cn2_bits(int16_t pin10, int16_t pin11)
+void md_ioc_set_cn2_bits(bool pin10, bool pin11)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x30;
@@ -42,20 +42,15 @@ void md_ioc_set_cn2_bits(int16_t pin10, int16_t pin11)
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 }
 
-void md_ioc_set_coin_outputs(int16_t lockout1, int16_t lockout2,
-                             int16_t meter1, int16_t meter2)
+void md_ioc_set_coin_outputs(uint8_t status)
 {
 	volatile uint8_t *reg_portd = (volatile uint8_t *)(SYSC_IO_LOC_PORTD);
 	s_io_reg_cache[SYSC_IO_PORT_D] &= ~0x0F;
-	s_io_reg_cache[SYSC_IO_PORT_D] |= (lockout2 ? 0x08 : 0x00);
-	s_io_reg_cache[SYSC_IO_PORT_D] |= (lockout1 ? 0x04 : 0x00);
-	s_io_reg_cache[SYSC_IO_PORT_D] |= (meter2 ? 0x02 : 0x00);
-	s_io_reg_cache[SYSC_IO_PORT_D] |= (meter1 ? 0x01 : 0x00);
+	s_io_reg_cache[SYSC_IO_PORT_D] |= status;
 	*reg_portd = s_io_reg_cache[SYSC_IO_PORT_D];
 }
 
-// Set two bits corresponding to CN4 outputs A19 and B19.
-void md_ioc_set_cn4_bits(int16_t a19, int16_t b19)
+void md_ioc_set_cn4_bits(bool a19, bool b19)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0xC0;
@@ -64,7 +59,6 @@ void md_ioc_set_cn4_bits(int16_t a19, int16_t b19)
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
 }
 
-// Set palette bank 0-3 through bits A9 and A10 of CRAM.
 void md_ioc_set_global_pal_bank(uint16_t bank)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);

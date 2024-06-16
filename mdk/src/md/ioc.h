@@ -48,6 +48,11 @@ extern "C"
 #define SYSC_DIPSW_1 0x02
 #define SYSC_DIPSW_0 0x01
 
+#define SYSC_COIN_METER1 (1 << 0)
+#define SYSC_COIN_METER2 (1 << 1)
+#define SYSC_COIN_LOCKOUT1 (1 << 2)
+#define SYSC_COIN_LOCKOUT2 (1 << 3)
+
 typedef enum MdIoCIoPort
 {
 	SYSC_IO_PORT_A = 0,
@@ -86,14 +91,20 @@ uint8_t md_ioc_read_reg_raw(MdIoCIoPort port);
 // Setting outputs. Last register value is cached since readback can't be done.
 // Other code may use these (e.g. pal_systemc, adpcm_systemc)
 
-void md_ioc_set_watchdog_ctrl(int16_t jp15_pin3);
-void md_ioc_set_tda1518bq_mute(int16_t mute);
-void md_ioc_set_cn2_bits(int16_t pin10, int16_t pin11);
-void md_ioc_set_coin_outputs(int16_t lockout1, int16_t lockout2,
-                             int16_t meter1, int16_t meter2);
+// Controls pin 3 of JP15.
+void md_ioc_set_watchdog_ctrl(bool jp15_pin3);
+
+// Mutes the audio amplifier.
+void md_ioc_set_tda1518bq_mute(bool mute);
+
+// Controls pin 10 and pin 11 of CN2.
+void md_ioc_set_cn2_bits(bool pin10, bool pin11);
+
+// Sets the coin meter and coil driver outputs. Use SYSC_COIN_* definitions.
+void md_ioc_set_coin_outputs(uint8_t state);
 
 // Set two bits corresponding to CN4 outputs A19 and B19.
-void md_ioc_set_cn4_bits(int16_t a19, int16_t b19);
+void md_ioc_set_cn4_bits(bool a19, bool b19);
 
 // Set upper address pins for uPD7759 sample ROM A17-A18.
 // Upper bits theorized to exist via Charles McDonald's doc, unconfirmed.
