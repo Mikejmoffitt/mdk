@@ -95,8 +95,7 @@ CPPFLAGS += -std=gnu++2b
 ASFLAGS := -I$(SRCDIR) -I$(OBJDIR) -I$(MDKSRCDIR)
 ASFLAGS += -Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(MDKSRCDIR)
 ASFLAGS += -mcpu=68000 -Wa,--bitwise-or
-ASFLAGS += -Wa,--register-prefix-optional 
-ASFLAGS += -Wa,-l -Wa,--no-pad-sections
+ASFLAGS += -Wa,--register-prefix-optional
 ASFLAGS += -x assembler-with-cpp
 
 ifeq ($(TARGET_SYSTEM),MDK_TARGET_C2)

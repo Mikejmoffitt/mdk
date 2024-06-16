@@ -37,26 +37,26 @@ md_dma_process_cmd:
 ; Set length registers.
 	move.w	#VDP_REGST(VDP_DMALEN1, 0), d0
 	move.b	PRM_LEN1(a0), d0
-	move.w	d0, VDP_OFFS_CTRL(a4)
+	move.w	d0, VDP_OFFS_CTRL(a1)
 	move.w	#VDP_REGST(VDP_DMALEN2, 0), d0
 	move.b	PRM_LEN2(a0), d0
-	move.w	d0, VDP_OFFS_CTRL(a4)
+	move.w	d0, VDP_OFFS_CTRL(a1)
 ; If it's a fill operation, things are handled differently.
 	tst.w	PRM_OP(a0)
-	bmi	run_dma_fill
+	bmi.w	run_dma_fill
 ; Write remaining regs.
 	move.w	#VDP_REGST(VDP_DMASRC1, 0), d0
 	move.b	PRM_SRC1(a0), d0
-	move.w	d0, VDP_OFFS_CTRL(a4)
+	move.w	d0, VDP_OFFS_CTRL(a1)
 	move.w	#VDP_REGST(VDP_DMASRC2, 0), d0
 	move.b	PRM_SRC2(a0), d0
-	move.w	d0, VDP_OFFS_CTRL(a4)
+	move.w	d0, VDP_OFFS_CTRL(a1)
 	move.w	#VDP_REGST(VDP_DMASRC3, 0), d0
 ; The final source and destination addr writes set off the DMA.
 	move.b	PRM_SRC3(a0), d0
-	move.w	d0, VDP_OFFS_CTRL(a4)
+	move.w	d0, VDP_OFFS_CTRL(a1)
 	zbusreq
-	move.l	PRM_CTRL32(a0), VDP_OFFS_CTRL(a4)
+	move.l	PRM_CTRL32(a0), VDP_OFFS_CTRL(a1)
 	zbusrel
 
 ; NOTE(2023-06-29): Repeatedly enabling and disabling the DMA bit does not
@@ -64,7 +64,7 @@ md_dma_process_cmd:
 ; Disable DMA.
 ;	move.w	#VDP_REGST(VDP_MODESET2, 0), d0
 ;	move.b	d1, d0  ; Restore MODE2 from before.
-;	move.w	d0, VDP_OFFS_CTRL(a4)
+;	move.w	d0, VDP_OFFS_CTRL(a1)
 
 
 ; Mark the DMA command slot as inactive.
@@ -72,18 +72,18 @@ md_dma_process_cmd:
 	rts
 
 run_dma_fill:
-	move.w	#VDP_REGST(VDP_DMASRC3, $80), VDP_OFFS_CTRL(a4)  ; Fill
-	move.l	PRM_CTRL32(a0), VDP_OFFS_CTRL(a4)
+	move.w	#VDP_REGST(VDP_DMASRC3, $80), VDP_OFFS_CTRL(a1)  ; Fill
+	move.l	PRM_CTRL32(a0), VDP_OFFS_CTRL(a1)
 	move.b	PRM_SRC1(a0), d0
 	move.b	d0, d1
 	lsl.w	#8, d0
 	move.b	d1, d0
 	zbusreq
-	move.w	d0, VDP_OFFS_DATA(a4)
+	move.w	d0, VDP_OFFS_DATA(a1)
 	zbusrel
 	; Wait for DMA to complete
 dma_fill_vdp_wait:
-	btst	#1, VDP_OFFS_CTRL+1(a4)
+	btst	#1, VDP_OFFS_CTRL+1(a1)
 	bne.s	dma_fill_vdp_wait
 	rts
 
