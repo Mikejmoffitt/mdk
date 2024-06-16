@@ -1,6 +1,6 @@
 ; mdk SRAM routiness
-; Michael Moffitt 2023
-; Thanks to Chilly Willy and Stephane Dallongeville for extant reference code.
+; Michael Moffitt 2024
+#include	"md/top.inc"
 
 	.globl	md_sram_write
 md_sram_write:

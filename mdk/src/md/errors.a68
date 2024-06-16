@@ -6,7 +6,7 @@
 ; as to be suitable for a situation where work RAM is not operational.
 ;
 
-#include	"md/asm/top.inc"
+#include	"md/top.inc"
 
 #define MD_ERROR_ATTR_ADDR   $0000
 #define MD_ERROR_ATTR_OK     $1000

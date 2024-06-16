@@ -1,4 +1,4 @@
-#include	"md/asm/top.inc"
+#include	"md/top.inc"
 
 	.global	md_vdp_debug_port_sel
 ; void md_vdp_debug_port_sel(uint32_t num);

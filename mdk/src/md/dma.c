@@ -91,7 +91,7 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 			break;
 
 		case DMA_OP_FILL:
-			cmd->src_1 = src & 0xFFFF;  // desired data.
+			cmd->src_1 = (src & 0xFF) << 8;  // fill byte.
 			cmd->src_3 = VDP_REGST(VDP_DMASRC3, VDP_DMA_SRC_FILL);
 			break;
 

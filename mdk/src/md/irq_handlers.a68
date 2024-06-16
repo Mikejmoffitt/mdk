@@ -1,7 +1,7 @@
-#include	"md/asm/top.inc"
+#include	"md/top.inc"
 
 ; md-toolchain interrupt handlers
-; Michael Moffitt 2018-2022
+; Michael Moffitt 2018-2024
 
 	.global	_v_irq1
 	.global	_v_irq2

@@ -1,6 +1,6 @@
 ; mdk header, interrupts, and C runtime startup
 ; Michael Moffitt 2018-2022
-#include	"md/asm/top.inc"
+#include	"md/top.inc"
 
 	.section	.text.keepboot
 
@@ -491,7 +491,7 @@ md_error_palette:
 	dc.w	$0000
 
 md_error_font:
-	.incbin	"md/asm/font.bin"
+	.incbin	"md/font.bin"
 
 ;
 ; Other routines kept explicitly in low ROM

@@ -1,4 +1,4 @@
-	.include	"md/asm/cspr_types.inc"
+	.include	"md/cspr_types.inc"
 
 	.global	cspr_dma_setup_sub
 cspr_dma_setup_sub:

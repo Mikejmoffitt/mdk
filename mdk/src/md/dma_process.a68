@@ -1,4 +1,4 @@
-#include	"md/asm/top.inc"
+#include	"md/top.inc"
 ;
 ; void md_dma_process_cmd(DmaCmd *cmd)
 ;
@@ -19,23 +19,26 @@ md_dma_process_cmd:
 	lea	VDP_LOC_BASE+VDP_OFFS_CTRL, a1
 ; A0 holds the DMA command, with precalculated register values.
 	movea.l	ARG_CMD(sp), a0
+	move.w	PRM_SRC3(a0), d0
 	move.w	(a0)+, (a1)  ; PRM_STRIDE
 	move.w	(a0)+, (a1)  ; PRM_LEN1
 	move.w	(a0)+, (a1)  ; PRM_LEN2
+	tst.b	d0
+	bmi.s	dma_fill
 	move.w	(a0)+, (a1)  ; PRM_SRC1
 	move.w	(a0)+, (a1)  ; PRM_SRC2
-	move.w	(a0)+, d0
-	bmi.s	dma_fill
+	addq.w	#2, a0
 	move.w	d0, (a1)  ; PRM_SRC3
 	zbusreq
 	move.l	(a0), (a1)   ; PRM_CTRL32
 	zbusrel
 	rts
 dma_fill:
+	subq	#6, a0
 	move.w	d0, (a1)  ; PRM_SRC3
 	zbusreq
-	move.l	(a0), (a1)  ; PRM_CTRL32
-	move.w	PRM_SRC1-PRM_CTRL32(a0), -4(a1)  ; data
+	move.l	PRM_CTRL32(a0), (a1)  ; PRM_CTRL32
+	move.w	PRM_SRC1(a0), -4(a1)  ; data
 	zbusrel
 dma_fill_vdp_wait:
 	btst	#1, 1(a1)

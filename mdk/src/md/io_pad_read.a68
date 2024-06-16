@@ -1,5 +1,5 @@
 ; ASM routines supporting io.h.
-#include	"md/asm/top.inc"
+#include	"md/top.inc"
 
 	; uint16_t[2]
 	.extern	g_md_pad[2]
