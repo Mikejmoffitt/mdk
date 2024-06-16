@@ -1,3 +1,5 @@
+#ifdef MDK_TARGET_C2
+
 #include "md/ioc.h"
 #include "md/mmio.h"
 #include "md/macro.h"
@@ -158,7 +160,7 @@ void md_ioc_init(void)
 
 	md_ioc_set_watchdog_ctrl(0);
 	md_ioc_set_tda1518bq_mute(0);
-	md_ioc_set_coin_outputs(0, 0, 0, 0);
+	md_ioc_set_coin_outputs(0);
 }
 
 static void generate_edges(const uint8_t *fresh, const uint8_t *prev,
@@ -202,3 +204,5 @@ void md_ioc_poll(void)
 	}
 	md_ioc_generate_compatible_input();
 }
+
+#endif  // MD_TARGET_C2

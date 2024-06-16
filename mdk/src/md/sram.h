@@ -7,11 +7,9 @@ of code location.
 
 The intended use case is to allow the user to copy to and from a struct
 representing save data.
-
 */
 
-#ifndef MD_SRAM_H
-#define MD_SRAM_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -27,5 +25,3 @@ void md_sram_read(uint32_t src_offset, void *dest_addr, uint32_t n);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif  // MD_SRAM_H

@@ -1,5 +1,6 @@
-/* mdk top-level file
-Michael Moffitt */
+// mdk top-level file
+// 2018-2024 Michael Moffitt
+// ===========================================================================
 #include "md/megadrive.h"
 #include "md/sys.h"
 #include "md/vdp.h"

@@ -1,9 +1,0 @@
-	.global	md_tmss_init
-
-md_tmss_init:
-	move.b	$A10001, d0
-	andi.b	#$0F, d0
-	beq.s	tmss_version_0
-	move.l	#$53454741, $A14000  ; "SEGA"
-tmss_version_0:
-	rts

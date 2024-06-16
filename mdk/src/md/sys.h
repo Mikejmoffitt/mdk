@@ -1,11 +1,10 @@
 // mdk system functions
-// Michael Moffitt 2018-2022
+// Michael Moffitt 2018-2024
 //
 // Most things in this file rely on the arbiter / controller in the Mega Drive.
 // System C2 does not have this IC, so most functions either work differently or
 // are dummy / no-op.
-#ifndef MD_SYS_H
-#define MD_SYS_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -203,5 +202,3 @@ static inline void md_sys_z80_reset_assert(void)
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif // MD_SYS_H

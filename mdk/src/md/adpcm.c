@@ -1,3 +1,5 @@
+#ifdef MDK_TARGET_C2
+
 #include "md/adpcm.h"
 #include "md/mmio.h"
 #include "md/ioc.h"
@@ -35,3 +37,5 @@ bool md_adpcm_busy(void)
 {
 	return md_ioc_get_upd7759_busy();
 }
+
+#endif  // MD_TARGET_C2

@@ -1,9 +1,6 @@
-/* mdk IRQ and exception handler registration
-Michael Moffitt 2018-2022
-
- */
-#ifndef MD_IRQ_H
-#define MD_IRQ_H
+// mdk IRQ and exception handler registration
+// Michael Moffitt 2018-2024
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -24,5 +21,3 @@ void md_irq_register(MdIrqType type, void (*function_ptr)(void));
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif  // MD_IRQ_H

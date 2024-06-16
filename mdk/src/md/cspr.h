@@ -1,8 +1,7 @@
 // mdk composite sprite support
-// 2023 Michael Moffitt
+// 2023-2024 Michael Moffitt
 // These functions may be used in SIMPLE mode.
-#ifndef MD_CSPR_H
-#define MD_CSPR_H
+#pragma once
 
 #include <stdint.h>
 
@@ -43,5 +42,3 @@ uint16_t md_cspr_get_frame_count(const void *cspr_data);
 
 // Returns a pointer to a C-string of the name of the composite sprite.
 const char *md_cspr_get_name(const void *cspr_data);
-
-#endif  // MD_CSPR_H

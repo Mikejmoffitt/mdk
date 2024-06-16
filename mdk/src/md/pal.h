@@ -1,7 +1,6 @@
-/* mdk palette support functions
-Michael Moffitt 2018-2022 */
-#ifndef MD_PAL_H
-#define MD_PAL_H
+// mdk palette support functions
+// Michael Moffitt 2018-2024
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -55,5 +54,3 @@ void md_pal_init(void);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif // MD_PAL_H

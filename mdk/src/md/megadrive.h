@@ -1,9 +1,7 @@
 // mdk Top-level Sega Megadrive support routines and structures
-// 2018-2022 Michael Moffitt
+// 2018-2024 Michael Moffitt
 // ===========================================================================
-
-#ifndef MD_MEGADRIVE_H
-#define MD_MEGADRIVE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -75,5 +73,3 @@ void megadrive_init(void);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif // MD_MEGADRIVE_H

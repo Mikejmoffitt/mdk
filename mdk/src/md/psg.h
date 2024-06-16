@@ -1,7 +1,6 @@
-/* mdk PSG audio support
-Michael Moffitt 2018-2022 */
-#ifndef MD_PSG_H
-#define MD_PSG_H
+// mdk PSG audio support
+// Michael Moffitt 2018-2024
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -109,5 +108,3 @@ static inline void md_psg_note(uint8_t chan, uint8_t note, uint8_t octave)
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif  // MD_PAL_H

@@ -1,8 +1,6 @@
-/* mdk memory map and MMIO definitions
-   2018-2022 Michael Moffitt */
-
-#ifndef MD_MMIO_H
-#define MD_MMIO_H
+// mdk memory map and MMIO definitions
+// 2018-2024 Michael Moffitt
+#pragma once
 
 #define ROM_BASE (0x00000000)
 #define WRAM_BASE (0xFFFF0000)
@@ -34,6 +32,7 @@
 #define SYS_Z80_PRG_LOC        (0xA00000)
 #define SYS_Z80_PORT_BUS_LOC   (0xA11100)
 #define SYS_Z80_PORT_RESET_LOC (0xA11200)
+#define TMSS_PORT    (0xA14000)
 /* VDP */
 #define VDP_LOC_BASE      (0xC00000)
 /* PSG */
@@ -80,5 +79,3 @@
 #define VDPPORT_DBG_SEL   (*(volatile uint16_t *)(VDP_LOC_BASE + 0x18))
 #define VDPPORT_DBG_DATA  (*(volatile uint16_t *)(VDP_LOC_BASE + 0x1C))
 #endif  /* __ASSEMBLY__ */
-
-#endif  /* MD_MMIO_H */

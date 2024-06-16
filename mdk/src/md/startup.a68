@@ -104,6 +104,12 @@ start:
 #ifndef MDK_TARGET_C2
 	; Halt Z80
 	move.w	#$0100, (SYS_Z80_PORT_BUS_LOC).l
+	; TMSS
+	move.b	IO_LOC_VERSION, d0
+	andi.b	#$0F, d0
+	beq.s	tmss_version_0
+	move.l	#$53454741, TMSS_PORT  ; "SEGA"
+tmss_version_0:
 #endif
 
 	; Shut up PSG - On my VA0 units it defaults to a loud noise.

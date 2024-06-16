@@ -1,5 +1,5 @@
-/* mdk VDP control functions
-Michael Moffitt 2018-2022 */
+// mdk VDP control functions
+// Michael Moffitt 2018-2024
 
 #include "md/vdp.h"
 #include "md/dma.h"

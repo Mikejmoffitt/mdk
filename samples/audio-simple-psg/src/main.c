@@ -1,6 +1,6 @@
 // md-toolchain example "audio-simple-psg" main.c
 // Damian Yerrick 2019
-// Michael Moffitt 2022
+// Michael Moffitt 2024
 //
 // This demo plays two chords through the programmable sound
 // generator (PSG) that the MD inherits from the Master System.

@@ -1,4 +1,4 @@
-
+#pragma once
 
 # A1 - CSPR blob
 .set	CSPR_NAME, 0x00

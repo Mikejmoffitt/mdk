@@ -1,7 +1,8 @@
-/* mdk System C/C2 I/O support
-Michael Moffitt 2018-2022 */
-#ifndef MD_IO_SYSTEMC_H
-#define MD_IO_SYSTEMC_H
+// mdk System C/C2 I/O support
+// Michael Moffitt 2018-2024
+#pragma once
+
+#ifdef MDK_TARGET_C2
 
 #ifdef __cplusplus
 extern "C"
@@ -135,4 +136,4 @@ void md_ioc_poll(void);
 }
 #endif  // __cplusplus
 
-#endif // MD_IO_SYSTEMC_H
+#endif  // MDK_TARGET_C2

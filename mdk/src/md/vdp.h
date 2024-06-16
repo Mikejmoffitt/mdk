@@ -1,5 +1,5 @@
 // MDK SEGA 315-5313 / YM7101 support (VDP)
-// Michael Moffitt 2018-2022
+// Michael Moffitt 2018-2024
 //
 // The VDP (Video Display Processor) is the most complicated part of the Sega
 // Mega Drive, Genesis, and System C/C2. It is responsible for generating the
@@ -24,9 +24,7 @@
 // TODO: Deprecate storage of some of these registers that have no reason to
 // be read (e.g. DMA parameters). Modeset, plane size will be kept so that
 // specific accessor functions will work.
-
-#ifndef MD_VDP_H
-#define MD_VDP_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -312,5 +310,3 @@ static inline void md_vdp_debug_reset(void);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif // MD_VDP_H

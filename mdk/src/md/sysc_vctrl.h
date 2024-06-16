@@ -1,5 +1,6 @@
-#ifndef MD_SYSC_VCTRL
-#define MD_SYSC_VCTRL
+#pragma once
+
+#ifdef MDK_TARGET_C2
 
 #include <stdint.h>
 
@@ -26,4 +27,4 @@ void md_sysc_vctrl_set_md_color_compat(bool compat);
 }
 #endif  // __cplusplus
 
-#endif  // MD_SYSC_VCTRL
+#endif  // MDK_TARGET_C2

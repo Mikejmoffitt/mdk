@@ -1,6 +1,4 @@
-#ifndef MD_MACRO_H
-#define MD_MACRO_H
-
+#pragma once
 #define NUM_IS_POW2(x) ((x & (x - 1)) == 0)
 
 #ifndef ARRAYSIZE
@@ -24,5 +22,3 @@
        __typeof__ (b) _b = (b); \
        _a < _b ? _a : _b; })
 #endif  // MIN
-
-#endif  // MD_MARCO_H

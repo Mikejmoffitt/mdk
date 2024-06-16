@@ -1,5 +1,5 @@
 // mdk sprite support
-// Michael Moffitt 2018-2023
+// Michael Moffitt 2018-2024
 //
 // MDK offers two modes of sprite management: SIMPLE and DIRECT.
 //
@@ -92,9 +92,7 @@
 // and you may terminate the sprite list prematurely, should you wish to save
 // on DMA bandwidth by transferring less sprites. Otherwise, the default value
 // of 80 will be adequate and you do not need to touch it.
-
-#ifndef MD_SPR_H
-#define MD_SPR_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -207,5 +205,3 @@ void md_spr_finish(void);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif  // MD_SPR_H

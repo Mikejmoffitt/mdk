@@ -1,7 +1,6 @@
-/* mdk gamepad support
-Michael Moffitt 2018-2022 */
-#ifndef MD_IO_H
-#define MD_IO_H
+// mdk gamepad support
+// Michael Moffitt 2018-2024
+#pragma once
 
 #include <stdint.h>
 
@@ -47,5 +46,3 @@ void md_io_poll(void);
 
 // Generates g_md_pad_pos and g_md_pad_neg from g_md_pad.
 void md_io_generate_edges(void);
-
-#endif  // MD_IO_H

@@ -1,8 +1,7 @@
-/* mdk system functions
-Michael Moffitt 2018-2022 */
+// mdk system functions
+// Michael Moffitt 2018-2024
 #include "md/mmio.h"
 #include "md/sys.h"
-#include "md/tmss.h"
 
 bool g_md_sys_ints_enabled __attribute__ ((aligned(2)));
 

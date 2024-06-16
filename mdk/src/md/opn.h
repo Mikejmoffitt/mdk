@@ -1,7 +1,6 @@
-/* mdk YM2612 support functions
-Michael Moffitt 2018-2022 */
-#ifndef MD_OPN_H
-#define MD_OPN_H
+// mdk YM2612 support functions
+// Michael Moffitt 2018-2022
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -34,5 +33,3 @@ static inline void md_opn_write(uint8_t part, uint8_t addr, uint8_t data)
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif // MD_OPN_H

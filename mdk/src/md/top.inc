@@ -1,3 +1,4 @@
+#pragma once
 #include	"md/mmio.h"
 #include	"md/vdp_regs.h"
 #include	"md/vdp_default_vram_map.h"
