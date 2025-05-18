@@ -92,7 +92,7 @@ CPPFLAGS := $(COMMON_FLAGS)
 CPPFLAGS += -std=gnu++2b
 
 # For ASM.
-ASFLAGS := -I$(SRCDIR) -I$(OBJDIR) -I$(MDKSRCDIR)
+ASFLAGS := $(COMMON_FLAGS) -I$(OBJDIR)
 ASFLAGS += -Wa,-I$(SRCDIR) -Wa,-I$(OBJDIR) -Wa,-I$(MDKSRCDIR)
 ASFLAGS += -mcpu=68000 -Wa,--bitwise-or
 ASFLAGS += -Wa,--register-prefix-optional
