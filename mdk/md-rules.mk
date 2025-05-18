@@ -262,10 +262,10 @@ flash: $(OUTPUT_GEN) $(MEGALOADER)
 ifeq ($(TARGET_SYSTEM),MDK_TARGET_C2)
 
 debug: $(MDK_C2_TESTROM)
-	exec mame $< -rompath $(shell pwd) -debug -r 640x480
+	exec mame $< -rompath $(shell pwd) -debug -r 1280x960
 
 test: $(MDK_C2_TESTROM)
-	exec mame $< -rompath $(shell pwd)
+	exec mame $< -rompath $(shell pwd) -r 1280x960
 
 $(MDK_C2_TESTROM): $(OUTPUT_GEN) $(BSPLIT)
 	# MAME does not have a generic System C2 target, so Zunzunkyou no Yabou is used.
