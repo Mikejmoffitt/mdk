@@ -1,6 +1,7 @@
 #include "md/irq.h"
 #include "md/sys.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -14,7 +15,7 @@ void (*g_irq_v_func)(void) = NULL;
 // pre-existing handler.
 void md_irq_register(MdIrqType type, void (*function_ptr)(void))
 {
-	const uint8_t ints_were_enabled = md_sys_di();
+	const bool ints_were_enabled = md_sys_di();
 	switch (type)
 	{
 		default:

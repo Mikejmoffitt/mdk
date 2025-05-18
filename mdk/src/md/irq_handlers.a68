@@ -14,8 +14,8 @@
 ; This is a flag used for vblank waiting.
 	.extern g_vblank_wait
 
-; Pointer to interrupt routines. Calling convention is just a standard void
-;   function which takes no arguments (e.g. my_irq_handler(void)).
+; Pointer to interrupt routines. Calling convention is just a regular
+; function which takes no arguments (e.g. void my_irq_handler(void)).
 	.extern g_irq_h_func
 	.extern g_irq_io_func
 	.extern g_irq_v_func
@@ -34,6 +34,7 @@
 	movem.l	(sp)+, d1/a0-a1
 1:
 	move.l	(sp)+, d0
+	andi.w	#$F8FF, sr
 	.endm
 
 ; IRQ vectors unused
