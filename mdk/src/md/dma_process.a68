@@ -53,7 +53,6 @@ dma_fill_vdp_wait:
 	bne.s	dma_fill_vdp_wait
 	rts
 
-
 ;
 ; void md_dma_process(void)
 ;

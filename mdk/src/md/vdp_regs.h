@@ -113,7 +113,7 @@ a... .... ADMUX - On CBUS, outputs color code when set, else CPU address.
 #define VDP_MODESET3_HS1   0x02
 #define VDP_MODESET3_HS0   0x01
 
-#define VDP_MODESET3_DEFAULT 0
+#define VDP_MODESET3_DEFAULT VDP_MODESET3_ADMUX
 
 /*
 Register $0C - Mode Set Register 4

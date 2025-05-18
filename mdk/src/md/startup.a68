@@ -103,6 +103,23 @@ _v_table:
 ; the a6 register; until the WRAM test has completed it is not assumed that the
 ; RAM actually works.
 
+#define MDK_BOOT_DEBUG
+
+#ifdef MDK_BOOT_DEBUG
+
+.macro	beepcheck	val
+	move.w	#\val, d0
+	moveq	#4-1, d1
+	calla6	md_test_beep
+.endm
+
+#else
+
+.macro	beepcheck	val
+.endm
+
+#endif  // MDK_BOOT_DEBUG
+
 _start:
 start:
 	move.w	#$2700, sr
@@ -110,10 +127,11 @@ start:
 
 #ifndef MDK_TARGET_C2
 	calla6	tmss_init
-#else MDK_TARGET_C2
+#else
 	calla6	md_c2_min_init
 #endif  // MDK_TARGET_C2
 	calla6	psg_min_init
+
 	calla6	md_vdp_min_init
 
 softreset:
@@ -134,17 +152,22 @@ softreset:
 
 	calla6	md_error_startup_wram_check_display
 
+	beepcheck	0
+
 	move.w	#$5555, d0
 	calla6	startup_wram_test_sub
 	move.w	#$AAAA, d0
 	calla6	startup_wram_test_sub
+
 	calla6	md_error_startup_wram_ok_display
+	beepcheck	1
 
 ;
 ; Checksum
 ;
 checksum:
-#ifdef MDK_WANT_CHECKSUM
+	; TODO: Enable once checksum is actually being set
+	bra.s	checksum_ok
 	lea	start, a0
 	lea	_stext, a1
 	moveq	#0, d0
@@ -158,15 +181,12 @@ checksum_loop:
 
 checksum_done:
 	sub.w	($18E).w, d0
-	bne.s	checksum_bad
-#endif  // MDK_WANT_CHECKSUM
-	jmp	md_crt0_begin
-
-#ifdef MDK_WANT_CHECKSUM
+	beq.s	checksum_ok
 checksum_bad:
 	calla6	md_error_startup_checksum_error_display
 	bra.w	startup_forever
-#endif  // MDK_WANT_CHECKSUM
+checksum_ok:
+	jmp	(md_crt0_begin).l
 
 
 ; ==============================================================================
@@ -175,14 +195,69 @@ checksum_bad:
 ;
 ; ==============================================================================
 
+; C-callable beep code.
+; void md_test_beep_c(uint32_t beepcode, uint16_t len);
+	.global	md_test_beep_c
+md_test_beep_c:
+	move.l	4(sp), d0
+	move.w	8+2(sp), d1
+	movem.l	d2/a6, -(sp)
+	lea	0f, a6
+	bra.s	md_test_beep
+0:
+	movem.l	(sp)+, d2/a6
+	rts
+
+; d0.l = beep pattern (high or low, from lsb)
+; d1.w = beep pattern length - 1
+md_test_beep:
+	lea	PSG_LOC_BASE, a0
+	move.b	#$9F, (a0)  ; Channel 0 att F (mute)
+	move.b	#$80, (a0)  ; Channel 0 tone first part
+	move.b	#$30, (a0)
+	; default low tone
+	asr.l	#1, d0
+	bcc.s	0f
+	; set high tone
+	move.b	#$0C, (a0)
+0:
+	move.b	#$90, (a0)  ; Channel 0 att 0 (loud)
+
+	; delay
+	moveq	#-1, d2
+1:
+	.rept	3
+	nop
+	.endr
+	dbf	d2, 1b
+	; silence
+	move.b	#$9F, (a0)  ; Channel 0 att F (mute)
+	moveq	#-1, d2
+2:
+	.rept	1
+	nop
+	.endr
+	dbf	d2, 2b
+	dbf	d1, md_test_beep
+	; delay
+	moveq	#-1, d2
+1:
+	.rept	20
+	nop
+	.endr
+	dbf	d2, 1b
+	jmp	(a6)
+	
+
 #ifdef MDK_TARGET_C2
 md_c2_min_init:
 	; Set up I/O
 	move.b	#$88, (SYSC_IO_LOC_CTRL3).l  ; Ports D and H become outputs.
 	move.b	#$B0, (SYSC_IO_LOC_PORTD).l
 	move.b	#$30, (SYSC_IO_LOC_PORTH).l
+	; Enable display
+	move.b	#$06, (SYSC_PROTECTION_LOC_VCTRL).l
 	jmp	(a6)
-#endif
 
 psg_min_init:
 	; Shut up PSG - On my VA0 units it defaults to a loud noise.
@@ -197,6 +272,7 @@ psg_min_init:
 	add.b	d1, d0
 	move.b	d0, (a0)
 	jmp	(a6)
+#endif
 
 #ifndef MDK_TARGET_C2
 tmss_init:

@@ -23,33 +23,6 @@ extern "C"
 #include "md/irq.h"         // Interrupt handler registration
 #include "md/sysc_vctrl.h"  // System C/C2 Video Control
 
-// Run after completing the logic in one game tick loop.
-static inline void megadrive_finish(void)
-{
-	md_spr_finish();
-	md_pal_poll();
-	md_vdp_wait_vblank();
-
-	// C2-specific screen blanking.
-#ifdef MDK_TARGET_C2
-	md_sysc_vctrl_set_blank(1);
-#endif  // MDK_TARGET_C2
-
-#ifndef MDK_TARGET_C2
-	md_io_poll();
-#else
-	md_ioc_poll();
-#endif  // MDK_TARGET_C2
-	md_dma_process();
-
-	md_spr_start();
-
-	// C2-specific screen blanking.
-#ifdef MDK_TARGET_C2
-	md_sysc_vctrl_set_blank(0);
-#endif  // MDK_TARGET_C2
-}
-
 // Internal use ---------------------------------------------------------------
 
 // * Initializes VDP with VDP defaults (see vdp.c):
@@ -69,6 +42,9 @@ static inline void megadrive_finish(void)
 // * Configures IO ports for gamepad reads
 // * Enables interrupts
 void megadrive_init(void);
+
+// Run after completing the logic in one game tick loop.
+void megadrive_finish(void);
 
 #ifdef __cplusplus
 }
