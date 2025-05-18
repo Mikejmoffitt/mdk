@@ -29,17 +29,25 @@ md_dma_process_cmd:
 	move.w	(a0)+, (a1)  ; PRM_SRC2
 	addq.w	#2, a0
 	move.w	d0, (a1)  ; PRM_SRC3
+#ifndef MDK_TARGET_C2
 	zbusreq
+#endif
 	move.l	(a0), (a1)   ; PRM_CTRL32
+#ifndef MDK_TARGET_C2
 	zbusrel
+#endif
 	rts
 dma_fill:
 	subq	#6, a0
 	move.w	d0, (a1)  ; PRM_SRC3
+#ifndef MDK_TARGET_C2
 	zbusreq
+#endif
 	move.l	PRM_CTRL32(a0), (a1)  ; PRM_CTRL32
 	move.w	PRM_SRC1(a0), -4(a1)  ; data
+#ifndef MDK_TARGET_C2
 	zbusrel
+#endif
 dma_fill_vdp_wait:
 	btst	#1, 1(a1)
 	bne.s	dma_fill_vdp_wait

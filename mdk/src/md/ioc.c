@@ -61,7 +61,7 @@ void md_ioc_set_cn4_bits(bool a19, bool b19)
 	*reg_porth = s_io_reg_cache[SYSC_IO_PORT_H];
 }
 
-void md_ioc_set_global_pal_bank(uint16_t bank)
+void md_ioc_set_pal_bank(uint16_t bank)
 {
 	volatile uint8_t *reg_porth = (volatile uint8_t *)(SYSC_IO_LOC_PORTH);
 	s_io_reg_cache[SYSC_IO_PORT_H] &= ~0x03;

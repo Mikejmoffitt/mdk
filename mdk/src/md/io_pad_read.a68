@@ -11,6 +11,9 @@
 ; a1 points to the pad data port (byte address).
 	.global	md_io_read_pad
 md_io_read_pad:
+#ifdef MDK_TARGET_C2
+	rts
+#else
 	; First step - x1CBRLDU into d0
 	move.b	#$40, (a1)  ; TH hi
 	nop
@@ -70,19 +73,25 @@ store_pad:
 	move.w	d0, (a0)
 	move.b	#$00, (a1)  ; TH back to low
 	rts
+#endif  // MDK_TARGET_C2
 
 	.global	md_io_init
 md_io_init:
-	clr.l	d0
+	moveq	#0, d0
 	move.l	d0, g_md_pad
 	move.l	d0, g_md_pad_prev
 	move.l	d0, g_md_pad_pos
 	move.l	d0, g_md_pad_neg
+#ifndef MDK_TARGET_C2
 	move.l	#$00400040, (IO_LOC_CTRL1+1).l  ; Set TH pin as an output
+#endif
 	rts
 
 	.global	md_io_poll
 md_io_poll:
+#ifdef MDK_TARGET_C2
+	bra.w	md_ioc_poll
+#else
 	; Move stale pad data into previous frame var.
 	move.l	g_md_pad, g_md_pad_prev
 
@@ -99,8 +108,9 @@ md_io_poll:
 
 	; Done with the ports, so release the Z80.
 	zbusrel
-
 	; Fall-through to md_io_generate_edges
+#endif  // MDK_TARGET_C2
+
 
 	.global	md_io_generate_edges
 md_io_generate_edges:
