@@ -87,44 +87,39 @@ _v_table:
 
 .include	"header.inc"
 
+.macro	calla6	routine
+	lea	(. + 12).l, a6  ; avoiding the need for even a temp label
+	jmp	(\routine).l
+.endm
+
+
+; ==============================================================================
 ;
 ; Entry point
 ;
+; ==============================================================================
+
+; Routines here do not use a call stack, but instead store the return address in
+; the a6 register; until the WRAM test has completed it is not assumed that the
+; RAM actually works.
 
 _start:
 start:
 	move.w	#$2700, sr
-	move.l	(0).l, sp
+	move.l	($0).l, sp
 
 #ifndef MDK_TARGET_C2
-	; Halt Z80
-	move.w	#$0100, (SYS_Z80_PORT_BUS_LOC).l
-	; TMSS
-	move.b	IO_LOC_VERSION, d0
-	andi.b	#$0F, d0
-	beq.s	0f
-	move.l	#"SEGA", TMSS_PORT  ; "SEGA"
-0:
-#endif
-	; Shut up PSG - On my VA0 units it defaults to a loud noise.
-	lea	PSG_LOC_BASE, a0
-	move.b	#$9F, d0  ; Channel 0 att 15
-	move.b	#$20, d1  ; Channel offset
-	move.b	d0, (a0)
-	add.b	d1, d0
-	move.b	d0, (a0)
-	add.b	d1, d0
-	move.b	d0, (a0)
-	add.b	d1, d0
-	move.b	d0, (a0)
-
-	lea	softreset, a6
-	jmp	md_vdp_min_init
+	calla6	tmss_init
+#else MDK_TARGET_C2
+	calla6	md_c2_min_init
+#endif  // MDK_TARGET_C2
+	calla6	psg_min_init
+	calla6	md_vdp_min_init
 
 softreset:
 	; Turn off display output
 	move.w	#VDP_REGST(VDP_MODESET2, $14), (VDP_LOC_BASE+VDP_OFFS_CTRL)
-
+	; WRAM Test - on MD, skipped unless the START button is held.
 #ifndef MDK_TARGET_C2
 	; Prepare controller read
 	move.l	#$00400040, (IO_LOC_BASE + 8).l  ; Set TH pin as an output
@@ -132,15 +127,24 @@ softreset:
 	.rept	20
 	nop
 	.endr
-	; If start is held, run the memory test.
+	; If start is not held, skip the memory test.
 	btst	#5, (IO_LOC_BASE + 3).l
-	beq.w	selftest
-#endif
+	bne.s	checksum
+#endif  // MDK_TARGET_C2
 
+	calla6	md_error_startup_wram_check_display
+
+	move.w	#$5555, d0
+	calla6	startup_wram_test_sub
+	move.w	#$AAAA, d0
+	calla6	startup_wram_test_sub
+	calla6	md_error_startup_wram_ok_display
+
+;
+; Checksum
+;
 checksum:
-#ifndef MDK_WANT_CHECKSUM
-	jmp	md_crt0_begin
-#endif
+#ifdef MDK_WANT_CHECKSUM
 	lea	start, a0
 	lea	_stext, a1
 	moveq	#0, d0
@@ -155,28 +159,57 @@ checksum_loop:
 checksum_done:
 	sub.w	($18E).w, d0
 	bne.s	checksum_bad
+#endif  // MDK_WANT_CHECKSUM
 	jmp	md_crt0_begin
-checksum_bad:
-	lea	startup_forever, a6
-	jmp	md_error_startup_checksum_error_display
-;
-; Self Test
-;
-selftest:
-	lea	wram_test_begin, a6
-	jmp	md_error_startup_wram_check_display
 
-wram_test_begin:
-	move.l	#$5555, d0
-	lea	wram_test_pass1, a6
-	bra.w	startup_wram_test_sub
-wram_test_pass1:
-	move.l	#$AAAA, d0
-	lea	wram_test_pass2, a6
-	bra.w	startup_wram_test_sub
-wram_test_pass2:
-	lea	checksum, a6
-	jmp	md_error_startup_wram_ok_display
+#ifdef MDK_WANT_CHECKSUM
+checksum_bad:
+	calla6	md_error_startup_checksum_error_display
+	bra.w	startup_forever
+#endif  // MDK_WANT_CHECKSUM
+
+
+; ==============================================================================
+;
+; Test Subroutines
+;
+; ==============================================================================
+
+#ifdef MDK_TARGET_C2
+md_c2_min_init:
+	; Set up I/O
+	move.b	#$88, (SYSC_IO_LOC_CTRL3).l  ; Ports D and H become outputs.
+	move.b	#$B0, (SYSC_IO_LOC_PORTD).l
+	move.b	#$30, (SYSC_IO_LOC_PORTH).l
+	jmp	(a6)
+#endif
+
+psg_min_init:
+	; Shut up PSG - On my VA0 units it defaults to a loud noise.
+	lea	PSG_LOC_BASE, a0
+	move.b	#$9F, d0  ; Channel 0 att 15
+	move.b	#$20, d1  ; Channel offset
+	move.b	d0, (a0)
+	add.b	d1, d0
+	move.b	d0, (a0)
+	add.b	d1, d0
+	move.b	d0, (a0)
+	add.b	d1, d0
+	move.b	d0, (a0)
+	jmp	(a6)
+
+#ifndef MDK_TARGET_C2
+tmss_init:
+	; Halt Z80
+	move.w	#$0100, (SYS_Z80_PORT_BUS_LOC).l
+	; TMSS
+	move.b	IO_LOC_VERSION, d0
+	andi.b	#$0F, d0
+	beq.s	0f
+	move.l	#"SEGA", TMSS_PORT  ; "SEGA"
+0:
+	jmp	(a6)
+#endif
 
 ; d0 = test word
 ; a6 = return
@@ -189,15 +222,20 @@ wram_test_loop:
 	bne.s	wram_test_failed
 	dbra	d7, wram_test_loop
 	jmp	(a6)
+
 wram_test_failed:
-	lea	startup_forever, a6
-	jmp	md_error_startup_wram_ng_display
+	; knowingly stomping on the a6 return pointer.
+	calla6	md_error_startup_wram_ng_display
+	bra.w	startup_forever
 
 startup_forever:
 #ifdef MDK_TARGET_C2
 	; Arcade target hangs on the error indefinitely
 	bra.s	startup_forever
+	; TODO: Start button, or eventual restart.
 #else
+	move.l	#$00400040, (IO_LOC_BASE + 8).l  ; Set TH pin as an output
+	move.b	#$00, (IO_LOC_BASE + 3).l  ; TH low
 	btst	#5, (IO_LOC_BASE + 3).l  ; Check start button
 	bne.s	startup_forever
 startup_forever_wait_start_release:
@@ -207,6 +245,11 @@ startup_forever_wait_start_release:
 	bra.w	start
 
 
+; ==============================================================================
+;
+; Exception Vectors
+;
+; ==============================================================================
 _v_bus_error:
 	movem.l	d0-d7/a0-a7, -(sp)
 	moveq	#0, d0

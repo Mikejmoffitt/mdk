@@ -38,17 +38,19 @@ pal_copy_top:
 	.endr
 	dbf	d7, pal_copy_top
 #else
+	move.w	#VDP_REGST(VDP_MODESET3, $80), VDP_OFFS_CTRL(a4)  ; Enable color bus master
 	lea	CRAM_SYSTEMC_LOC_BASE, a1
 	moveq	#(128 / (4 * 4)) - 1, d7
 	lea	md_min_palette, a0
 pal_copy_top:
 	.rept	4
 	move.l	(a0), (a1)
-	move.l	(a0)+, 128(a1)
+	move.l	(a0)+, 2*16*16(a1)  ; sprites
+	addq.w	#4, a1
 	.endr
 	dbf	d7, pal_copy_top
+	move.w	#VDP_REGST(VDP_MODESET3, $00), VDP_OFFS_CTRL(a4)  ; Disable color bus master
 #endif
-
 	; Copy font into VRAM
 	md_set_vram_addr $0000
 	lea	md_error_font, a0

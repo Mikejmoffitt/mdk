@@ -117,14 +117,14 @@ a... .... ADMUX - On CBUS, outputs color code when set, else CPU address.
 
 /*
 Register $0C - Mode Set Register 4
-r... .... RS0   - Select external dot clock (EDCLK). Used for H40 on MD.
+r... .... RS1   - Select external dot clock (EDCLK). Used for H40 on MD.
 .s.. .... VSCLK - Outputs pixel clock on VSync pin. Used by 32x and C/C2.
 ..h. .... HSCIN - Hsync pin becomes an input. Used by 32x.
 ...c .... SPAEN - Enable sprite/plane indicator pin as output. Used by C/C2.
 .... S... SHI   - Enable shadow/highlight mode.
 .... .L.. LSM1  - Interlace mode (bit 1). See VdpInterlaceMode enum.
 .... ..l. LSM0  - Interlace mode (bit 0).
-.... ...R RS1   - Selects horizontal cell mode and dot clock divisor.
+.... ...R RS0   - Selects horizontal cell mode and dot clock divisor.
 */
 
 #define VDP_MODESET4_RS1   0x80
