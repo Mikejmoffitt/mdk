@@ -22,6 +22,7 @@
 
 	.macro	irq_func_handle symbol_name:req
 	; Disable interrupts. Don't touch the global flag for it, though.*/
+	move.w	sr, -(sp)
 	ori.w	#$0700, sr
 	; Load handler, and nope out if nothing has been registered.
 	move.l	d0, -(sp)
@@ -34,7 +35,7 @@
 	movem.l	(sp)+, d1/a0-a1
 1:
 	move.l	(sp)+, d0
-	andi.w	#$F8FF, sr
+	move.w	(sp)+, sr
 	.endm
 
 ; IRQ vectors unused
