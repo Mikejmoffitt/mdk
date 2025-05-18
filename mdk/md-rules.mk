@@ -68,7 +68,7 @@ FLAGS ?=
 # Flags shared by both C and C++.
 COMMON_FLAGS := $(FLAGS)
 COMMON_FLAGS += -mcpu=68000
-COMMON_FLAGS += -O3
+COMMON_FLAGS += -O2
 COMMON_FLAGS += -fomit-frame-pointer
 COMMON_FLAGS += -frename-registers -fshort-enums
 COMMON_FLAGS += -Wall -Wextra -Wno-unused-function
