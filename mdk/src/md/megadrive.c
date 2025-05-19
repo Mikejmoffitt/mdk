@@ -48,7 +48,7 @@ void megadrive_finish(void)
 
 	// C2-specific screen blanking.
 #ifdef MDK_TARGET_C2
-//	md_sysc_vctrl_set_blank(1);
+	md_sysc_vctrl_set_blank(true);
 #endif  // MDK_TARGET_C2
 
 #ifndef MDK_TARGET_C2
@@ -62,7 +62,7 @@ void megadrive_finish(void)
 
 	// C2-specific screen blanking.
 #ifdef MDK_TARGET_C2
-//	md_sysc_vctrl_set_blank(0);
+	md_sysc_vctrl_set_blank(false);
 #endif  // MDK_TARGET_C2
 	if (!irq_en) md_sys_di();
 }
