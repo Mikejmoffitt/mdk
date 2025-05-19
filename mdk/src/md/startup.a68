@@ -281,7 +281,7 @@ tmss_init:
 	move.b	IO_LOC_VERSION, d0
 	andi.b	#$0F, d0
 	beq.s	0f
-	move.l	#"SEGA", TMSS_PORT  ; "SEGA"
+	move.l	#$53454741, TMSS_PORT  ; "SEGA"
 0:
 	jmp	(a6)
 #endif
