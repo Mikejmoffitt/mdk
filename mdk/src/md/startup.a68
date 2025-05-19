@@ -257,6 +257,7 @@ md_c2_min_init:
 	; Enable display
 	move.b	#$06, (SYSC_PROTECTION_LOC_VCTRL).l
 	jmp	(a6)
+#endif
 
 psg_min_init:
 	; Shut up PSG - On my VA0 units it defaults to a loud noise.
@@ -271,7 +272,6 @@ psg_min_init:
 	add.b	d1, d0
 	move.b	d0, (a0)
 	jmp	(a6)
-#endif
 
 #ifndef MDK_TARGET_C2
 tmss_init:
