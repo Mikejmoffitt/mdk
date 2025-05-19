@@ -7,6 +7,7 @@
 ;
 
 #include	"md/top.inc"
+#include	"md/errors.h"
 
 #define MD_ERROR_ATTR_ADDR   $0000
 #define MD_ERROR_ATTR_OK     $1000
@@ -138,6 +139,13 @@ str_tbl:
 	dc.l	str_trap0xe
 	dc.l	str_trap0xf
 	dc.l	str_unimp
+	dc.l	str_irq1
+	dc.l	str_irq2
+	dc.l	str_irq3
+	dc.l	str_irq4
+	dc.l	str_irq5
+	dc.l	str_irq6
+	dc.l	str_irq7
 
 prmsg:
 	cmpi.w	#4*4, d0
@@ -543,6 +551,20 @@ str_trap0xf:
 	.ascii	"Trap $F\0"
 str_unimp:
 	.ascii	"Unimplemented\0"
+str_irq1:
+	.ascii	"IRQ 1\0"
+str_irq2:
+	.ascii	"IRQ 2\0"
+str_irq3:
+	.ascii	"IRQ 3\0"
+str_irq4:
+	.ascii	"IRQ 4\0"
+str_irq5:
+	.ascii	"IRQ 5\0"
+str_irq6:
+	.ascii	"IRQ 6\0"
+str_irq7:
+	.ascii	"IRQ 7\0"
 
 str_reg_d0:
 	.ascii	"D0 $\0"

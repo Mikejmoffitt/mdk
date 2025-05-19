@@ -68,7 +68,7 @@
 #define SYSC_IO_UPD7759_LOC_BASE (0x880000)
 #define SYSC_IO_UPD7759_PHRASE_LOC (SYSC_IO_UPD7759_LOC_BASE + 1)
 
-#ifndef __ASSEMBLY__
+#ifndef __ASSEMBLER__
 #define PSG_PORT          (*(volatile uint8_t *)(PSG_LOC_BASE))
 #define SYS_PORT_VERSION  (*(volatile uint8_t *)(IO_LOC_BASE + 1))
 #define VDPPORT_DATA      (*(volatile uint16_t*)(VDP_LOC_BASE))
@@ -78,4 +78,4 @@
 #define VDPPORT_HVCOUNT   (*(volatile uint16_t*)(VDP_LOC_BASE + 8))
 #define VDPPORT_DBG_SEL   (*(volatile uint16_t *)(VDP_LOC_BASE + 0x18))
 #define VDPPORT_DBG_DATA  (*(volatile uint16_t *)(VDP_LOC_BASE + 0x1C))
-#endif  /* __ASSEMBLY__ */
+#endif  /* __ASSEMBLER__ */

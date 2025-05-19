@@ -1,5 +1,5 @@
 #include	"md/top.inc"
-
+#include	"md/errors.h"
 ; md-toolchain interrupt handlers
 ; Michael Moffitt 2018-2024
 
@@ -40,10 +40,13 @@
 
 ; IRQ vectors unused
 _v_irq1:
+	showerr	MD_ERRMSG_IRQ1
 _v_irq3:
+	showerr	MD_ERRMSG_IRQ3
 _v_irq5:
+	showerr	MD_ERRMSG_IRQ5
 _v_irq7:
-	rte
+	showerr	MD_ERRMSG_IRQ7
 
 ; /TH pin change, from controller port
 _v_irq2:

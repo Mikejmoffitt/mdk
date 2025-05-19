@@ -1,6 +1,7 @@
 ; mdk header, interrupts, and C runtime startup
 ; Michael Moffitt 2018-2022
 #include	"md/top.inc"
+#include	"md/errors.h"
 
 	.section	.text.keepboot
 
@@ -152,15 +153,12 @@ softreset:
 
 	calla6	md_error_startup_wram_check_display
 
-	beepcheck	0
-
 	move.w	#$5555, d0
 	calla6	startup_wram_test_sub
 	move.w	#$AAAA, d0
 	calla6	startup_wram_test_sub
 
 	calla6	md_error_startup_wram_ok_display
-	beepcheck	1
 
 ;
 ; Checksum
@@ -252,6 +250,7 @@ md_test_beep:
 #ifdef MDK_TARGET_C2
 md_c2_min_init:
 	; Set up I/O
+	move.b	#$F0, (SYSC_IO_LOC_CTRL2).l
 	move.b	#$88, (SYSC_IO_LOC_CTRL3).l  ; Ports D and H become outputs.
 	move.b	#$B0, (SYSC_IO_LOC_PORTD).l
 	move.b	#$30, (SYSC_IO_LOC_PORTH).l
@@ -327,134 +326,68 @@ startup_forever_wait_start_release:
 ;
 ; ==============================================================================
 _v_bus_error:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#0, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_BUS_ERROR
 _v_address_error:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#1, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_ADDRESS_ERROR
 _v_illegal_instruction:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#2, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_ILLEGAL_INSTRUCTION
 _v_div_zero:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#3, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_DIV_ZERO
 _v_chk:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#4, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_CHK
 _v_trapv:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#5, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAPV
 _v_privelege:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#6, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_PRIVELEGE
 _v_trace:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#7, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRACE
 _v_unused_irq:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#8, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_UNUSED_IRQ
 _v_aline_emu:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#9, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_ALINE_EMU
 _v_fline_emu:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#10, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_FLINE_EMU
 _v_reserved:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#11, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_RESERVED
 _v_coproc_violation:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#12, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_COPROC_VIOLATION
 _v_format:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#13, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_FORMAT
 _v_uninit:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#14, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_UNINIT
 _v_spurious:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#15, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_SPURIOUS
 _v_trap0x0:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#16, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X0
 _v_trap0x1:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#17, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X1
 _v_trap0x2:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#18, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X2
 _v_trap0x3:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#19, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X3
 _v_trap0x4:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#20, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X4
 _v_trap0x5:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#21, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X5
 _v_trap0x6:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#22, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X6
 _v_trap0x7:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#23, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X7
 _v_trap0x8:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#24, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X8
 _v_trap0x9:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#25, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0X9
 _v_trap0xa:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#26, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0XA
 _v_trap0xb:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#27, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0XB
 _v_trap0xc:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#28, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0XC
 _v_trap0xd:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#29, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0XD
 _v_trap0xe:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#30, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0XE
 _v_trap0xf:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#31, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_TRAP0XF
 _v_unimp:
-	movem.l	d0-d7/a0-a7, -(sp)
-	moveq	#32, d0
-	jmp	(md_error_dispatch)
+	showerr	MD_ERRMSG_UNIMP

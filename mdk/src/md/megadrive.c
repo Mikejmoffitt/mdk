@@ -9,12 +9,6 @@
 #include "md/sysc_vctrl.h"
 #include <stdlib.h>
 
-#define MDK_BOOT_DEBUG
-#include "util/beepcheck.h"
-
-
-extern void md_test_beep_c(uint32_t beepcode, uint16_t len);
-
 void megadrive_init(void)
 {
 	md_sys_di();
@@ -41,6 +35,7 @@ void megadrive_init(void)
 #endif
 	md_pal_init();
 	md_vdp_set_display_en(true);
+	md_sys_ei();
 }
 
 // Run after completing the logic in one game tick loop.
