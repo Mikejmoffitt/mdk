@@ -8,7 +8,7 @@
 
 # bus release
 	.macro	zbusrel
-	sf	SYS_Z80_PORT_BUS_LO
+	sf	SYS_Z80_PORT_BUS_LOC
 	.endm
 
 # bus wait
