@@ -35,6 +35,7 @@ void megadrive_init(void)
 #endif
 	md_pal_init();
 	md_vdp_set_display_en(true);
+
 	md_sys_ei();
 }
 

@@ -33,6 +33,10 @@ void md_vdp_init(void)
 	// H40 mode by default
 	md_vdp_set_reg(VDP_MODESET4, VDP_MODESET4_DEFAULT);
 
+	// Just in case...
+	md_vdp_set_thint_en(false);
+	md_vdp_set_hint_en(false);
+
 	md_vdp_set_vscroll_mode(VDP_VSCROLL_PLANE);
 	md_vdp_set_hscroll_mode(VDP_HSCROLL_PLANE);
 

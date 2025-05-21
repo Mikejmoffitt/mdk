@@ -67,7 +67,11 @@ extern bool g_md_sys_ints_enabled;
 
 static inline uint8_t md_sys_ei(void)
 {
+#ifdef MDK_TARGET_C2
+	__asm__ volatile("\tandi.w	#0xFCFF, %sr\n");
+#else
 	__asm__ volatile("\tandi.w	#0xF8FF, %sr\n");
+#endif
 	const uint8_t ret = g_md_sys_ints_enabled;
 	g_md_sys_ints_enabled = true;
 	return ret;
@@ -75,7 +79,11 @@ static inline uint8_t md_sys_ei(void)
 
 static inline uint8_t md_sys_di(void)
 {
+#ifdef MDK_TARGET_C2
 	__asm__ volatile("\tori.w	#0x0700, %sr\n");
+#else
+	__asm__ volatile("\tori.w	#0x0700, %sr\n");
+#endif
 	const uint8_t ret = g_md_sys_ints_enabled;
 	g_md_sys_ints_enabled = false;
 	return ret;
