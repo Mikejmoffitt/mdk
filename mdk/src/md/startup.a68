@@ -289,9 +289,6 @@ opn_min_init:
 	bmi.s	0b
 
 	move.b	#$00, 1(a0)  ; Disable timers
-0:
-	tst.b	(a0)
-	bmi.s	0b
 
 #ifndef MDK_TARGET_C2
 	zbusrel
