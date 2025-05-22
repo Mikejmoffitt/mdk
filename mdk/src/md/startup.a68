@@ -283,7 +283,7 @@ opn_min_init:
 #endif
 
 	lea	OPN_BASE, a0
-	move.b	$27, (a0)  ; Timer control
+	move.b	#$27, (a0)  ; Timer control
 0:
 	tst.b	(a0)
 	bmi.s	0b
