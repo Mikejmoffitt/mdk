@@ -34,11 +34,15 @@
 #define SYS_Z80_PORT_RESET_LOC (0xA11200)
 #define TMSS_PORT    (0xA14000)
 /* VDP */
-#define VDP_LOC_BASE      (0xC00000)
+#define VDP_LOC_BASE  (0xC00000)
 /* PSG */
 #define PSG_LOC_BASE (0xC00011)
 /* OPN */
+#ifdef MDK_TARGET_C2
+#define OPN_BASE 0x840100
+#else
 #define OPN_BASE 0xA04000
+#endif  // MDK_TARGET_C2
 /* System C/C2 additions */
 /* Color RAM */
 #define CRAM_SYSTEMC_LOC_BASE (0x8C0000)
