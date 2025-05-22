@@ -126,11 +126,12 @@ start:
 	move.w	#$2700, sr
 	move.l	($0).l, sp
 
-#ifndef MDK_TARGET_C2
-	calla6	tmss_init
-#else
+#ifdef MDK_TARGET_C2
 	calla6	md_c2_min_init
+#else
+	calla6	tmss_init
 #endif  // MDK_TARGET_C2
+
 	calla6	psg_min_init
 	calla6	opn_min_init
 	calla6	md_vdp_min_init
@@ -278,6 +279,7 @@ psg_min_init:
 	jmp	(a6)
 
 opn_min_init:
+	jmp	(a6)
 #ifndef MDK_TARGET_C2
 	zbusreq
 #endif

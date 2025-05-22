@@ -5,8 +5,7 @@
 // not particularly flexible, so depending on your game's needs, it may be
 // sensible to not use these.
 
-#ifndef UTIL_TEXT_H
-#define UTIL_TEXT_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -30,5 +29,3 @@ void text_puts(VdpPlane plane, uint16_t x, uint16_t y, const char *s);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif // UTIL_TEXT_H

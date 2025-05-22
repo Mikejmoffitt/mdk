@@ -36,9 +36,9 @@ void main(void)
 		"   START: Pause / Resume",
 	};
 
-	for (uint16_t i = 0; i < ARRAYSIZE(kinstructions); i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(kinstructions); i++)
 	{
-		const int16_t print_y = 28 - ARRAYSIZE(kinstructions) + i - 1;
+		const int16_t print_y = 28 - MDK_ARRAYSIZE(kinstructions) + i - 1;
 		text_puts(VDP_PLANE_A, 1, print_y, kinstructions[i]);
 	}
 
@@ -61,7 +61,7 @@ void main(void)
 	cspr_param[1].frame = 0;
 	cspr_param[1].use_dma = true;
 	// Populate with data for the cirnos.
-	for (uint16_t i = 2; i < ARRAYSIZE(cspr_param); i++)
+	for (uint16_t i = 2; i < MDK_ARRAYSIZE(cspr_param); i++)
 	{
 		cspr_param[i].cspr_data = res_cirno_csp;
 		cspr_param[i].vram_base = 0x1C00;
@@ -85,7 +85,7 @@ void main(void)
 		// Animate and render
 		if (!anim_pause)
 		{
-			for (uint16_t i = 0; i < ARRAYSIZE(cspr_param); i++)
+			for (uint16_t i = 0; i < MDK_ARRAYSIZE(cspr_param); i++)
 			{
 				if (frame % 8 == 0) cspr_param[i].frame++;
 				const uint16_t max = md_cspr_get_frame_count(cspr_param[i].cspr_data);
@@ -98,7 +98,7 @@ void main(void)
 		if (g_md_pad_pos[0] & BTN_A)
 		{
 			selected_spr++;
-			if (selected_spr >= ARRAYSIZE(cspr_param)) selected_spr = 0;
+			if (selected_spr >= MDK_ARRAYSIZE(cspr_param)) selected_spr = 0;
 		}
 
 		// Start is used to pause and resume.
@@ -125,7 +125,7 @@ void main(void)
 		}
 
 		// Use the MODE button to test the "fast" drawing function..
-		for (uint16_t i = 0; i < ARRAYSIZE(cspr_param); i++)
+		for (uint16_t i = 0; i < MDK_ARRAYSIZE(cspr_param); i++)
 		{
 			if (g_md_pad[0] & BTN_Z) md_cspr_put_st_fast(&cspr_param[i]);
 			else md_cspr_put_st(&cspr_param[i]);

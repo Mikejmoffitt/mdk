@@ -10,7 +10,7 @@
 
 void draw_inputs(void)
 {
-	for (uint16_t j = 0; j < ARRAYSIZE(g_md_pad); j++)
+	for (uint16_t j = 0; j < MDK_ARRAYSIZE(g_md_pad); j++)
 	{
 		uint16_t plot_x = 12 * 8;
 		const uint16_t plot_y = (12 + j) * 8;
@@ -55,7 +55,7 @@ void draw_inputs(void)
 			{BTN_MODE, 'm'},
 		};
 
-		for (uint16_t i = 0; i < ARRAYSIZE(button_meta); i++)
+		for (uint16_t i = 0; i < MDK_ARRAYSIZE(button_meta); i++)
 		{
 			char chara = (g_md_pad[j] & button_meta[i].mask) ?
 			              button_meta[i].chara : '.';

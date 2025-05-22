@@ -6,7 +6,7 @@ static uint8_t atan_int(fix32_t ratio)
 {
 	if (ratio >= INTTOFIX16(TRIG_TAB_ATAN_INPUT_RANGE))
 	{
-		return trig_tab_atan[ARRAYSIZE(trig_tab_atan) - 1];
+		return trig_tab_atan[MDK_ARRAYSIZE(trig_tab_atan) - 1];
 	}
 	if (ratio < 0) return 0;
 	ratio = ratio / 4;

@@ -1,5 +1,5 @@
-/* mdk DMA control functions
-Michael Moffitt 2018 */
+// mdk DMA control functions
+// Michael Moffitt 2018-2025
 
 #include "md/dma.h"
 #include "md/macro.h"
@@ -8,7 +8,7 @@ Michael Moffitt 2018 */
 
 #define DMA_QUEUE_DEPTH 128
 // Used with modulo operator, so should be power of 2.
-_Static_assert(NUM_IS_POW2(DMA_QUEUE_DEPTH), "DMA queue depth != power of 2!");
+_Static_assert(MDK_NUM_IS_POW2(DMA_QUEUE_DEPTH), "DMA queue depth != power of 2!");
 
 typedef enum DmaOp DmaOp;
 enum DmaOp
@@ -57,7 +57,7 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 	DmaCmd *cmd;
 	if (op == DMA_OP_SPR_TRANSFER)
 	{
-		if (s_dma_prio_q_idx >= ARRAYSIZE(s_dma_prio_q_cmd)) return;
+		if (s_dma_prio_q_idx >= MDK_ARRAYSIZE(s_dma_prio_q_cmd)) return;
 		cmd = &s_dma_prio_q_cmd[s_dma_prio_q_idx];
 		s_dma_prio_q_idx++;
 	}
@@ -65,7 +65,7 @@ static inline void enqueue_int(DmaOp op, uint32_t bus, uint16_t dest,
 	{
 		cmd = &s_dma_q[s_dma_q_write_idx];
 		s_dma_q_write_idx = (s_dma_q_write_idx + 1) %
-		                     ARRAYSIZE(s_dma_q);
+		                     MDK_ARRAYSIZE(s_dma_q);
 		if (s_dma_q_write_idx == s_dma_q_read_idx) return;
 	}
 
@@ -204,7 +204,7 @@ void md_dma_process(void)
 	const bool ints_enabled = md_sys_di();
 
 	// Process high-priority slots first.
-	for (uint16_t i = 0; i < ARRAYSIZE(s_dma_prio_q_cmd); i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(s_dma_prio_q_cmd); i++)
 	{
 		if (s_dma_prio_q_cmd[i].stride == 0) break;
 #ifdef MDK_FAKE_DMA_TEST_HACK

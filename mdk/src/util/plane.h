@@ -1,5 +1,4 @@
-#ifndef UTIL_PLANE_H
-#define UTIL_PLANE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"
@@ -13,5 +12,3 @@ void plane_clear(VdpPlane plane);
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-
-#endif  // UTIL_PLANE_H

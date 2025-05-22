@@ -1,7 +1,6 @@
 // mdk fixed point
-// Michael Moffitt 2018-2022
-#ifndef FIXED_H
-#define FIXED_H
+// Michael Moffitt 2018-2025
+#pragma once
 
 #include <stdint.h>
 
@@ -33,5 +32,3 @@ typedef int16_t fix16_t;
 #define FIX16DIV(x, y) (((x) << FIX16_PRECISION_BITS) / (y))
 #define FIX32MUL(x, y) (((x) * (y)) >> FIX32_PRECISION_BITS)
 #define FIX32DIV(x, y) (((x) << FIX32_PRECISION_BITS) / (y))
-
-#endif // FIXED_H

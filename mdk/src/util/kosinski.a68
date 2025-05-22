@@ -29,9 +29,9 @@ kos_decomp_loop:
 
 kos_decomp_chkbit:
 	move.w	d6, ccr  ; was the bit set?
-	bcc	kos_decomp_match  ; if not, branch (C flag = bit clear
+	bcc.s	kos_decomp_match  ; if not, branch (C flag = bit clear
 	move.b	(a0)+, (a1)+  ; otherwise, copy byte as-is
-	bra	kos_decomp_loop
+	bra.s	kos_decomp_loop
 
 ; ------------------------------------------------------------------------------
 
@@ -69,7 +69,7 @@ kos_decomp_chkbit2:
 	addq.w	#1, d3  ; increment repeat count
 	moveq	#-1, d2
 	move.b	(a0)+, d2  ; calculate offset
-	bra	kos_decomp_matchloop
+	bra.s	kos_decomp_matchloop
 
 kos_decomp_fullmatch:
 	move.b	(a0)+, d0  ; first byte
@@ -87,15 +87,15 @@ kos_decomp_matchloop:
 	move.b	(a1, d2.w), d0
 	move.b	d0, (a1)+                 ; copy appropriate byte
 	dbf	d3, kos_decomp_matchloop  ; and repeat the copy
-	bra	kos_decomp_loop
+	bra.w	kos_decomp_loop
 
 kos_decomp_fullmatch2:
 	move.b	(a0)+, d1
-	beq	kos_decomp_done  ; 0 indicates end of stream
+	beq.s	kos_decomp_done  ; 0 indicates end of stream
 	cmpi.b	#1, d1
-	beq	kos_decomp_loop  ; 1 indicates new desc needed
+	beq.w	kos_decomp_loop  ; 1 indicates new desc needed
 	move.b	d1, d3  ; else, copy repeat count
-	bra	kos_decomp_matchloop
+	bra.s	kos_decomp_matchloop
 kos_decomp_done:
 	addq.l	#2, sp  ; restore from two scratch bytes
 

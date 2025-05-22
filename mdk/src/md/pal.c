@@ -31,8 +31,8 @@ static uint8_t s_prot_reg_cache;
 // -----------------------------------------------------------------------------
 void md_pal_mark_dirty(uint16_t first_index, uint16_t count)
 {
-	const uint16_t first_line = (first_index / 16) % (ARRAYSIZE(g_palette) / 16);
-	const uint16_t last_line = (count / 16) % (ARRAYSIZE(g_palette) / 16);
+	const uint16_t first_line = (first_index / 16) % (MDK_ARRAYSIZE(g_palette) / 16);
+	const uint16_t last_line = (count / 16) % (MDK_ARRAYSIZE(g_palette) / 16);
 	if (last_line < first_line)
 	{
 		s_dirty |= MDK_PAL_DIRTY_MASK_FULL;
@@ -53,7 +53,7 @@ void md_pal_mark_dirty(uint16_t first_index, uint16_t count)
 
 void md_pal_set(uint16_t idx, uint16_t val)
 {
-	idx = idx % ARRAYSIZE(g_palette);
+	idx = idx % MDK_ARRAYSIZE(g_palette);
 	g_palette[idx] = val;
 	s_dirty |= (1 << (idx >> 4));
 }
@@ -64,7 +64,7 @@ void md_pal_set(uint16_t idx, uint16_t val)
 // Upload as-is.
 void md_pal_upload(uint16_t dest, const void *source, uint16_t count)
 {
-	if (dest + count > ARRAYSIZE(g_palette)) return;
+	if (dest + count > MDK_ARRAYSIZE(g_palette)) return;
 	md_pal_mark_dirty(dest, count);
 	memcpy(&g_palette[dest], source, count * sizeof(uint16_t));
 }
@@ -188,7 +188,7 @@ void md_pal_poll(void)
 	volatile uint32_t *cram32 = (volatile uint32_t *)CRAM_SYSTEMC_LOC_BASE;
 	volatile uint32_t *src32 = (uint32_t *)g_palette;
 
-	for (uint16_t i = 0; i < ARRAYSIZE(g_palette) / 16; i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(g_palette) / 16; i++)
 	{
 		if (s_dirty & test_bit)
 		{

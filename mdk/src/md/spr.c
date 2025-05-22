@@ -15,7 +15,7 @@ void md_spr_init(SprMode mode)
 {
 	s_mode = mode;
 	// The sprite table has its link values installed ahead of time.
-	for (uint16_t i = 0; i < ARRAYSIZE(g_sprite_table); i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(g_sprite_table); i++)
 	{
 		g_sprite_table[i].link = i + 1;
 		g_sprite_table[i].xpos = 2;  // Avoid triggering line mask.
@@ -77,7 +77,7 @@ void md_spr_finish(void)
 
 void md_spr_mask_line_full(int16_t y, uint8_t size)
 {
-	if (g_sprite_count >= ARRAYSIZE(g_sprite_table)) return;
+	if (g_sprite_count >= MDK_ARRAYSIZE(g_sprite_table)) return;
 	SprSlot *spr = &g_sprite_table[g_sprite_count];
 	spr->ypos = y + SPR_STATIC_OFFS;
 	spr->size = size;
@@ -91,7 +91,7 @@ void md_spr_mask_line_full(int16_t y, uint8_t size)
 void md_spr_mask_line_overlap(int16_t y1, uint8_t size1,
                               int16_t y2, uint8_t size2)
 {
-	if (g_sprite_count >= ARRAYSIZE(g_sprite_table) - 1) return;
+	if (g_sprite_count >= MDK_ARRAYSIZE(g_sprite_table) - 1) return;
 	SprSlot *spr = &g_sprite_table[g_sprite_count];
 	spr->ypos = y1 + SPR_STATIC_OFFS;
 	spr->size = size1;

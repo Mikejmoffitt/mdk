@@ -1,24 +1,19 @@
 #pragma once
-#define NUM_IS_POW2(x) ((x & (x - 1)) == 0)
+#define MDK_NUM_IS_POW2(x) ((x & (x - 1)) == 0)
 
-#ifndef ARRAYSIZE
-#define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
-#endif  // ARRAYSIZE
+#define MDK_ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
 
-#ifndef BITVAL
-#define BITVAL(x) (1 << x)
-#endif  // BITVAL
+#define MDK_BITVAL(x) (1 << x)
+#define MDK_BTST(x, n) ((x) & (MDK_BITVAL(n)))
+#define MDK_BCLR(x, n) ((x) &= (~(MDK_BITVAL(n))))
+#define MDK_BSET(x, n) ((x) |= (MDK_BITVAL(n)))
 
-#ifndef MAX
-#define MAX(a, b) \
+#define MDK_MAX(a, b) \
     ({ __typeof__ (a) _a = (a); \
        __typeof__ (b) _b = (b); \
        _a > _b ? _a : _b; })
-#endif  // MAX
 
-#ifndef MIN
-#define MIN(a, b) \
+#define MDK_MIN(a, b) \
     ({ __typeof__ (a) _a = (a); \
        __typeof__ (b) _b = (b); \
        _a < _b ? _a : _b; })
-#endif  // MIN

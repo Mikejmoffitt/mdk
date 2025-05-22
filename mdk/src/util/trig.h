@@ -1,5 +1,4 @@
-#ifndef TRIG_H
-#define TRIG_H
+#pragma once
 
 // Fixed point trigonometry.
 
@@ -28,5 +27,3 @@ static inline fix16_t trig_tan(uint8_t angle)
 }
 
 uint8_t trig_atan(int y, int x);
-
-#endif  // TRIG_H

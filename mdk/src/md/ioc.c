@@ -119,11 +119,11 @@ static void md_ioc_generate_compatible_input(void)
 		{SYSC_PL_A,     BTN_A},
 	};
 	
-	for (uint16_t i = 0; i < ARRAYSIZE(g_md_pad); i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(g_md_pad); i++)
 	{
 		g_md_pad_prev[i] = g_md_pad[i];
 		g_md_pad[i] = 0;
-		for (uint16_t j = 0; j < ARRAYSIZE(c2_to_md_mappings); j++)
+		for (uint16_t j = 0; j < MDK_ARRAYSIZE(c2_to_md_mappings); j++)
 		{
 			if (g_md_c2_in[SYSC_INPUT_P1] &
 			    c2_to_md_mappings[j].c2_button)
@@ -147,7 +147,7 @@ void md_ioc_init(void)
 {
 	volatile uint8_t *reg_ctrl3 = (volatile uint8_t *)(SYSC_IO_LOC_CTRL3);
 	*reg_ctrl3 = 0x88;  // Configure ports D and H as outputs.
-	for (uint16_t i = 0; i < ARRAYSIZE(s_io_reg_cache); i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(s_io_reg_cache); i++)
 	{
 		s_io_reg_cache[i] = 0x00;
 	}
@@ -185,7 +185,7 @@ void md_ioc_poll(void)
 	s_io_reg_cache[SYSC_IO_PORT_F] = ~(*reg_portf);
 	s_io_reg_cache[SYSC_IO_PORT_G] = ~(*reg_portg);
 
-	for (uint16_t i = 0; i < ARRAYSIZE(g_md_c2_in); i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(g_md_c2_in); i++)
 	{
 		g_md_c2_in_prev[i] = g_md_c2_in[i];
 	}
@@ -197,7 +197,7 @@ void md_ioc_poll(void)
 	g_md_c2_in[SYSC_INPUT_DIP1] = s_io_reg_cache[SYSC_IO_PORT_F];
 	g_md_c2_in[SYSC_INPUT_DIP2] = s_io_reg_cache[SYSC_IO_PORT_G];
 
-	for (uint16_t i = 0; i < ARRAYSIZE(g_md_c2_in); i++)
+	for (uint16_t i = 0; i < MDK_ARRAYSIZE(g_md_c2_in); i++)
 	{
 		generate_edges(&g_md_c2_in[i], &g_md_c2_in_prev[i],
 		               &g_md_c2_in_pos[i], &g_md_c2_in_neg[i]);
