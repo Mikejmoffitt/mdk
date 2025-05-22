@@ -44,8 +44,13 @@ void megadrive_finish(void)
 {
 	const bool irq_en = md_sys_ei();
 	md_spr_finish();
+#ifndef MDK_TARGET_C2
 	md_pal_poll();
+#endif  // MDK_TARGET_C2
 	md_vdp_wait_vblank();
+#ifdef MDK_TARGET_C2
+	md_pal_poll();
+#endif  // MDK_TARGET_C2
 
 	// C2-specific screen blanking.
 #ifdef MDK_TARGET_C2

@@ -182,10 +182,12 @@ void md_pal_set_bg_bank(uint16_t bank)
 
 void md_pal_poll(void)
 {
-	md_vdp_set_cbus_cpu_mux(0);
+	if (!s_dirty) return;
+	md_vdp_set_cbus_cpu_mux(false);
 	uint32_t test_bit = 0x00000001;
 	volatile uint32_t *cram32 = (volatile uint32_t *)CRAM_SYSTEMC_LOC_BASE;
 	volatile uint32_t *src32 = (uint32_t *)g_palette;
+
 	for (uint16_t i = 0; i < ARRAYSIZE(g_palette) / 16; i++)
 	{
 		if (s_dirty & test_bit)
@@ -197,7 +199,7 @@ void md_pal_poll(void)
 		cram32 += 8;
 		src32 += 8;
 	}
-	md_vdp_set_cbus_cpu_mux(1);
+	md_vdp_set_cbus_cpu_mux(true);
 	s_dirty = 0;
 }
 

@@ -37,6 +37,8 @@
 #define VDP_LOC_BASE      (0xC00000)
 /* PSG */
 #define PSG_LOC_BASE (0xC00011)
+/* OPN */
+#define OPN_BASE 0xA04000
 /* System C/C2 additions */
 /* Color RAM */
 #define CRAM_SYSTEMC_LOC_BASE (0x8C0000)

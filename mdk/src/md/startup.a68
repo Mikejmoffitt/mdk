@@ -132,7 +132,7 @@ start:
 	calla6	md_c2_min_init
 #endif  // MDK_TARGET_C2
 	calla6	psg_min_init
-
+	calla6	opn_min_init
 	calla6	md_vdp_min_init
 
 softreset:
@@ -250,11 +250,15 @@ md_test_beep:
 #ifdef MDK_TARGET_C2
 md_c2_min_init:
 	; Set up I/O
-	move.b	#$F0, (SYSC_IO_LOC_CTRL2).l
+	sf	(SYSC_IO_LOC_CTRL0).l
+	sf	(SYSC_IO_LOC_CTRL1).l
+	sf	(SYSC_IO_LOC_CTRL2).l
+;	move.b	#$F0, (SYSC_IO_LOC_CTRL2).l
 	move.b	#$88, (SYSC_IO_LOC_CTRL3).l  ; Ports D and H become outputs.
 	move.b	#$B0, (SYSC_IO_LOC_PORTD).l
 	move.b	#$30, (SYSC_IO_LOC_PORTH).l
 	; Enable display
+	move.b	#$00, (SYSC_PROTECTION_LOC_SECURITY).l
 	move.b	#$06, (SYSC_PROTECTION_LOC_VCTRL).l
 	jmp	(a6)
 #endif
@@ -271,6 +275,28 @@ psg_min_init:
 	move.b	d0, (a0)
 	add.b	d1, d0
 	move.b	d0, (a0)
+	jmp	(a6)
+
+opn_min_init:
+#ifndef MDK_TARGET_C2
+	zbusreq
+#endif
+
+	lea	OPN_BASE, a0
+	move.b	$27, (a0)  ; Timer control
+0:
+	tst.b	(a0)
+	bmi.s	0b
+
+	move.b	#$00, 1(a0)  ; Disable timers
+0:
+	tst.b	(a0)
+	bmi.s	0b
+
+#ifndef MDK_TARGET_C2
+	zbusrel
+#endif
+
 	jmp	(a6)
 
 #ifndef MDK_TARGET_C2

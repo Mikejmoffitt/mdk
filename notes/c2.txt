@@ -1,0 +1,47 @@
+Some little notes from probing a Sega C2 board.
+
+## CPU IPL
+IPL0 is hooked up to a GAL16V8 IC26 "315-5395" on pin 19.
+IPL1 comes from pin 13 of the same IC.
+IPL0 is on pin 12.
+
+If we decompile this GAL's logic the pins are as follows:
+
+/f15 and /f14 are always set to GND, so the state is 1, while OE is unset.
+
+/ipl0 = (/f15 * /f14) + (i2 * i4 * /i5 * /i11)
+
+IC26 315-5395
+
+1
+2	VDP pin 98 /ZINT, interrupt for Z80 on MD
+3
+4	OPN2 IRQ (!)
+
+
+## DTACK generation
+
+IC24 315-5452 generates enable signals and DTACK.
+
+Pins:
+
+1	A23
+2	A22
+3	A21
+4	A19
+5	A20
+6	AS
+7	BGACK
+8	IC23 pin 3
+9	R34 pullup (not populated)
+10	GND
+11	?
+12	DTACK
+13	ROM1 /CE (upper 1MiB)
+14	ROM0 /CE (lower 1MiB)
+15	?
+16	?
+17	?
+18	?
+19	?
+20	VCC

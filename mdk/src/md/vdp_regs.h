@@ -59,6 +59,15 @@ v... .... SMSVL - Columns 24-31 (but not 32-39) forced to a scroll of 0.
 .... .f.. FCE   - Full color enable. Enables full palette bit depth.
 .... ..s. M3    - HV counter latch enable. When set, HV counter is stopped.
 .... ...o OVER  - Overlay mode. Enables locking to ext. sync via csync pin.
+
+C2 Notes:
+
+On C2, it appears that the HSync pin is used to control blanking output. Setting
+VC0 will result in every other line getting blanked accordingly.
+
+In addition, turning off M3 supposedly locks up the system.
+
+
 */
 
 #define VDP_MODESET1_SMSVL 0x80
@@ -104,6 +113,13 @@ a... .... ADMUX - On CBUS, outputs color code when set, else CPU address.
 .... .v.. VCELL - Vertical scroll mode. See VdpVmode enum.
 .... ..h. HS1   - Horizontal scroll mode (bit 1). See VdpHmode enum.
 .... ...l HS0   - Horizontal scroll mode (bit 0).
+
+C2 Notes:
+
+When writing to palette RAM, turn off ADMUX (bit 7) first to allow the CPU
+address lines to drive the color bus lines. Be sure to turn it back afterwards
+otherwise the screen will just be a rainbow mess.
+
 */
 
 #define VDP_MODESET3_ADMUX 0x80
@@ -125,6 +141,12 @@ r... .... RS1   - Select external dot clock (EDCLK). Used for H40 on MD.
 .... .L.. LSM1  - Interlace mode (bit 1). See VdpInterlaceMode enum.
 .... ..l. LSM0  - Interlace mode (bit 0).
 .... ...R RS0   - Selects horizontal cell mode and dot clock divisor.
+
+C2 Notes:
+
+On C2, EDCLK is not available, so RS1 should always be zero.
+SPAEN is used to allow sprites to use a separate palette.
+VSCLK is needed for video output.
 */
 
 #define VDP_MODESET4_RS1   0x80
